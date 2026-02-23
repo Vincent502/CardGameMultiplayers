@@ -55,8 +55,8 @@ namespace CardGame.Core
             player.DeckKind = deckKind;
             player.PV = 100;
             player.Shield = 0;
-            player.Force = 0;
-            player.Resistance = 0;
+            player.Force = deckKind == DeckKind.Guerrier ? 1 : 0;   // Passif Guerrier : +1 Force de base
+            player.Resistance = deckKind == DeckKind.Guerrier ? 1 : 0; // Passif Guerrier : +1 Résistance de base
             player.Hand.Clear();
             player.Deck.Clear();
             player.Graveyard.Clear();

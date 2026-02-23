@@ -6,7 +6,7 @@ Jeu de cartes **2 joueurs** en tour par tour pour Unity (PC/Mobile). Phase 1 : *
 
 ## ✨ Fonctionnalités
 
-- **2 decks** : Magicien et Guerrier (34 cartes chacun, 4 équipements obligatoires)
+- **2 decks** : Magicien et Guerrier (34 cartes chacun, 4 équipements obligatoires). **Passif Guerrier** : +1 Force et +1 Résistance de base.
 - **Règles complètes** : PV, bouclier, Force, Résistance, mana, pioche, frappe (1/tour), équipements actifs à la frappe / début / fin de tour
 - **Effets à durée** : Orage de poche, Armure psychique, Lien karmique (compteur de tours, expiration)
 - **Glace localisée** : gel d’un équipement adverse, dégel par carte dégâts ou frappe « briser le gel », affichage en bleu
@@ -72,6 +72,7 @@ Rapport d’implémentation : `Assets/Document/RAPPORT_phase1_implementation.md`
 - **1 frappe par tour** ; si l’arme est gelée, la frappe peut servir à briser le gel (sans dégâts).
 - **Équipement gelé** (bleu) : se dégèle en jouant une carte qui fait des dégâts ou en utilisant Frappe pour briser le gel.
 - **Éphémère** : chaque exemplaire n’est jouable qu’une fois ; les autres exemplaires restent jouables.
+- **Guerrier** : passif +1 Force et +1 Résistance de base (dès le début de partie).
 
 ---
 

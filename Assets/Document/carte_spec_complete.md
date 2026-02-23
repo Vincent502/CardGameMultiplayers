@@ -186,6 +186,8 @@ La victoire est accordée au joueur ayant **réduit les points de vie adverses �
 
 # Deck Guerrier
 
+**Passif de classe** : le joueur possédant le deck Guerrier a **+1 Force** et **+1 Résistance** de base (en permanence).
+
 ### Cartes obligatoires (Equipé)
 
 - **Hache de l'oublié**

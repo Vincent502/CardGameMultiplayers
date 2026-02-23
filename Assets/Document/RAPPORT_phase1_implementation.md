@@ -36,10 +36,11 @@
 - **Effets à durée** : Orage de poche (1 dégât/tour, 3 tours), Armure psychique (23 bouclier, retrait après 2 tours), Lien karmique (+3 Résistance, retrait après 3 tours).
 - **Glace localisée** : gèle le premier équipement actif adverse. Dégel uniquement si le propriétaire joue une **carte qui fait des dégâts** (Attaque, Boule de feu, etc.) ou utilise la **Frappe** pour « briser le gel » (0 dégât). Pas de dégel en fin de tour. Affichage : équipement gelé en **bleu** dans l’UI.
 - **Cartes Éphémère** : chaque **exemplaire** (instance) est jouable une fois ; les autres exemplaires du même type restent disponibles (pas de blocage par `CardId`).
+- **Passif Guerrier** : le joueur qui utilise le deck Guerrier a **+1 Force** et **+1 Résistance** de base (appliqué au démarrage de partie dans `BuildDecks`).
 
 ### 2.3 Cartes et decks
 
-- **Decks** : Magicien et Guerrier définis dans `DeckDefinitions.cs` (34 cartes chacun, 4 équipements obligatoires). Choix par joueur dans l’Inspector (`DeckKind`).
+- **Decks** : Magicien et Guerrier définis dans `DeckDefinitions.cs` (34 cartes chacun, 4 équipements obligatoires). Choix par joueur dans l’Inspector (`DeckKind`). **Guerrier** : passif +1 Force, +1 Résistance de base.
 - **Types** : Equipe, Normal, Ephemere, Rapide. Coût équipement = nombre de tours avant activation.
 - **Cartes avec effet** : Attaque, Attaque+, Boule de feu, Défense, Défense+, Galvanisation, Concentration, Lien karmique, Armure psychique, Orage de poche, Glace localisée, Appuis solide, Explosion magie éphémère, Divination, etc. (voir `EffectResolver` et spec).
 
