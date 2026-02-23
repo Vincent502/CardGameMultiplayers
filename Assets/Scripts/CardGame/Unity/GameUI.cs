@@ -80,7 +80,7 @@ namespace CardGame.Unity
             RefreshHand(state);
             RefreshEquipments(state);
             RefreshEffects(state);
-            if (_buttonStrike != null) _buttonStrike.interactable = _controller.IsHumanTurn;
+            if (_buttonStrike != null) _buttonStrike.interactable = _controller.CanStrike;
             if (_buttonEndTurn != null) _buttonEndTurn.interactable = _controller.IsHumanTurn;
         }
 

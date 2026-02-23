@@ -43,5 +43,7 @@ namespace CardGame.Core
         public int ForceBonusValue { get; set; }
         public int ResistanceBonusTurnsLeft { get; set; }
         public int ResistanceBonusValue { get; set; }
+        /// <summary>Bonus de dégâts d'arme ce tour (ex. Appuis solide +1). Remis à 0 en fin de tour.</summary>
+        public int WeaponDamageBonusThisTurn { get; set; }
     }
 }

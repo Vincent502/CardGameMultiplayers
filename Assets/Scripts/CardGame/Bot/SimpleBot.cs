@@ -18,14 +18,14 @@ namespace CardGame.Bot
             var p = state.CurrentPlayer;
             if (p.IsHuman) return null;
 
-            // Option 1: Frappe si l'arme fait des dégâts
+            // Option 1: Frappe si l'arme fait des dégâts (1 frappe max par tour, équipement "strike" une seule fois)
             int weaponDmg = 0;
             foreach (var eq in p.Equipments.Where(e => e.IsActive))
             {
                 if (eq.Card.Id == CardId.HacheOublie) weaponDmg = 5;
                 if (eq.Card.Id == CardId.RuneForceArcanique) weaponDmg += 2;
             }
-            if (weaponDmg > 0 && _rng.NextDouble() < 0.4)
+            if (weaponDmg > 0 && p.ConsecutiveStrikesThisTurn == 0 && _rng.NextDouble() < 0.4)
                 return new StrikeAction { PlayerIndex = state.CurrentPlayerIndex };
 
             // Option 2: Jouer une carte jouable

@@ -205,7 +205,7 @@ namespace CardGame.Core
                     _log.Log("LienKarmique", new { casterIndex, turns = 3 });
                     return true;
                 case CardId.AppuisSolide:
-                    // +1 dégât arme : géré au moment de la frappe
+                    caster.WeaponDamageBonusThisTurn += 1;
                     _log.Log("AppuisSolide", new { casterIndex });
                     return false;
                 case CardId.OrageDePoche:
@@ -226,24 +226,51 @@ namespace CardGame.Core
             }
         }
 
-        /// <summary>Dégâts de base de la frappe (Hache 5, Rune force arcanique 2).</summary>
+        /// <summary>Dégâts de base de la frappe (Hache 5, Rune force arcanique 2) + bonus ce tour (ex. Appuis solide).</summary>
         public int GetWeaponBaseDamage(GameState state, int playerIndex)
         {
             int baseDmg = 0;
-            foreach (var eq in state.Players[playerIndex].Equipments.Where(e => e.IsActive))
+            var player = state.Players[playerIndex];
+            foreach (var eq in player.Equipments.Where(e => e.IsActive))
             {
                 if (eq.Card.Id == CardId.HacheOublie) baseDmg = 5;
                 if (eq.Card.Id == CardId.RuneForceArcanique) baseDmg += 2;
             }
-            return baseDmg;
+            return baseDmg + player.WeaponDamageBonusThisTurn;
         }
 
-        /// <summary>Frappe : applique les dégâts (arme × (1+Force)).</summary>
+        /// <summary>
+        /// Frappe : applique les dégâts (arme × (1+Force)) puis déclenche
+        /// les équipements « à la frappe » et le dégel (Glace localisée).
+        /// </summary>
         public void ResolveStrike(GameState state, int strikerIndex, int targetIndex)
         {
             int baseDmg = GetWeaponBaseDamage(state, strikerIndex);
             if (baseDmg <= 0) return;
             ApplyDamage(state, targetIndex, baseDmg, state.Players[strikerIndex].Force, "Frappe");
+
+            var striker = state.Players[strikerIndex];
+            foreach (var eq in striker.Equipments.Where(e => e.IsActive))
+            {
+                if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint)
+                {
+                    ApplyShield(state, strikerIndex, 1, DeckDefinitions.GetCard(eq.Card.Id).Name);
+                }
+                if (eq.Card.Id == CardId.RuneAgressiviteOublie)
+                {
+                    striker.Force += 1;
+                    striker.ForceBonusValue += 1;
+                    striker.ForceBonusTurnsLeft = Math.Max(striker.ForceBonusTurnsLeft, 1);
+                    _log.Log("RuneAgressivite", new { strikerIndex });
+                }
+            }
+            // Glace localisée : une frappe brise le gel d'un équipement du frappeur.
+            var frozen = striker.Equipments.FirstOrDefault(e => e.IsFrozen);
+            if (frozen != null)
+            {
+                frozen.IsFrozen = false;
+                _log.Log("EquipmentUnfrozen", new { strikerIndex, cardId = frozen.Card.Id.ToString() });
+            }
         }
 
         /// <summary>

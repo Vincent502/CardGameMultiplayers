@@ -28,6 +28,8 @@ namespace CardGame.Unity
         public bool IsGameOver => State != null && State.WinnerIndex >= 0;
         public bool IsHumanTurn => State != null && State.CurrentPlayer.IsHuman;
         public bool WaitingForHumanAction => _waitingForHumanAction;
+        /// <summary>True si le joueur humain peut encore frapper (1 frappe par tour, équipement "strike" une seule fois).</summary>
+        public bool CanStrike => IsHumanTurn && (_session?.CanStrike() ?? false);
 
         private void Start()
         {

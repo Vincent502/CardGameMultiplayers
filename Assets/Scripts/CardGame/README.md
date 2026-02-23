@@ -53,7 +53,7 @@ Référence : `Document/carte_spec_complete.md` et `Document/PROMPT_jeu_cartes.m
 
 8. **Lancer**
    - **Play**. La partie démarre : toi = Joueur 1 humain (Magicien), l’adversaire = Joueur 2 (Guerrier, bot ou futur P2P). Premier joueur = aléatoire.
-   - À ton tour : clique sur une carte pour la jouer, ou sur « Frappe », ou « Fin de tour ».
+   - À ton tour : clique sur une carte pour la jouer, ou sur « Frappe », ou « Fin de tour ». **Une seule frappe par tour** : les équipements qui utilisent le bouton Frappe (arme, Catalyseur, Rune force arcanique, etc.) ne s’activent qu’une fois par tour.
 
 ### Résumé des scripts
 
