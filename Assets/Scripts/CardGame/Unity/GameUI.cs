@@ -47,11 +47,11 @@ namespace CardGame.Unity
             if (_textPlayer1 != null)
                 _textPlayer1.text = $"Joueur 1 (Guerrier)\nPV: {state.Players[1].PV} Bouclier: {state.Players[1].Shield}\nMana: {state.Players[1].Mana} Main: {state.Players[1].Hand.Count}";
 
+            // Tour actuel = 1 quand le premier joueur joue, 2 quand le second, 3 au tour suivant, etc.
             if (_textTurn != null)
             {
-                int globalTurn = state.TurnCount + 1;
-                int currentPlayerTurn = state.GetCurrentTurnNumber();
-                _textTurn.text = $"Tour global : {globalTurn}\nTour joueur courant : {currentPlayerTurn}";
+                int tourActuel = state.TurnCount + 1;
+                _textTurn.text = $"Tour : {tourActuel}";
             }
 
             if (_controller.IsGameOver)
