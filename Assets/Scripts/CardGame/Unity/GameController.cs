@@ -2,20 +2,21 @@ using System.Collections;
 using CardGame.Core;
 using CardGame.Bot;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace CardGame.Unity
 {
     /// <summary>
     /// Pilote Unity : crée la session, fait avancer le moteur, délègue au bot quand ce n'est pas le tour du joueur.
-    /// Compatible PC/Mobile. Brancher l'UI (boutons cartes, frappe, fin de tour) sur RequestPlayAction.
+    /// Joueur 1 = index 0 (humain en solo), Joueur 2 = index 1 (bot ou P2P).
     /// </summary>
     public class GameController : MonoBehaviour
     {
-        [SerializeField] private bool _humanIsPlayer0 = true;
+        [SerializeField] [FormerlySerializedAs("_humanIsPlayer0")] private bool _humanIsJoueur1 = true;
         [SerializeField] private bool _writeLogToFile = true;
         [Header("Decks")]
-        [SerializeField] private DeckKind _player0Deck = DeckKind.Magicien;
-        [SerializeField] private DeckKind _player1Deck = DeckKind.Guerrier;
+        [SerializeField] [FormerlySerializedAs("_player0Deck")] private DeckKind _deckJoueur1 = DeckKind.Magicien;
+        [SerializeField] [FormerlySerializedAs("_player1Deck")] private DeckKind _deckJoueur2 = DeckKind.Guerrier;
 
         private GameSession _session;
         private IGameLogger _logger;
@@ -35,7 +36,7 @@ namespace CardGame.Unity
             _bot = new SimpleBot();
 
             int first = Random.Range(0, 2);
-            _session.StartGame(_humanIsPlayer0, first, _player0Deck, _player1Deck);
+            _session.StartGame(_humanIsJoueur1, first, _deckJoueur1, _deckJoueur2);
             _waitingForHumanAction = false;
             StartCoroutine(RunGameLoop());
         }

@@ -52,7 +52,7 @@ Référence : `Document/carte_spec_complete.md` et `Document/PROMPT_jeu_cartes.m
      - **Card Button Prefab** : laisser vide (des boutons seront créés automatiquement pour les cartes).
 
 8. **Lancer**
-   - **Play**. La partie démarre : toi = Joueur 0 (Magicien), le bot = Joueur 1 (Guerrier). Premier joueur = aléatoire.
+   - **Play**. La partie démarre : toi = Joueur 1 humain (Magicien), l’adversaire = Joueur 2 (Guerrier, bot ou futur P2P). Premier joueur = aléatoire.
    - À ton tour : clique sur une carte pour la jouer, ou sur « Frappe », ou « Fin de tour ».
 
 ### Résumé des scripts
@@ -62,7 +62,7 @@ Référence : `Document/carte_spec_complete.md` et `Document/PROMPT_jeu_cartes.m
 | GameController | GameController  | Lance la partie, fait jouer le bot. |
 | GameUI (sous Canvas) | GameUI       | Affiche PV/mana/main et envoie tes actions. |
 
-Les champs **Controller**, **_text Status**, **_text Player0**, **_text Player1**, **Hand Container**, **Button Strike**, **Button End Turn** doivent être assignés dans l’Inspector de GameUI, sinon l’affichage ou les boutons ne marcheront pas.
+Les champs **Controller**, **_text Status**, **_text Joueur1**, **_text Joueur2**, **Hand Container**, **Button Strike**, **Button End Turn** (et les containers Équipements / Effets par joueur) doivent être assignés dans l’Inspector de GameUI. Les anciennes références (ex. _text Player0) sont conservées grâce à `FormerlySerializedAs` lors du chargement de scènes existantes.
 
 ## Logging
 

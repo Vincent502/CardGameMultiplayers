@@ -25,13 +25,14 @@ namespace CardGame.Core
 
         /// <summary>
         /// Démarre une partie.
-        /// firstPlayerIndex = 0 ou 1 (tirage au sort côté appelant).
-        /// deckPlayer0 / deckPlayer1 = choix de deck pour chaque joueur.
+        /// humanIsJoueur1 = true si l'humain joue en tant que Joueur 1 (index 0).
+        /// firstPlayerIndex = GameState.Player1Index ou Player2Index (tirage au sort côté appelant).
+        /// deckJoueur1 / deckJoueur2 = choix de deck pour Joueur 1 et Joueur 2.
         /// </summary>
-        public void StartGame(bool humanIsPlayer0, int firstPlayerIndex, DeckKind deckPlayer0, DeckKind deckPlayer1)
+        public void StartGame(bool humanIsJoueur1, int firstPlayerIndex, DeckKind deckJoueur1, DeckKind deckJoueur2)
         {
-            State.Players[0].IsHuman = humanIsPlayer0;
-            State.Players[1].IsHuman = !humanIsPlayer0;
+            State.Players[GameState.Player1Index].IsHuman = humanIsJoueur1;
+            State.Players[GameState.Player2Index].IsHuman = !humanIsJoueur1;
             State.FirstPlayerIndex = firstPlayerIndex;
             State.CurrentPlayerIndex = firstPlayerIndex;
             State.TurnCount = 0;
@@ -39,10 +40,10 @@ namespace CardGame.Core
             State.WinnerIndex = -1;
             State.ActiveDurationEffects.Clear();
 
-            BuildDecks(0, deckPlayer0);
-            BuildDecks(1, deckPlayer1);
+            BuildDecks(GameState.Player1Index, deckJoueur1);
+            BuildDecks(GameState.Player2Index, deckJoueur2);
 
-            _log.Log("GameStart", new { firstPlayerIndex, player0Deck = deckPlayer0.ToString(), player1Deck = deckPlayer1.ToString() });
+            _log.Log("GameStart", new { firstPlayerIndex, deckJoueur1 = deckJoueur1.ToString(), deckJoueur2 = deckJoueur2.ToString() });
         }
 
         private void BuildDecks(int playerIndex, DeckKind deckKind)
@@ -296,10 +297,10 @@ namespace CardGame.Core
 
         private void CheckVictory()
         {
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < GameState.MaxPlayers; i++)
                 if (State.Players[i].PV <= 0)
                 {
-                    State.WinnerIndex = 1 - i;
+                    State.WinnerIndex = i == GameState.Player1Index ? GameState.Player2Index : GameState.Player1Index;
                     _log.Log("Victory", new { winnerIndex = State.WinnerIndex });
                 }
         }

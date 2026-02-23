@@ -8,19 +8,25 @@ namespace CardGame.Core
     public class GameState
     {
         public const int MaxPlayers = 2;
+        /// <summary>Index du Joueur 1 (affiché) = toujours l'humain en solo.</summary>
+        public const int Player1Index = 0;
+        /// <summary>Index du Joueur 2 (affiché) = bot ou second humain en P2P.</summary>
+        public const int Player2Index = 1;
 
         public PlayerState[] Players { get; } = new PlayerState[MaxPlayers];
         /// <summary>Effets actifs avec durée (ex. Orage de poche). 1 tour de jeu = 1 joueur.</summary>
         public List<ActiveDurationEffect> ActiveDurationEffects { get; } = new List<ActiveDurationEffect>();
         /// <summary>Nombre de tours de jeu écoulés (1 tour = 1 joueur).</summary>
         public int TurnCount { get; set; }
-        /// <summary>Joueur dont c'est le tour (0 ou 1).</summary>
+        /// <summary>Index du joueur dont c'est le tour (Player1Index ou Player2Index).</summary>
         public int CurrentPlayerIndex { get; set; }
         public TurnPhase Phase { get; set; }
-        /// <summary>Joueur qui a commencé la partie (tirage au sort).</summary>
+        /// <summary>Index du joueur qui a commencé la partie (tirage au sort).</summary>
         public int FirstPlayerIndex { get; set; }
-        /// <summary>Partie terminée : gagnant (0 ou 1), -1 si pas fini.</summary>
+        /// <summary>Partie terminée : index du gagnant (Player1Index ou Player2Index), -1 si pas fini.</summary>
         public int WinnerIndex { get; set; } = -1;
+        /// <summary>Numéro affiché du gagnant (1 ou 2), -1 si partie non terminée.</summary>
+        public int WinnerDisplayNumber => WinnerIndex < 0 ? -1 : WinnerIndex + 1;
 
         public GameState()
         {
@@ -29,7 +35,7 @@ namespace CardGame.Core
         }
 
         public PlayerState CurrentPlayer => Players[CurrentPlayerIndex];
-        public PlayerState Opponent => Players[1 - CurrentPlayerIndex];
+        public PlayerState Opponent => Players[CurrentPlayerIndex == Player1Index ? Player2Index : Player1Index];
 
         /// <summary>Numéro de tour du joueur actuel (1, 2, 3...) pour mana/pioche.</summary>
         public int GetCurrentTurnNumber()

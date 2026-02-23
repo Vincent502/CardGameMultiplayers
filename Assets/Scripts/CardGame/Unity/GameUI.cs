@@ -2,33 +2,33 @@ using CardGame.Core;
 using CardGame.Data;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 using TMPro;
 
 namespace CardGame.Unity
 {
     /// <summary>
     /// UI minimale : PV, mana, main (boutons), Frappe, Fin de tour.
-    /// À attacher à un Canvas. Référence le GameController sur la même scène.
-    /// Utilise TextMeshPro (TMP_Text) pour les textes.
+    /// Joueur 1 = humain (index 0), Joueur 2 = adversaire (index 1).
     /// </summary>
     public class GameUI : MonoBehaviour
     {
         [SerializeField] private GameController _controller;
         [SerializeField] private TMP_Text _textStatus;
-        [SerializeField] private TMP_Text _textPlayer0;
-        [SerializeField] private TMP_Text _textPlayer1;
-        [SerializeField] private TMP_Text _textTurn; // affichage du nombre de tours
+        [SerializeField] [FormerlySerializedAs("_textPlayer0")] private TMP_Text _textJoueur1;
+        [SerializeField] [FormerlySerializedAs("_textPlayer1")] private TMP_Text _textJoueur2;
+        [SerializeField] private TMP_Text _textTurn;
         [SerializeField] private Transform _handContainer;
         [SerializeField] private GameObject _cardButtonPrefab;
         [SerializeField] private Button _buttonStrike;
         [SerializeField] private Button _buttonEndTurn;
         [Header("Équipements")]
-        [SerializeField] private Transform _equipmentsPlayer0Container;
-        [SerializeField] private Transform _equipmentsPlayer1Container;
+        [SerializeField] [FormerlySerializedAs("_equipmentsPlayer0Container")] private Transform _equipmentsJoueur1Container;
+        [SerializeField] [FormerlySerializedAs("_equipmentsPlayer1Container")] private Transform _equipmentsJoueur2Container;
         [SerializeField] private GameObject _equipmentLabelPrefab;
         [Header("Effets à durée")]
-        [SerializeField] private Transform _effectsPlayer0Container;
-        [SerializeField] private Transform _effectsPlayer1Container;
+        [SerializeField] [FormerlySerializedAs("_effectsPlayer0Container")] private Transform _effectsJoueur1Container;
+        [SerializeField] [FormerlySerializedAs("_effectsPlayer1Container")] private Transform _effectsJoueur2Container;
         [SerializeField] private GameObject _effectLabelPrefab;
 
         private int _lastHandCount = -1;
@@ -46,17 +46,17 @@ namespace CardGame.Unity
             if (_controller?.State == null) return;
 
             var state = _controller.State;
-            if (_textPlayer0 != null)
+            if (_textJoueur1 != null)
             {
-                var p0 = state.Players[0];
-                _textPlayer0.text =
-                    $"Joueur 0 ({p0.DeckKind})\nPV: {p0.PV} Bouclier: {p0.Shield}\nForce: {p0.Force} Résistance: {p0.Resistance}\nMana: {p0.Mana} Main: {p0.Hand.Count}";
+                var joueur1 = state.Players[GameState.Player1Index];
+                _textJoueur1.text =
+                    $"Joueur 1 - humain ({joueur1.DeckKind})\nPV: {joueur1.PV} Bouclier: {joueur1.Shield}\nForce: {joueur1.Force} Résistance: {joueur1.Resistance}\nMana: {joueur1.Mana} Main: {joueur1.Hand.Count}";
             }
-            if (_textPlayer1 != null)
+            if (_textJoueur2 != null)
             {
-                var p1 = state.Players[1];
-                _textPlayer1.text =
-                    $"Joueur 1 ({p1.DeckKind})\nPV: {p1.PV} Bouclier: {p1.Shield}\nForce: {p1.Force} Résistance: {p1.Resistance}\nMana: {p1.Mana} Main: {p1.Hand.Count}";
+                var joueur2 = state.Players[GameState.Player2Index];
+                _textJoueur2.text =
+                    $"Joueur 2 ({joueur2.DeckKind})\nPV: {joueur2.PV} Bouclier: {joueur2.Shield}\nForce: {joueur2.Force} Résistance: {joueur2.Resistance}\nMana: {joueur2.Mana} Main: {joueur2.Hand.Count}";
             }
 
             // Tour actuel = 1 quand le premier joueur joue, 2 quand le second, 3 au tour suivant, etc.
@@ -68,7 +68,7 @@ namespace CardGame.Unity
 
             if (_controller.IsGameOver)
             {
-                if (_textStatus != null) _textStatus.text = $"Partie terminée. Gagnant : Joueur {state.WinnerIndex}";
+                if (_textStatus != null) _textStatus.text = $"Partie terminée. Gagnant : Joueur {state.WinnerDisplayNumber}";
                 return;
             }
 
@@ -165,8 +165,8 @@ namespace CardGame.Unity
 
         private void RefreshEquipments(GameState state)
         {
-            RefreshEquipmentsForPlayer(state, 0, _equipmentsPlayer0Container);
-            RefreshEquipmentsForPlayer(state, 1, _equipmentsPlayer1Container);
+            RefreshEquipmentsForPlayer(state, GameState.Player1Index, _equipmentsJoueur1Container);
+            RefreshEquipmentsForPlayer(state, GameState.Player2Index, _equipmentsJoueur2Container);
         }
 
         private void RefreshEquipmentsForPlayer(GameState state, int playerIndex, Transform container)
@@ -213,8 +213,8 @@ namespace CardGame.Unity
 
         private void RefreshEffects(GameState state)
         {
-            RefreshEffectsForPlayer(state, 0, _effectsPlayer0Container);
-            RefreshEffectsForPlayer(state, 1, _effectsPlayer1Container);
+            RefreshEffectsForPlayer(state, GameState.Player1Index, _effectsJoueur1Container);
+            RefreshEffectsForPlayer(state, GameState.Player2Index, _effectsJoueur2Container);
         }
 
         private void RefreshEffectsForPlayer(GameState state, int playerIndex, Transform container)

@@ -686,10 +686,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0265da35c7c41af4b81e1441bbabfc29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardGame.Unity.GameController
-  _humanIsPlayer0: 1
+  _humanIsJoueur1: 1
   _writeLogToFile: 1
-  _player0Deck: 0
-  _player1Deck: 1
+  _deckJoueur1: 0
+  _deckJoueur2: 0
 --- !u!4 &801899258
 Transform:
   m_ObjectHideFlags: 0
@@ -875,6 +875,68 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 984148582}
   m_CullTransparentMesh: 1
+--- !u!1 &1185512040
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1185512041}
+  - component: {fileID: 1185512042}
+  m_Layer: 5
+  m_Name: EffectContainerPlayeur2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1185512041
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1185512040}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1893120382}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 29, y: 329}
+  m_SizeDelta: {x: 1000, y: 200}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1185512042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1185512040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 3
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &1291955343
 GameObject:
   m_ObjectHideFlags: 0
@@ -1535,6 +1597,68 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1643392408
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1643392409}
+  - component: {fileID: 1643392410}
+  m_Layer: 5
+  m_Name: EffectContainerPlayeur1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1643392409
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1643392408}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1893120382}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 29, y: -171}
+  m_SizeDelta: {x: 1000, y: 200}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1643392410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1643392408}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 3
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &1788113826
 GameObject:
   m_ObjectHideFlags: 0
@@ -1706,16 +1830,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardGame.Unity.GameUI
   _controller: {fileID: 801899257}
   _textStatus: {fileID: 1480756729}
-  _textPlayer0: {fileID: 1788113828}
-  _textPlayer1: {fileID: 515345822}
+  _textJoueur1: {fileID: 1788113828}
+  _textJoueur2: {fileID: 515345822}
   _textTurn: {fileID: 1291955344}
   _handContainer: {fileID: 1394467831}
   _cardButtonPrefab: {fileID: 1089519675679389984, guid: 0a618721a3334b84f87cd959161d6515, type: 3}
   _buttonStrike: {fileID: 984148584}
   _buttonEndTurn: {fileID: 1509964016}
-  _equipmentsPlayer0Container: {fileID: 1324514819}
-  _equipmentsPlayer1Container: {fileID: 1461625323}
+  _equipmentsJoueur1Container: {fileID: 1324514819}
+  _equipmentsJoueur2Container: {fileID: 1461625323}
   _equipmentLabelPrefab: {fileID: 2940249844995941936, guid: b85ac4b6f30d92e45a80a6f9569b3723, type: 3}
+  _effectsJoueur1Container: {fileID: 1643392409}
+  _effectsJoueur2Container: {fileID: 1185512041}
+  _effectLabelPrefab: {fileID: 6950824854011511212, guid: ac3d5c401768df74b96662d92be2ec12, type: 3}
 --- !u!114 &1893120379
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1795,6 +1922,8 @@ RectTransform:
   - {fileID: 515345821}
   - {fileID: 1480756728}
   - {fileID: 1291955346}
+  - {fileID: 1643392409}
+  - {fileID: 1185512041}
   - {fileID: 1324514819}
   - {fileID: 1461625323}
   - {fileID: 984148583}
