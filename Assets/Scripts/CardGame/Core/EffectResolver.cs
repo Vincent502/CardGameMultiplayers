@@ -40,6 +40,17 @@ namespace CardGame.Core
             _log.Log("DamageApplied", new { targetPlayerIndex, baseDamage, casterForce, damage, toShield, toPV, targetPV = target.PV, source = sourceName });
         }
 
+        /// <summary>Glace localisée : jouer une carte qui fait des dégâts dégèle un équipement du joueur (celui qui a joué la carte).</summary>
+        private void UnfreezeOneEquipmentIfAny(GameState state, int playerIndex)
+        {
+            var frozen = state.Players[playerIndex].Equipments.FirstOrDefault(e => e.IsFrozen);
+            if (frozen != null)
+            {
+                frozen.IsFrozen = false;
+                _log.Log("EquipmentUnfrozen", new { playerIndex, cardId = frozen.Card.Id.ToString(), reason = "carte dégâts" });
+            }
+        }
+
         /// <summary>Ajoute du bouclier (formule Résistance).</summary>
         public void ApplyShield(GameState state, int targetPlayerIndex, int baseShield, string sourceName)
         {
@@ -98,12 +109,15 @@ namespace CardGame.Core
             {
                 case CardId.Attaque:
                     ApplyDamage(state, targetIndex, 5, caster.Force, data.Name);
+                    UnfreezeOneEquipmentIfAny(state, casterIndex);
                     return true;
                 case CardId.AttaquePlus:
                     ApplyDamage(state, targetIndex, 9, caster.Force, data.Name);
+                    UnfreezeOneEquipmentIfAny(state, casterIndex);
                     return true;
                 case CardId.BouleDeFeu:
                     ApplyDamage(state, targetIndex, 15, 0, data.Name); // pas influencé par Force
+                    UnfreezeOneEquipmentIfAny(state, casterIndex);
                     return false; // Éphémère
                 case CardId.Defense:
                     ApplyShield(state, casterIndex, 4, data.Name);
@@ -132,18 +146,22 @@ namespace CardGame.Core
                     return true;
                 case CardId.AttaqueTactique:
                     ApplyDamage(state, targetIndex, 2, caster.Force, data.Name);
+                    UnfreezeOneEquipmentIfAny(state, casterIndex);
                     ApplyShield(state, casterIndex, 1, data.Name);
                     return true;
                 case CardId.AttaqueLegere:
                     ApplyDamage(state, targetIndex, 3, caster.Force, data.Name);
+                    UnfreezeOneEquipmentIfAny(state, casterIndex);
                     ApplyShield(state, casterIndex, 2, data.Name);
                     return true;
                 case CardId.AttaqueLourde:
                     ApplyDamage(state, targetIndex, 7, caster.Force, data.Name);
+                    UnfreezeOneEquipmentIfAny(state, casterIndex);
                     ApplyShield(state, casterIndex, 4, data.Name);
                     return true;
                 case CardId.FendoireMortel:
                     ApplyDamage(state, targetIndex, 20, 0, data.Name);
+                    UnfreezeOneEquipmentIfAny(state, casterIndex);
                     return false;
                 case CardId.DefenseLourde:
                     ApplyShield(state, casterIndex, 10, data.Name);
@@ -169,6 +187,7 @@ namespace CardGame.Core
                     int consumed = caster.CardsDiscardedThisTurn.Count;
                     int dmg = consumed * 2;
                     ApplyDamage(state, targetIndex, dmg, 0, data.Name);
+                    UnfreezeOneEquipmentIfAny(state, casterIndex);
                     return true;
                 case CardId.ArmurePsychique:
                     ApplyShield(state, casterIndex, 23, data.Name);
@@ -220,6 +239,15 @@ namespace CardGame.Core
                     });
                     _log.Log("OrageDePoche", new { casterIndex, targetIndex, turns = 3 });
                     return false;
+                case CardId.GlaceLocalisee:
+                    var targetEquipments = state.Players[targetIndex].Equipments;
+                    var toFreeze = targetEquipments.FirstOrDefault(e => e.IsActive);
+                    if (toFreeze != null)
+                    {
+                        toFreeze.IsFrozen = true;
+                        _log.Log("GlaceLocalisee", new { casterIndex, targetIndex, equipment = DeckDefinitions.GetCard(toFreeze.Card.Id).Name });
+                    }
+                    return false;
                 default:
                     _log.Log("EffectNotImplemented", new { cardId = cardId.ToString() });
                     return data.Type == CardType.Normal;
@@ -240,16 +268,24 @@ namespace CardGame.Core
         }
 
         /// <summary>
-        /// Frappe : applique les dégâts (arme × (1+Force)) puis déclenche
-        /// les équipements « à la frappe » et le dégel (Glace localisée).
+        /// Frappe : si seule arme gelée, un coup "brise le gel" (dégel sans dégâts). Sinon dégâts (arme × (1+Force)) + effets « à la frappe ».
         /// </summary>
         public void ResolveStrike(GameState state, int strikerIndex, int targetIndex)
         {
-            int baseDmg = GetWeaponBaseDamage(state, strikerIndex);
-            if (baseDmg <= 0) return;
-            ApplyDamage(state, targetIndex, baseDmg, state.Players[strikerIndex].Force, "Frappe");
-
             var striker = state.Players[strikerIndex];
+            int baseDmg = GetWeaponBaseDamage(state, strikerIndex);
+            if (baseDmg <= 0)
+            {
+                var frozen = striker.Equipments.FirstOrDefault(e => e.IsFrozen);
+                if (frozen != null)
+                {
+                    frozen.IsFrozen = false;
+                    _log.Log("EquipmentUnfrozen", new { strikerIndex, cardId = frozen.Card.Id.ToString(), reason = "frappe briser le gel" });
+                }
+                return;
+            }
+            ApplyDamage(state, targetIndex, baseDmg, striker.Force, "Frappe");
+
             foreach (var eq in striker.Equipments.Where(e => e.IsActive))
             {
                 if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint)
@@ -263,13 +299,6 @@ namespace CardGame.Core
                     striker.ForceBonusTurnsLeft = Math.Max(striker.ForceBonusTurnsLeft, 1);
                     _log.Log("RuneAgressivite", new { strikerIndex });
                 }
-            }
-            // Glace localisée : une frappe brise le gel d'un équipement du frappeur.
-            var frozen = striker.Equipments.FirstOrDefault(e => e.IsFrozen);
-            if (frozen != null)
-            {
-                frozen.IsFrozen = false;
-                _log.Log("EquipmentUnfrozen", new { strikerIndex, cardId = frozen.Card.Id.ToString() });
             }
         }
 

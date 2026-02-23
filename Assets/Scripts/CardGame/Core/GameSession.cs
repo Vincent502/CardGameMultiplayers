@@ -154,7 +154,6 @@ namespace CardGame.Core
             foreach (var eq in p.Equipments)
             {
                 if (eq.RoundsUntilActive > 0) eq.RoundsUntilActive--;
-                if (eq.IsFrozen) eq.IsFrozen = false; // Glace localisée : dégel au début du tour suivant
                 if (!eq.IsActive) continue;
                 switch (eq.Card.Id)
                 {
@@ -215,6 +214,7 @@ namespace CardGame.Core
                 }
             }
             _resolver.ResolveEndOfTurnEffects(State);
+            // Glace localisée : dégel uniquement par carte dégâts ou frappe "briser le gel", pas en fin de tour.
             State.Phase = TurnPhase.EndTurn;
         }
 
@@ -287,26 +287,25 @@ namespace CardGame.Core
             return true;
         }
 
-        /// <summary>True si le joueur actuel peut encore frapper (1 frappe max par tour, avec une arme).</summary>
+        /// <summary>True si le joueur actuel peut encore frapper (1 frappe max par tour : arme active ou arme gelée pour briser le gel).</summary>
         public bool CanStrike()
         {
             if (State == null || State.WinnerIndex >= 0) return false;
             if (State.Phase != TurnPhase.Play) return false;
             if (State.CurrentPlayer.ConsecutiveStrikesThisTurn >= 1) return false;
-            if (_resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex) <= 0) return false;
-            return true;
+            var p = State.CurrentPlayer;
+            return _resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex) > 0 || p.Equipments.Any(e => e.IsFrozen);
         }
 
         private bool TryStrike()
         {
             if (State.CurrentPlayer.ConsecutiveStrikesThisTurn >= 1) return false;
-            int baseDmg = _resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex);
-            if (baseDmg <= 0) return false;
+            var p = State.CurrentPlayer;
+            if (_resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex) <= 0 && !p.Equipments.Any(e => e.IsFrozen)) return false;
 
             _resolver.ResolveStrike(State, State.CurrentPlayerIndex, 1 - State.CurrentPlayerIndex);
-            State.CurrentPlayer.AttackDoneThisTurn = true;
-            State.CurrentPlayer.ConsecutiveStrikesThisTurn++;
-            var p = State.CurrentPlayer;
+            p.AttackDoneThisTurn = true;
+            p.ConsecutiveStrikesThisTurn++;
             if (p.ConsecutiveStrikesThisTurn == 2 && p.Equipments.Any(e => e.IsActive && e.Card.Id == CardId.RuneProtectionOublie))
             {
                 _resolver.ApplyShield(State, State.CurrentPlayerIndex, 2, "Rune de protection de l'oublié");

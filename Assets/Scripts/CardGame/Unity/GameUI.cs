@@ -188,7 +188,12 @@ namespace CardGame.Unity
                 if (label == null) continue;
 
                 label.text = data.Name;
-                label.color = eq.IsActive ? Color.green : Color.gray;
+                if (eq.IsFrozen)
+                    label.color = new Color(0.25f, 0.45f, 1f); // Bleu quand gelé (Glace localisée)
+                else if (eq.IsActive)
+                    label.color = Color.green;
+                else
+                    label.color = Color.gray;
             }
         }
 
