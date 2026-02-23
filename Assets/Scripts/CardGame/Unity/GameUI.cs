@@ -26,6 +26,10 @@ namespace CardGame.Unity
         [SerializeField] private Transform _equipmentsPlayer0Container;
         [SerializeField] private Transform _equipmentsPlayer1Container;
         [SerializeField] private GameObject _equipmentLabelPrefab;
+        [Header("Effets à durée")]
+        [SerializeField] private Transform _effectsPlayer0Container;
+        [SerializeField] private Transform _effectsPlayer1Container;
+        [SerializeField] private GameObject _effectLabelPrefab;
 
         private int _lastHandCount = -1;
         private int _lastMana = -1;
@@ -46,13 +50,13 @@ namespace CardGame.Unity
             {
                 var p0 = state.Players[0];
                 _textPlayer0.text =
-                    $"Joueur 0 ({p0.DeckKind})\nPV: {p0.PV} Bouclier: {p0.Shield}\nMana: {p0.Mana} Main: {p0.Hand.Count}";
+                    $"Joueur 0 ({p0.DeckKind})\nPV: {p0.PV} Bouclier: {p0.Shield}\nForce: {p0.Force} Résistance: {p0.Resistance}\nMana: {p0.Mana} Main: {p0.Hand.Count}";
             }
             if (_textPlayer1 != null)
             {
                 var p1 = state.Players[1];
                 _textPlayer1.text =
-                    $"Joueur 1 ({p1.DeckKind})\nPV: {p1.PV} Bouclier: {p1.Shield}\nMana: {p1.Mana} Main: {p1.Hand.Count}";
+                    $"Joueur 1 ({p1.DeckKind})\nPV: {p1.PV} Bouclier: {p1.Shield}\nForce: {p1.Force} Résistance: {p1.Resistance}\nMana: {p1.Mana} Main: {p1.Hand.Count}";
             }
 
             // Tour actuel = 1 quand le premier joueur joue, 2 quand le second, 3 au tour suivant, etc.
@@ -75,6 +79,7 @@ namespace CardGame.Unity
 
             RefreshHand(state);
             RefreshEquipments(state);
+            RefreshEffects(state);
             if (_buttonStrike != null) _buttonStrike.interactable = _controller.IsHumanTurn;
             if (_buttonEndTurn != null) _buttonEndTurn.interactable = _controller.IsHumanTurn;
         }
@@ -198,6 +203,57 @@ namespace CardGame.Unity
             rt.anchoredPosition = Vector2.zero;
             rt.localScale = Vector3.one;
             rt.sizeDelta = new Vector2(160f, 24f);
+
+            var txt = go.AddComponent<TextMeshProUGUI>();
+            txt.text = "";
+            txt.alignment = TextAlignmentOptions.Left;
+
+            return go;
+        }
+
+        private void RefreshEffects(GameState state)
+        {
+            RefreshEffectsForPlayer(state, 0, _effectsPlayer0Container);
+            RefreshEffectsForPlayer(state, 1, _effectsPlayer1Container);
+        }
+
+        private void RefreshEffectsForPlayer(GameState state, int playerIndex, Transform container)
+        {
+            if (container == null) return;
+
+            foreach (Transform t in container)
+                Destroy(t.gameObject);
+
+            // On affiche les effets qui impactent ce joueur (TargetPlayerIndex).
+            foreach (var effect in state.ActiveDurationEffects)
+            {
+                if (effect.TargetPlayerIndex != playerIndex) continue;
+
+                var data = DeckDefinitions.GetCard(effect.CardId);
+                GameObject go = _effectLabelPrefab != null
+                    ? Instantiate(_effectLabelPrefab, container, false)
+                    : CreateDefaultEffectLabel(container);
+
+                var label = go.GetComponentInChildren<TMP_Text>() ?? go.GetComponent<TMP_Text>();
+                if (label == null) continue;
+
+                label.text = $"{data.Name} ({effect.TurnsRemaining} tours)";
+                // Par défaut, vert si plus d'un tour restant, orange si 1 seul.
+                label.color = effect.TurnsRemaining > 1 ? new Color(0.2f, 0.8f, 0.2f) : new Color(1f, 0.6f, 0.2f);
+            }
+        }
+
+        private GameObject CreateDefaultEffectLabel(Transform parent)
+        {
+            var go = new GameObject("EffectLabel", typeof(RectTransform));
+            var rt = go.GetComponent<RectTransform>();
+            rt.SetParent(parent, false);
+            rt.anchorMin = new Vector2(0f, 0.5f);
+            rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.localScale = Vector3.one;
+            rt.sizeDelta = new Vector2(180f, 24f);
 
             var txt = go.AddComponent<TextMeshProUGUI>();
             txt.text = "";

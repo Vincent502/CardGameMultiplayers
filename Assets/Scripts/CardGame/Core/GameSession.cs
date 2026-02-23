@@ -37,6 +37,7 @@ namespace CardGame.Core
             State.TurnCount = 0;
             State.Phase = TurnPhase.StartTurn;
             State.WinnerIndex = -1;
+            State.ActiveDurationEffects.Clear();
 
             BuildDecks(0, deckPlayer0);
             BuildDecks(1, deckPlayer1);
@@ -201,6 +202,7 @@ namespace CardGame.Core
                 if (eq.Card.Id == CardId.RuneEssenceArcanique && p.Resistance == 0)
                     _resolver.ApplyShield(State, State.CurrentPlayerIndex, 5, "Rune essence arcanique");
             }
+            _resolver.ResolveEndOfTurnEffects(State);
             State.Phase = TurnPhase.EndTurn;
         }
 

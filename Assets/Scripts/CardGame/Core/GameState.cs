@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace CardGame.Core
 {
     /// <summary>
@@ -8,6 +10,8 @@ namespace CardGame.Core
         public const int MaxPlayers = 2;
 
         public PlayerState[] Players { get; } = new PlayerState[MaxPlayers];
+        /// <summary>Effets actifs avec durée (ex. Orage de poche). 1 tour de jeu = 1 joueur.</summary>
+        public List<ActiveDurationEffect> ActiveDurationEffects { get; } = new List<ActiveDurationEffect>();
         /// <summary>Nombre de tours de jeu écoulés (1 tour = 1 joueur).</summary>
         public int TurnCount { get; set; }
         /// <summary>Joueur dont c'est le tour (0 ou 1).</summary>

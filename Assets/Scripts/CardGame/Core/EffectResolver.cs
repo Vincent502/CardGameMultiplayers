@@ -171,7 +171,17 @@ namespace CardGame.Core
                     ApplyDamage(state, targetIndex, dmg, 0, data.Name);
                     return true;
                 case CardId.ArmurePsychique:
-                    ApplyShield(state, casterIndex, 23, data.Name); // TODO durée 2 tours
+                    ApplyShield(state, casterIndex, 23, data.Name);
+                    state.ActiveDurationEffects.Add(new ActiveDurationEffect
+                    {
+                        CardId = CardId.ArmurePsychique,
+                        Kind = DurationEffectKind.ShieldBuff,
+                        CasterPlayerIndex = casterIndex,
+                        TargetPlayerIndex = casterIndex,
+                        TurnsRemaining = 2,
+                        Value = 23
+                    });
+                    _log.Log("ArmurePsychique", new { casterIndex, turns = 2 });
                     return false;
                 case CardId.Concentration:
                     caster.Force += 3;
@@ -182,12 +192,33 @@ namespace CardGame.Core
                     _log.Log("Concentration", new { casterIndex });
                     return false;
                 case CardId.LienKarmique:
-                    caster.Resistance += 3; // TODO durée 3 tours
-                    _log.Log("LienKarmique", new { casterIndex });
+                    caster.Resistance += 3;
+                    state.ActiveDurationEffects.Add(new ActiveDurationEffect
+                    {
+                        CardId = CardId.LienKarmique,
+                        Kind = DurationEffectKind.ResistanceBuff,
+                        CasterPlayerIndex = casterIndex,
+                        TargetPlayerIndex = casterIndex,
+                        TurnsRemaining = 3,
+                        Value = 3
+                    });
+                    _log.Log("LienKarmique", new { casterIndex, turns = 3 });
                     return true;
                 case CardId.AppuisSolide:
                     // +1 dégât arme : géré au moment de la frappe
                     _log.Log("AppuisSolide", new { casterIndex });
+                    return false;
+                case CardId.OrageDePoche:
+                    state.ActiveDurationEffects.Add(new ActiveDurationEffect
+                    {
+                        CardId = CardId.OrageDePoche,
+                        Kind = DurationEffectKind.DamageEachTurn,
+                        CasterPlayerIndex = casterIndex,
+                        TargetPlayerIndex = targetIndex,
+                        TurnsRemaining = 3,
+                        Value = 1
+                    });
+                    _log.Log("OrageDePoche", new { casterIndex, targetIndex, turns = 3 });
                     return false;
                 default:
                     _log.Log("EffectNotImplemented", new { cardId = cardId.ToString() });
@@ -213,6 +244,40 @@ namespace CardGame.Core
             int baseDmg = GetWeaponBaseDamage(state, strikerIndex);
             if (baseDmg <= 0) return;
             ApplyDamage(state, targetIndex, baseDmg, state.Players[strikerIndex].Force, "Frappe");
+        }
+
+        /// <summary>
+        /// Résout les effets "avant fin de tour" (ex. Orage de poche) puis décrémente la durée de tous les effets.
+        /// À appeler en fin de tour (DoResolveEndOfTurn).
+        /// </summary>
+        public void ResolveEndOfTurnEffects(GameState state)
+        {
+            foreach (var effect in state.ActiveDurationEffects.ToList())
+            {
+                if (effect.Kind == DurationEffectKind.DamageEachTurn)
+                    ApplyDamage(state, effect.TargetPlayerIndex, effect.Value, 0, DeckDefinitions.GetCard(effect.CardId).Name);
+            }
+            for (int i = state.ActiveDurationEffects.Count - 1; i >= 0; i--)
+            {
+                var effect = state.ActiveDurationEffects[i];
+                effect.TurnsRemaining--;
+                if (effect.TurnsRemaining <= 0)
+                {
+                    if (effect.Kind == DurationEffectKind.ShieldBuff)
+                    {
+                        var target = state.Players[effect.TargetPlayerIndex];
+                        target.Shield = Math.Max(0, target.Shield - effect.Value);
+                        _log.Log("ShieldBuffExpired", new { cardId = effect.CardId.ToString(), targetPlayerIndex = effect.TargetPlayerIndex, value = effect.Value });
+                    }
+                    else if (effect.Kind == DurationEffectKind.ResistanceBuff)
+                    {
+                        var target = state.Players[effect.TargetPlayerIndex];
+                        target.Resistance = Math.Max(0, target.Resistance - effect.Value);
+                        _log.Log("ResistanceBuffExpired", new { cardId = effect.CardId.ToString(), targetPlayerIndex = effect.TargetPlayerIndex, value = effect.Value });
+                    }
+                    state.ActiveDurationEffects.RemoveAt(i);
+                }
+            }
         }
     }
 }
