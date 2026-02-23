@@ -60,8 +60,8 @@ namespace CardGame.Core
             _log.Log("ShieldApplied", new { targetPlayerIndex, baseShield, resistance = target.Resistance, amount, source = sourceName });
         }
 
-        /// <summary>Pioche n cartes (mélange cimetière si deck vide).</summary>
-        public void DrawCards(GameState state, int playerIndex, int count, IGameLogger log)
+        /// <summary>Pioche n cartes (mélange cimetière si deck vide). Utilise rng pour un mélange déterministe (lockstep P2P).</summary>
+        public void DrawCards(GameState state, int playerIndex, int count, IGameLogger log, Random rng)
         {
             var player = state.Players[playerIndex];
             int drawn = 0;
@@ -72,7 +72,7 @@ namespace CardGame.Core
                     if (player.Graveyard.Count == 0) break;
                     foreach (var c in player.Graveyard) player.Deck.Add(c);
                     player.Graveyard.Clear();
-                    Shuffle(player.Deck);
+                    if (rng != null) Shuffle(player.Deck, rng);
                     log.Log("DeckReshuffled", new { playerIndex, cardsFromGraveyard = player.Deck.Count });
                 }
                 if (player.Deck.Count == 0) break;
@@ -84,14 +84,14 @@ namespace CardGame.Core
             log.Log("Draw", new { playerIndex, requested = count, drawn, deckRemaining = player.Deck.Count });
         }
 
-        private static readonly Random _rng = new Random();
-        private static void Shuffle(List<CardInstance> list)
+        private static void Shuffle(List<CardInstance> list, Random rng)
         {
+            if (rng == null) return;
             int n = list.Count;
             while (n > 1)
             {
                 n--;
-                int k = _rng.Next(n + 1);
+                int k = rng.Next(n + 1);
                 var v = list[k];
                 list[k] = list[n];
                 list[n] = v;
@@ -99,7 +99,7 @@ namespace CardGame.Core
         }
 
         /// <summary>Résout l'effet d'une carte jouée. Retourne true si la carte va au cimetière (false = retirée du jeu Éphémère).</summary>
-        public bool ResolveCardEffect(GameState state, CardId cardId, int casterIndex, int targetIndex, int? divinationPutBackHandIndex = null)
+        public bool ResolveCardEffect(GameState state, CardId cardId, int casterIndex, int targetIndex, Random rng, int? divinationPutBackHandIndex = null)
         {
             var caster = state.Players[casterIndex];
             var target = state.Players[targetIndex];
@@ -134,15 +134,15 @@ namespace CardGame.Core
                     _log.Log("Galvanisation", new { casterIndex, forceBonus });
                     return true;
                 case CardId.Evaluation:
-                    DrawCards(state, casterIndex, 3, _log);
+                    DrawCards(state, casterIndex, 3, _log, rng);
                     return false;
                 case CardId.Divination:
-                    DrawCards(state, casterIndex, 2, _log);
+                    DrawCards(state, casterIndex, 2, _log, rng);
                     // Le joueur choisit laquelle remettre sur le deck (divinationPutBackHandIndex = index dans les 2 dernières = 0 ou 1 dans hand après pioche). On traite dans GameSession après avoir reçu l'action.
                     return true;
                 case CardId.Repositionnement:
                     ApplyShield(state, casterIndex, 2, data.Name);
-                    DrawCards(state, casterIndex, 1, _log);
+                    DrawCards(state, casterIndex, 1, _log, rng);
                     return true;
                 case CardId.AttaqueTactique:
                     ApplyDamage(state, targetIndex, 2, caster.Force, data.Name);

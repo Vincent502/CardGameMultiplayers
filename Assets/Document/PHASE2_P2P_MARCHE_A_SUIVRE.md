@@ -4,39 +4,23 @@ Ce document décrit **comment procéder** pour intégrer le jeu en réseau P2P (
 
 ---
 
-## 0. Résumé du flux (comment ça va se passer)
+## 0. Flux global retenu (menu + lobby)
 
-### Menu
+### Scène Menu (nouvelle)
 
-- **Solo** → charge la scène **SoloBoard** (duel vs bot, Phase 1). Moteur et UI actuels inchangés.
-- **Multiplayer** → écran **Create / Join game** (code ami : créer une partie → afficher le code ; ou rejoindre → saisir le code). Une fois connectés, les deux passent au **lobby**.
+- **Solo** → charge la scène de jeu Phase 1 (duel vs bot). Moteur et UI actuels inchangés.
+- **Multiplayer (P2P)** → connexion par **code ami** : soit « Créer une partie » (j’obtiens un code à partager), soit « Rejoindre » (j’entre le code de l’autre).
 - **Quitter le jeu** → fermeture de l’application.
 
-### Solo
+### Multiplayer : de la connexion au lancement
 
-```
-Menu → Solo → (charge) SoloBoard → partie vs bot
-```
+1. **Connexion** : un joueur crée la partie (Host) et reçoit un **code ami** (ex. 6 caractères). L’autre saisit ce code et rejoint. Les deux sont alors connectés via un **relay** (traverse les NAT, pas besoin d’IP directe).
+2. **Lobby** : une fois connectés, les deux voient l’écran lobby.
+   - Chaque joueur **choisit son deck** : Magicien ou Guerrier.
+   - Chacun a un bouton **Confirmer** (ou équivalent). Quand **les deux ont confirmé**, la partie se lance.
+3. **Lancement** : les deux reçoivent les mêmes paramètres (deck Joueur 1, deck Joueur 2, premier joueur, graine). Les deux appellent `StartGame(...)` en local et chargent la scène de jeu. Le jeu tourne en **lockstep** (échange des actions uniquement).
 
-- Scène : **SoloBoard**. Un seul joueur humain (Joueur 1), Joueur 2 = bot. Aucun réseau.
-
-### Multiplayer
-
-```
-Menu → Multiplayer → Create game / Join game (code ami) → Lobby (choose deck + confirm)
-       → quand les deux joueurs ont confirmé → (charge) MultiplayeurBoard → partie entre les deux joueurs
-```
-
-1. **Create / Join game** : un joueur crée la partie (Host) et reçoit un **code ami** ; l’autre rejoint avec ce code. Connexion via relay (Netcode + Unity Relay).
-2. **Lobby** : les deux voient l’écran lobby. Chaque joueur **choisit son deck** (Magicien ou Guerrier) et **confirme**. Quand **les deux ont confirmé**, on lance la partie.
-3. **Lancement** : les deux reçoivent les mêmes paramètres (deck Joueur 1, deck Joueur 2, premier joueur, graine). On charge la scène **MultiplayeurBoard** et on appelle `StartGame(...)` en local avec ces paramètres. La partie se déroule entre les deux joueurs en **lockstep** (échange des actions uniquement).
-
-### Noms de scènes
-
-| Scène | Usage |
-|-------|--------|
-| **SoloBoard** | Partie Solo (vs bot). Scène actuelle Phase 1, renommée ou dupliquée. |
-| **MultiplayeurBoard** | Partie Multiplayer (P2P). Copie de la scène de jeu, avec controller réseau à la place du bot. |
+**Intérêt de cette approche** : une seule scène menu pour tout le jeu, expérience claire (Solo vs Multiplayer), et le lobby évite de lancer la partie avant que les deux aient choisi leur deck.
 
 ---
 
@@ -86,27 +70,27 @@ Pour le **code ami** et la connexion derrière NAT sans serveur de jeu dédié :
 
 ## 4. Étapes d’intégration (ordre proposé)
 
-### Étape 0 – Scènes de jeu : SoloBoard vs MultiplayeurBoard (deux scènes distinctes)
+### Étape 0 – Scènes de jeu : Solo vs Multiplayer (deux scènes distinctes)
 
-- **Ne pas mélanger** Solo et P2P dans une seule scène. Garder deux scènes de jeu séparées :
-  - **SoloBoard** (scène actuelle Phase 1, renommée) : duel vs bot. Elle reste inchangée : `GameController`, `GameUI`, `SimpleBot`. Aucune logique réseau.
-  - **MultiplayeurBoard** : **dupliquer** la scène de jeu (même disposition Canvas, joueurs, main, Frappe, Fin de tour). Sur cette copie, on met un **controller réseau** (ex. `NetworkGameController`) qui pilote la partie en P2P au lieu du bot. La même `GameUI` peut être réutilisée (elle lit le `GameState`).
-- **Intérêt** : séparation nette des modes, pas de risque de casser le Solo en modifiant pour le P2P.
+- **Ne pas mélanger** Solo et P2P dans une seule scène. Garder deux scènes de jeu séparées pour plus de clarté :
+  - **Scène Solo** (actuelle) : celle utilisée en Phase 1, duel vs bot. Elle reste inchangée : `GameController`, `GameUI`, `SimpleBot`. Aucune logique réseau.
+  - **Scène Multiplayer** : **dupliquer** la scène Solo (même disposition Canvas, joueurs, main, Frappe, Fin de tour). Sur cette copie, on remplace (ou on ajoute) un **controller réseau** (ex. `NetworkGameController`) qui pilote la partie en P2P au lieu du bot. La même `GameUI` peut être réutilisée (elle lit le `GameState`), seuls le pilote et la source des actions changent.
+- **Intérêt** : séparation nette des modes, pas de risque de casser le Solo en modifiant pour le P2P, maintenance plus simple.
 
 ### Étape 0a – Scène Menu
 
 - Créer une **scène Menu** avec trois options : **Solo**, **Multiplayer**, **Quitter**.
-- **Solo** : charge la scène **SoloBoard** (Phase 1, duel vs bot).
-- **Multiplayer** : affiche **Create game / Join game** (code ami). Une fois connecté, transition vers le **Lobby**. Quand les deux ont confirmé (deck + confirm), charge la scène **MultiplayeurBoard** et lance la partie entre les deux joueurs.
-- **Quitter** : `Application.Quit()` (ou équivalent).
+- **Solo** : charge la **scène de jeu Solo** (Phase 1, duel vs bot).
+- **Multiplayer** : affiche un écran « Créer une partie » (affiche le code ami après création) ou « Rejoindre » (champ pour saisir le code + bouton Rejoindre). Une fois connecté, transition vers le Lobby ; après confirmation des deux, charge la **scène de jeu Multiplayer** (P2P).
+- **Quitter** : `Application.Quit()` (ou équivalent selon plateforme).
 
 ### Étape 0b – Lobby (après connexion P2P)
 
-- Écran **Lobby** (choose deck + confirm) : chaque joueur choisit son deck (Magicien / Guerrier) et appuie sur **Confirm**.
-- Synchroniser les choix (Host envoie le sien, Client envoie le sien ; les deux affichent les decks une fois les deux reçus).
-- Quand **les deux joueurs ont confirmé** : le Host tire le premier joueur et la graine, envoie `StartGameParams` (firstPlayerIndex, deckJoueur1, deckJoueur2, seed), puis les deux chargent la scène **MultiplayeurBoard** et appellent `StartGame(...)` avec ces paramètres. La partie se fait selon les deux joueurs (lockstep).
+- Écran **Lobby** : chaque joueur choisit son deck (Magicien / Guerrier) et confirme.
+- Synchroniser les choix (Host envoie le sien, Client envoie le sien ; les deux affichent « Joueur 1 : Magicien, Joueur 2 : Guerrier » une fois les deux reçus).
+- Quand **les deux ont confirmé** : le Host tire le premier joueur et la graine, envoie `StartGameParams` (firstPlayerIndex, deckJoueur1, deckJoueur2, seed), puis les deux chargent la scène de jeu et appellent `StartGame(...)` avec ces paramètres.
 
-### Étape 1 – Préparer le moteur pour le déterministe
+### Étape 1 – Préparer le moteur pour le déterministe **(fait)**
 
 - Introduire une **graine (seed)** utilisée pour tout tirage aléatoire (mélange des decks, premier joueur si on le tire côté moteur).
 - Remplacer les `Random` / `_rng` par un générateur **initialisé avec cette graine** (ex. `System.Random(seed)` ou équivalent déterministe).
@@ -148,7 +132,7 @@ Pour le **code ami** et la connexion derrière NAT sans serveur de jeu dédié :
 ### Récapitulatif ordre de réalisation
 
 1. **Menu** (Solo / Multiplayer / Quitter) + chargement scène jeu en Solo.  
-2. **Moteur déterministe** (graine partagée).  
+2. **Moteur déterministe** (graine partagée). **(fait)**  
 3. **Netcode + Relay** : connexion par code ami, puis **Lobby** (choix deck, confirmation).  
 4. **Protocole StartGame** + chargement scène jeu en Multiplayer.  
 5. **Envoi / réception des GameAction** et boucle de jeu P2P.  

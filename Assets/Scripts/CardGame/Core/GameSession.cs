@@ -15,6 +15,8 @@ namespace CardGame.Core
         private readonly IGameLogger _log;
         private readonly EffectResolver _resolver;
         private int _nextInstanceId;
+        /// <summary>Générateur aléatoire déterministe (initialisé avec la graine au StartGame). Utilisé pour mélanges et tirages.</summary>
+        private Random _rng;
 
         public GameSession(IGameLogger log)
         {
@@ -26,11 +28,13 @@ namespace CardGame.Core
         /// <summary>
         /// Démarre une partie.
         /// humanIsJoueur1 = true si l'humain joue en tant que Joueur 1 (index 0).
-        /// firstPlayerIndex = GameState.Player1Index ou Player2Index (tirage au sort côté appelant).
+        /// firstPlayerIndex = GameState.Player1Index ou Player2Index (tirage au sort côté appelant ou envoyé en P2P).
         /// deckJoueur1 / deckJoueur2 = choix de deck pour Joueur 1 et Joueur 2.
+        /// seed = graine pour tout aléatoire (mélanges, etc.). Même seed → même état initial (lockstep P2P).
         /// </summary>
-        public void StartGame(bool humanIsJoueur1, int firstPlayerIndex, DeckKind deckJoueur1, DeckKind deckJoueur2)
+        public void StartGame(bool humanIsJoueur1, int firstPlayerIndex, DeckKind deckJoueur1, DeckKind deckJoueur2, int seed)
         {
+            _rng = new Random(seed);
             State.Players[GameState.Player1Index].IsHuman = humanIsJoueur1;
             State.Players[GameState.Player2Index].IsHuman = !humanIsJoueur1;
             State.FirstPlayerIndex = firstPlayerIndex;
@@ -43,7 +47,7 @@ namespace CardGame.Core
             BuildDecks(GameState.Player1Index, deckJoueur1);
             BuildDecks(GameState.Player2Index, deckJoueur2);
 
-            _log.Log("GameStart", new { firstPlayerIndex, deckJoueur1 = deckJoueur1.ToString(), deckJoueur2 = deckJoueur2.ToString() });
+            _log.Log("GameStart", new { firstPlayerIndex, deckJoueur1 = deckJoueur1.ToString(), deckJoueur2 = deckJoueur2.ToString(), seed });
         }
 
         private void BuildDecks(int playerIndex, DeckKind deckKind)
@@ -88,9 +92,10 @@ namespace CardGame.Core
         }
 
         private CardInstance NewCard(CardId id) => new CardInstance(id, _nextInstanceId++);
-        private static readonly Random _rng = new Random();
-        private static void Shuffle(List<CardInstance> list)
+
+        private void Shuffle(List<CardInstance> list)
         {
+            if (_rng == null) return;
             int n = list.Count;
             while (n > 1)
             {
@@ -158,7 +163,7 @@ namespace CardGame.Core
                 switch (eq.Card.Id)
                 {
                     case CardId.RuneEnergieArcanique:
-                        _resolver.DrawCards(State, State.CurrentPlayerIndex, 2, _log);
+                        _resolver.DrawCards(State, State.CurrentPlayerIndex, 2, _log, _rng);
                         break;
                     case CardId.RuneEnduranceOublie:
                         p.PV = Math.Min(100, p.PV + 3);
@@ -260,7 +265,7 @@ namespace CardGame.Core
             p.Mana -= cost;
             p.Hand.RemoveAt(a.HandIndex);
 
-            bool toGraveyard = _resolver.ResolveCardEffect(State, card.Id, State.CurrentPlayerIndex, 1 - State.CurrentPlayerIndex, a.DivinationPutBackIndex);
+            bool toGraveyard = _resolver.ResolveCardEffect(State, card.Id, State.CurrentPlayerIndex, 1 - State.CurrentPlayerIndex, _rng, a.DivinationPutBackIndex);
             if (card.Id == CardId.Divination && a.DivinationPutBackIndex.HasValue)
             {
                 int idx = p.Hand.Count - 2 + a.DivinationPutBackIndex.Value;

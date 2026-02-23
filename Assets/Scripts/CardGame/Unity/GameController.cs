@@ -37,8 +37,10 @@ namespace CardGame.Unity
             _session = new GameSession(_logger);
             _bot = new SimpleBot();
 
-            int first = Random.Range(0, 2);
-            _session.StartGame(_humanIsJoueur1, first, _deckJoueur1, _deckJoueur2);
+            int seed = System.Environment.TickCount;
+            var rng = new System.Random(seed);
+            int first = rng.Next(2);
+            _session.StartGame(_humanIsJoueur1, first, _deckJoueur1, _deckJoueur2, seed);
             _waitingForHumanAction = false;
             StartCoroutine(RunGameLoop());
         }
