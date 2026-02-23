@@ -13,6 +13,9 @@ namespace CardGame.Unity
     {
         [SerializeField] private bool _humanIsPlayer0 = true;
         [SerializeField] private bool _writeLogToFile = true;
+        [Header("Decks")]
+        [SerializeField] private DeckKind _player0Deck = DeckKind.Magicien;
+        [SerializeField] private DeckKind _player1Deck = DeckKind.Guerrier;
 
         private GameSession _session;
         private IGameLogger _logger;
@@ -32,7 +35,7 @@ namespace CardGame.Unity
             _bot = new SimpleBot();
 
             int first = Random.Range(0, 2);
-            _session.StartGame(_humanIsPlayer0, first);
+            _session.StartGame(_humanIsPlayer0, first, _player0Deck, _player1Deck);
             _waitingForHumanAction = false;
             StartCoroutine(RunGameLoop());
         }

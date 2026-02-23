@@ -9,6 +9,7 @@ namespace CardGame.Core
     {
         public int PlayerIndex { get; set; }
         public bool IsHuman { get; set; }
+        public DeckKind DeckKind { get; set; }
 
         public int PV { get; set; } = 100;
         public int Shield { get; set; }

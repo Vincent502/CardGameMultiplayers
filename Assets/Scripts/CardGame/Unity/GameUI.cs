@@ -43,9 +43,17 @@ namespace CardGame.Unity
 
             var state = _controller.State;
             if (_textPlayer0 != null)
-                _textPlayer0.text = $"Joueur 0 (Magicien)\nPV: {state.Players[0].PV} Bouclier: {state.Players[0].Shield}\nMana: {state.Players[0].Mana} Main: {state.Players[0].Hand.Count}";
+            {
+                var p0 = state.Players[0];
+                _textPlayer0.text =
+                    $"Joueur 0 ({p0.DeckKind})\nPV: {p0.PV} Bouclier: {p0.Shield}\nMana: {p0.Mana} Main: {p0.Hand.Count}";
+            }
             if (_textPlayer1 != null)
-                _textPlayer1.text = $"Joueur 1 (Guerrier)\nPV: {state.Players[1].PV} Bouclier: {state.Players[1].Shield}\nMana: {state.Players[1].Mana} Main: {state.Players[1].Hand.Count}";
+            {
+                var p1 = state.Players[1];
+                _textPlayer1.text =
+                    $"Joueur 1 ({p1.DeckKind})\nPV: {p1.PV} Bouclier: {p1.Shield}\nMana: {p1.Mana} Main: {p1.Hand.Count}";
+            }
 
             // Tour actuel = 1 quand le premier joueur joue, 2 quand le second, 3 au tour suivant, etc.
             if (_textTurn != null)

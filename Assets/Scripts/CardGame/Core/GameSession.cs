@@ -23,8 +23,12 @@ namespace CardGame.Core
             _resolver = new EffectResolver(log);
         }
 
-        /// <summary>Démarre une partie. firstPlayerIndex = 0 ou 1 (tirage au sort côté appelant).</summary>
-        public void StartGame(bool humanIsPlayer0, int firstPlayerIndex)
+        /// <summary>
+        /// Démarre une partie.
+        /// firstPlayerIndex = 0 ou 1 (tirage au sort côté appelant).
+        /// deckPlayer0 / deckPlayer1 = choix de deck pour chaque joueur.
+        /// </summary>
+        public void StartGame(bool humanIsPlayer0, int firstPlayerIndex, DeckKind deckPlayer0, DeckKind deckPlayer1)
         {
             State.Players[0].IsHuman = humanIsPlayer0;
             State.Players[1].IsHuman = !humanIsPlayer0;
@@ -34,16 +38,19 @@ namespace CardGame.Core
             State.Phase = TurnPhase.StartTurn;
             State.WinnerIndex = -1;
 
-            BuildDecks(0, true);  // Magicien
-            BuildDecks(1, false); // Guerrier
+            BuildDecks(0, deckPlayer0);
+            BuildDecks(1, deckPlayer1);
 
-            _log.Log("GameStart", new { firstPlayerIndex, player0Deck = "Magicien", player1Deck = "Guerrier" });
+            _log.Log("GameStart", new { firstPlayerIndex, player0Deck = deckPlayer0.ToString(), player1Deck = deckPlayer1.ToString() });
         }
 
-        private void BuildDecks(int playerIndex, bool magicien)
+        private void BuildDecks(int playerIndex, DeckKind deckKind)
         {
-            var deckDef = magicien ? DeckDefinitions.GetMagicienDeck() : DeckDefinitions.GetGuerrierDeck();
+            var deckDef = deckKind == DeckKind.Magicien
+                ? DeckDefinitions.GetMagicienDeck()
+                : DeckDefinitions.GetGuerrierDeck();
             var player = State.Players[playerIndex];
+            player.DeckKind = deckKind;
             player.PV = 100;
             player.Shield = 0;
             player.Force = 0;
