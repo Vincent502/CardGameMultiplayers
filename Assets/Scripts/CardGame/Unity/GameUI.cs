@@ -125,7 +125,7 @@ namespace CardGame.Unity
                     }
                     var label = btn.GetComponentInChildren<TMP_Text>();
                     if (label != null) label.text = $"{data.Name} ({data.Cost})";
-                    bool canPlay = p.Mana >= data.Cost && (data.Type != CardType.Ephemere || !p.EphemereUsed.Contains(card.Id));
+                    bool canPlay = p.Mana >= data.Cost;
                     btn.interactable = canPlay;
                     btn.onClick.AddListener(() =>
                     {

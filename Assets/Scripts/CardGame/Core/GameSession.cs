@@ -255,7 +255,7 @@ namespace CardGame.Core
             if (data.Type == CardType.Rapide) return false; // Rapides en réaction uniquement
             int cost = data.Type == CardType.Equipe ? 0 : data.Cost;
             if (p.Mana < cost) return false;
-            if (data.Type == CardType.Ephemere && p.EphemereUsed.Contains(card.Id)) return false;
+            // Éphémère : chaque exemplaire (instance) n'est jouable qu'une fois ; les autres exemplaires restent disponibles.
 
             p.Mana -= cost;
             p.Hand.RemoveAt(a.HandIndex);
@@ -272,8 +272,6 @@ namespace CardGame.Core
                 }
             }
 
-            if (data.Type == CardType.Ephemere)
-                p.EphemereUsed.Add(card.Id);
             if (toGraveyard)
                 p.Graveyard.Add(card);
             else

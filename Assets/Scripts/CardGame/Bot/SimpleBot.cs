@@ -56,7 +56,6 @@ namespace CardGame.Bot
             if (data.Type == CardType.Rapide) return false;
             int cost = data.Type == CardType.Equipe ? 0 : data.Cost;
             if (p.Mana < cost) return false;
-            if (data.Type == CardType.Ephemere && p.EphemereUsed.Contains(card.Id)) return false;
             return true;
         }
     }
