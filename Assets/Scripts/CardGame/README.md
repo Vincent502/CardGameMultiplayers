@@ -1,73 +1,106 @@
-# Jeu de cartes tour par tour - Phase 1 (Duel vs Bot)
+# 🃏 Card Game – Duel tour par tour
 
-Référence : `Document/carte_spec_complete.md` et `Document/PROMPT_jeu_cartes.md`.
+Jeu de cartes **2 joueurs** en tour par tour pour Unity (PC/Mobile). Phase 1 : **duel contre un bot**. Moteur en C# sans réseau, conçu pour être branché plus tard en P2P.
 
-## Structure
+---
 
-- **Core/** : Moteur de jeu (sans Unity) — règles, état, résolution des effets, logging.
-- **Data/** : Définition des decks Magicien et Guerrier.
-- **Bot/** : IA simple (SimpleBot) pour le joueur 2.
-- **Unity/** : GameController (pilote de partie), GameLogger, GameUI (interface minimale).
+## ✨ Fonctionnalités
 
-## Lancer une partie dans Unity
+- **2 decks** : Magicien et Guerrier (34 cartes chacun, 4 équipements obligatoires)
+- **Règles complètes** : PV, bouclier, Force, Résistance, mana, pioche, frappe (1/tour), équipements actifs à la frappe / début / fin de tour
+- **Effets à durée** : Orage de poche, Armure psychique, Lien karmique (compteur de tours, expiration)
+- **Glace localisée** : gel d’un équipement adverse, dégel par carte dégâts ou frappe « briser le gel », affichage en bleu
+- **Cartes Éphémère** : chaque exemplaire jouable une fois, les autres exemplaires restent disponibles
+- **IA** : bot simple (SimpleBot) pour le Joueur 2
+- **UI** : TextMeshPro, statut joueurs (Joueur 1 humain / Joueur 2), main, Frappe, Fin de tour, équipements, effets à durée
 
-### Guide pas à pas (à faire dans l’éditeur Unity)
+---
 
-1. **Ouvrir ta scène** (ex. `SampleScene` ou ta scène de jeu).
+## 🛠 Technologies
 
-2. **Créer le pilote de partie**
-   - Clic droit dans la Hierarchy → **Create Empty**.
-   - Renommer l’objet (ex. `GameController`).
-   - Dans l’Inspector : **Add Component** → chercher **Game Controller** (script `CardGame.Unity.GameController`).
+- **Unity** (compatible PC / Mobile)
+- **C#** – moteur dans `Core/` sans dépendance Unity
+- **TextMeshPro** pour tous les textes
 
-3. **Créer le Canvas UI**
-   - Clic droit dans la Hierarchy → **UI** → **Canvas** (Unity crée un Canvas + EventSystem si besoin).
-   - Sélectionner le **Canvas**.
+---
 
-4. **Sous le Canvas, créer les 3 textes TMP**
-   - Clic droit sur Canvas → **UI** → **Text - TextMeshPro** (si demandé, importer les ressources TMP).
-   - Créer 3 fois, les renommer par ex. : `TextStatus`, `TextPlayer0`, `TextPlayer1`.
-   - Les placer où tu veux (en haut pour le statut, à gauche/droite pour les joueurs).
+## 📁 Structure du projet
 
-5. **Toujours sous le Canvas, créer le conteneur des cartes**
-   - Clic droit sur Canvas → **Create Empty** → renommer `HandContainer`.
-   - (Optionnel) Sur `HandContainer` : Add Component → **Horizontal Layout Group** pour aligner les boutons de cartes.
+```
+Scripts/CardGame/
+├── Core/           # Moteur de jeu (état, règles, résolution des effets)
+├── Data/           # Définition des decks (Magicien, Guerrier)
+├── Bot/            # IA SimpleBot
+├── Unity/          # GameController, GameUI, GameLogger
+└── README.md
+```
 
-6. **Sous le Canvas, créer les 2 boutons**
-   - Clic droit sur Canvas → **UI** → **Button - TextMeshPro** (ou Button puis remplacer le texte par du TMP).
-   - Créer 2 boutons, les renommer `ButtonStrike` et `ButtonEndTurn`.
-   - Changer le texte : « Frappe » et « Fin de tour ».
+| Dossier  | Rôle |
+|----------|------|
+| **Core** | `GameState`, `GameSession`, `EffectResolver`, `PlayerState`, `EquipmentState`, `ActiveDurationEffect`, types de cartes et actions |
+| **Data** | `DeckDefinitions`, `CardData`, `CardId` |
+| **Bot**  | `SimpleBot` – choix d’action pour le Joueur 2 |
+| **Unity**| Pilote de partie, interface, logs |
 
-7. **Brancher GameUI**
-   - Clic droit sur le **Canvas** (ou un enfant vide) → **Create Empty** → renommer `GameUI`.
-   - Sur `GameUI` : **Add Component** → **Game UI** (script `CardGame.Unity.GameUI`).
-   - Dans l’Inspector du script **Game UI** :
-     - **Controller** : glisser l’objet `GameController` de la Hierarchy.
-     - **_text Status** : glisser `TextStatus`.
-     - **_text Player0** : glisser `TextPlayer0`.
-     - **_text Player1** : glisser `TextPlayer1`.
-     - **Hand Container** : glisser `HandContainer`.
-     - **Button Strike** : glisser le bouton Frappe.
-     - **Button End Turn** : glisser le bouton Fin de tour.
-     - **Card Button Prefab** : laisser vide (des boutons seront créés automatiquement pour les cartes).
+---
 
-8. **Lancer**
-   - **Play**. La partie démarre : toi = Joueur 1 humain (Magicien), l’adversaire = Joueur 2 (Guerrier, bot ou futur P2P). Premier joueur = aléatoire.
-   - À ton tour : clique sur une carte pour la jouer, ou sur « Frappe », ou « Fin de tour ». **Une seule frappe par tour** : les équipements qui utilisent le bouton Frappe (arme, Catalyseur, Rune force arcanique, etc.) ne s’activent qu’une fois par tour.
+## 🚀 Installation et lancement (Unity)
 
-### Résumé des scripts
+1. **Ouvrir la scène** dans Unity.
+2. **Créer un objet vide** → ajouter le script **GameController**.
+3. **Créer un Canvas** (UI) puis sous le Canvas :
+   - Textes TMP : statut, Joueur 1, Joueur 2
+   - Conteneur vide pour la main (ex. `HandContainer`)
+   - 2 boutons : **Frappe**, **Fin de tour**
+   - (Optionnel) Conteneurs pour équipements et effets par joueur
+4. **Créer un objet** sous le Canvas → ajouter le script **GameUI**.
+5. **Brancher dans l’Inspector** :
+   - Controller → `GameController`
+   - _text Status, _text Joueur1, _text Joueur2
+   - Hand Container, Button Strike, Button End Turn
+   - Containers équipements / effets si utilisés
+6. **Play** : Joueur 1 = toi (humain), Joueur 2 = bot. Premier joueur aléatoire.
 
-| Objet        | Script à ajouter   | Rôle                          |
-|-------------|--------------------|--------------------------------|
-| GameController | GameController  | Lance la partie, fait jouer le bot. |
-| GameUI (sous Canvas) | GameUI       | Affiche PV/mana/main et envoie tes actions. |
+Référence détaillée : `Assets/Document/carte_spec_complete.md`  
+Rapport d’implémentation : `Assets/Document/RAPPORT_phase1_implementation.md`
 
-Les champs **Controller**, **_text Status**, **_text Joueur1**, **_text Joueur2**, **Hand Container**, **Button Strike**, **Button End Turn** (et les containers Équipements / Effets par joueur) doivent être assignés dans l’Inspector de GameUI. Les anciennes références (ex. _text Player0) sont conservées grâce à `FormerlySerializedAs` lors du chargement de scènes existantes.
+---
 
-## Logging
+## 🎮 Règles rapides
 
-Toutes les actions et changements d’état sont logués via **GameLogger** (Console Unity + fichier dans `Application.persistentDataPath` si activé).
+- **Joueur 1** = humain (index 0), **Joueur 2** = adversaire (index 1).
+- **1 frappe par tour** ; si l’arme est gelée, la frappe peut servir à briser le gel (sans dégâts).
+- **Équipement gelé** (bleu) : se dégèle en jouant une carte qui fait des dégâts ou en utilisant Frappe pour briser le gel.
+- **Éphémère** : chaque exemplaire n’est jouable qu’une fois ; les autres exemplaires restent jouables.
 
-## Évolution
+---
 
-- Phase 2 : brancher une couche P2P à la place du bot (même moteur, même `SubmitAction`).
+## 📋 Configuration (Inspector)
+
+**GameController**
+
+- Humain = Joueur 1 (coché par défaut)
+- Decks : Joueur 1 (ex. Magicien), Joueur 2 (ex. Guerrier)
+- Logs dans un fichier (optionnel)
+
+**GameUI**
+
+- Tous les champs texte et conteneurs doivent être assignés pour un affichage complet.
+
+---
+
+## 📄 Logs
+
+Les actions et changements d’état sont logués via **GameLogger** (Console Unity + fichier dans `Application.persistentDataPath` si l’option est activée).
+
+---
+
+## 🔜 Évolution
+
+- **Phase 2** : remplacer le bot par une couche P2P (même moteur, même `SubmitAction`).
+
+---
+
+## 📜 Licence et références
+
+Spécifications : `Document/carte_spec_complete.md`, `Document/PROMPT_jeu_cartes.md`.
