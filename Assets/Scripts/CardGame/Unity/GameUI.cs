@@ -17,10 +17,15 @@ namespace CardGame.Unity
         [SerializeField] private TMP_Text _textStatus;
         [SerializeField] private TMP_Text _textPlayer0;
         [SerializeField] private TMP_Text _textPlayer1;
+        [SerializeField] private TMP_Text _textTurn; // affichage du nombre de tours
         [SerializeField] private Transform _handContainer;
         [SerializeField] private GameObject _cardButtonPrefab;
         [SerializeField] private Button _buttonStrike;
         [SerializeField] private Button _buttonEndTurn;
+        [Header("Équipements")]
+        [SerializeField] private Transform _equipmentsPlayer0Container;
+        [SerializeField] private Transform _equipmentsPlayer1Container;
+        [SerializeField] private GameObject _equipmentLabelPrefab;
 
         private int _lastHandCount = -1;
         private int _lastMana = -1;
@@ -42,6 +47,13 @@ namespace CardGame.Unity
             if (_textPlayer1 != null)
                 _textPlayer1.text = $"Joueur 1 (Guerrier)\nPV: {state.Players[1].PV} Bouclier: {state.Players[1].Shield}\nMana: {state.Players[1].Mana} Main: {state.Players[1].Hand.Count}";
 
+            if (_textTurn != null)
+            {
+                int globalTurn = state.TurnCount + 1;
+                int currentPlayerTurn = state.GetCurrentTurnNumber();
+                _textTurn.text = $"Tour global : {globalTurn}\nTour joueur courant : {currentPlayerTurn}";
+            }
+
             if (_controller.IsGameOver)
             {
                 if (_textStatus != null) _textStatus.text = $"Partie terminée. Gagnant : Joueur {state.WinnerIndex}";
@@ -54,6 +66,7 @@ namespace CardGame.Unity
                     : "Tour du bot...";
 
             RefreshHand(state);
+            RefreshEquipments(state);
             if (_buttonStrike != null) _buttonStrike.interactable = _controller.IsHumanTurn;
             if (_buttonEndTurn != null) _buttonEndTurn.interactable = _controller.IsHumanTurn;
         }
@@ -135,6 +148,54 @@ namespace CardGame.Unity
             var txt = txtGo.AddComponent<TextMeshProUGUI>();
             txt.text = "";
             return btn;
+        }
+
+        private void RefreshEquipments(GameState state)
+        {
+            RefreshEquipmentsForPlayer(state, 0, _equipmentsPlayer0Container);
+            RefreshEquipmentsForPlayer(state, 1, _equipmentsPlayer1Container);
+        }
+
+        private void RefreshEquipmentsForPlayer(GameState state, int playerIndex, Transform container)
+        {
+            if (container == null) return;
+
+            foreach (Transform t in container)
+                Destroy(t.gameObject);
+
+            var player = state.Players[playerIndex];
+            foreach (var eq in player.Equipments)
+            {
+                var data = DeckDefinitions.GetCard(eq.Card.Id);
+                GameObject go = _equipmentLabelPrefab != null
+                    ? Instantiate(_equipmentLabelPrefab, container, false)
+                    : CreateDefaultEquipmentLabel(container);
+
+                var label = go.GetComponentInChildren<TMP_Text>() ?? go.GetComponent<TMP_Text>();
+                if (label == null) continue;
+
+                label.text = data.Name;
+                label.color = eq.IsActive ? Color.green : Color.gray;
+            }
+        }
+
+        private GameObject CreateDefaultEquipmentLabel(Transform parent)
+        {
+            var go = new GameObject("EquipLabel", typeof(RectTransform));
+            var rt = go.GetComponent<RectTransform>();
+            rt.SetParent(parent, false);
+            rt.anchorMin = new Vector2(0f, 0.5f);
+            rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.localScale = Vector3.one;
+            rt.sizeDelta = new Vector2(160f, 24f);
+
+            var txt = go.AddComponent<TextMeshProUGUI>();
+            txt.text = "";
+            txt.alignment = TextAlignmentOptions.Left;
+
+            return go;
         }
     }
 }
