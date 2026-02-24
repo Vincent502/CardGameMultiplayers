@@ -32,9 +32,10 @@
 3. Ajouter un **Canvas** (UI → Canvas) si besoin.
 4. Sous le Canvas :
   - Un **texte** (ex. TMP) : « Lobby – Create/Join puis choose deck » (ou « Phase 2 – bientôt »).
-  - Un **bouton** : « Retour au menu ».
-5. Créer un GameObject vide (ex. `LobbyController`) → **Add Component** → **Lobby Controller** (`CardGame.Unity.LobbyController`).
-6. Brancher **Button Back To Menu** → le bouton Retour.
+  - **Bouton** « Créer une partie », **InputField** (code), **Bouton** « Rejoindre », **Text** (affichage code / statut), **Bouton** « Retour au menu ».
+5. Créer un GameObject vide (ex. `NetworkManager`) → **Add Component** → **Network Manager** (Netcode) + **Unity Transport** en mode **Relay** (voir **PHASE2_ETAPE2_NETCODE_RELAY.md**).
+6. Créer un GameObject vide (ex. `LobbyLogic`) → **Add Component** → **Relay Manager** + **Lobby Controller**.
+7. Brancher dans **Lobby Controller** : Relay Manager, Button Create, Input Join Code, Button Join, Text Join Code, Button Back To Menu (détails dans **PHASE2_ETAPE2_NETCODE_RELAY.md**).
 
 ---
 
@@ -65,6 +66,7 @@
 | Script              | Scène | Rôle                                                                                                                       |
 | ------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------- |
 | **MenuController**  | Menu  | Boutons Solo (→ SoloBoard), Multiplayer (→ Lobby), Quitter. Constantes de noms de scènes dans `MenuController.SceneNames`. |
-| **LobbyController** | Lobby | Stub : bouton Retour au menu (→ Menu). Le flux Create/Join + choix deck sera ajouté avec Netcode + Relay.                  |
+| **LobbyController** | Lobby | Create/Join avec code ami (RelayManager), affichage du code (Host), saisie du code (Join), Retour au menu. Choix deck à l’étape suivante. |
+| **RelayManager**    | Lobby | Connexion Relay : StartHostWithRelayAsync (code ami), StartClientWithRelayAsync(code), Shutdown. Voir **PHASE2_ETAPE2_NETCODE_RELAY.md**. |
 
 
