@@ -6,7 +6,7 @@ using CardGame.Data;
 namespace CardGame.Core
 {
     /// <summary>
-    /// Résolution des effets selon spec : dégâts = base × (1+Force), bouclier = base × (1+Résistance).
+    /// Résolution des effets selon spec : dégâts = base + Force, bouclier = base × (1+Résistance).
     /// Applique les effets par carte (CardId).
     /// </summary>
     public class EffectResolver
@@ -15,9 +15,9 @@ namespace CardGame.Core
 
         public EffectResolver(IGameLogger log) => _log = log;
 
-        /// <summary>Dégâts infligés = base × (1 + Force du caster).</summary>
+        /// <summary>Dégâts infligés = base + Force du caster.</summary>
         public int ComputeDamage(int baseDamage, int casterForce) =>
-            (int)Math.Max(0, baseDamage * (1 + casterForce));
+            (int)Math.Max(0, baseDamage + casterForce);
 
         /// <summary>Bouclier reçu = base × (1 + Résistance du cible).</summary>
         public int ComputeShield(int baseShield, int targetResistance) =>
@@ -356,7 +356,7 @@ namespace CardGame.Core
         }
 
         /// <summary>
-        /// Frappe : si seule arme gelée, un coup "brise le gel" (dégel sans dégâts). Sinon dégâts (arme × (1+Force)) + effets « à la frappe ».
+        /// Frappe : si seule arme gelée, un coup "brise le gel" (dégel sans dégâts). Sinon dégâts (arme + Force) + effets « à la frappe ».
         /// </summary>
         public void ResolveStrike(GameState state, int strikerIndex, int targetIndex)
         {
