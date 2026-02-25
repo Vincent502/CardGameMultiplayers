@@ -80,6 +80,23 @@ Comportement : Host = Joueur 1 (choix deck 1), Client = Joueur 2 (choix deck 2).
 
 ---
 
-## 7. Suite (Étape 6)
+## 7. Fin de partie → Retour au menu
+
+- **GameUI** : panneau **Panel Game Over** (désactivé par défaut) + bouton **Retour au menu**.
+- Quand la partie est terminée (`IsGameOver`), le panneau s'affiche avec le message de victoire/défaite.
+- Clic sur **Retour au menu** : shutdown réseau (P2P) si actif, puis chargement de la scène **Menu**.
+- À brancher dans l'Inspector : **Panel Game Over** → le panneau, **Button Back To Menu** → le bouton.
+
+---
+
+## 8. Descriptions des cartes
+
+- **CardData** : champ **Description** (texte de l'effet).
+- **DeckDefinitions** : toutes les cartes ont une description (spec `carte_spec_complete.md`).
+- **GameUI** : les boutons de carte affichent `Nom (Coût)` + description sur une ligne si présente.
+
+---
+
+## 9. Suite (Étape 6)
 
 Gestion des **déconnexions** : détecter la perte de lien, afficher « Adversaire déconnecté », proposer de revenir au menu.

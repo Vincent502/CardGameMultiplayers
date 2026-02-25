@@ -3,6 +3,8 @@ using CardGame.Data;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Serialization;
+using UnityEngine.SceneManagement;
+using Unity.Netcode;
 using TMPro;
 
 namespace CardGame.Unity
@@ -23,6 +25,10 @@ namespace CardGame.Unity
         [SerializeField] private GameObject _cardButtonPrefab;
         [SerializeField] private Button _buttonStrike;
         [SerializeField] private Button _buttonEndTurn;
+        [Header("Fin de partie")]
+        [SerializeField] private GameObject _panelGameOver;
+        [SerializeField] private TMP_Text _textGameOver;
+        [SerializeField] private Button _buttonBackToMenu;
         [Header("Équipements")]
         [SerializeField] [FormerlySerializedAs("_equipmentsPlayer0Container")] private Transform _equipmentsJoueur1Container;
         [SerializeField] [FormerlySerializedAs("_equipmentsPlayer1Container")] private Transform _equipmentsJoueur2Container;
@@ -41,6 +47,8 @@ namespace CardGame.Unity
             if (_controller == null) _controller = FindObjectOfType<GameController>() ?? (IGameController)FindObjectOfType<NetworkGameController>();
             if (_buttonStrike != null) _buttonStrike.onClick.AddListener(() => _controller?.HumanStrike());
             if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller?.HumanEndTurn());
+            if (_buttonBackToMenu != null) _buttonBackToMenu.onClick.AddListener(OnBackToMenu);
+            if (_panelGameOver != null) _panelGameOver.SetActive(false);
         }
 
         private void Update()
@@ -75,7 +83,10 @@ namespace CardGame.Unity
             {
                 int winnerNum = state.WinnerIndex + 1;
                 bool iWon = state.WinnerIndex == localIdx;
-                if (_textStatus != null) _textStatus.text = iWon ? $"Partie terminée. Vous avez gagné !" : $"Partie terminée. Joueur {winnerNum} a gagné.";
+                string msg = iWon ? "Partie terminée.\nVous avez gagné !" : $"Partie terminée.\nJoueur {winnerNum} a gagné.";
+                if (_textStatus != null) _textStatus.text = msg;
+                if (_textGameOver != null) _textGameOver.text = msg;
+                if (_panelGameOver != null) _panelGameOver.SetActive(true);
                 return;
             }
 
@@ -130,9 +141,10 @@ namespace CardGame.Unity
                         rt.localScale = Vector3.one;
                         rt.sizeDelta = new Vector2(120f, 40f);
                     }
-                    var label = btn.GetComponentInChildren<TMP_Text>();
-                    if (label != null) label.text = $"{data.Name} ({data.Cost})";
-                    bool canPlay = p.Mana >= data.Cost;
+                    int cost = data.Type == CardType.Equipe ? 0 : data.Cost;
+                    SetCardPrefabTexts(btn.transform, data.Name, data.Description, cost);
+                    int manaCost = data.Type == CardType.Equipe ? 0 : data.Cost;
+                    bool canPlay = p.Mana >= manaCost;
                     btn.interactable = canPlay;
                     btn.onClick.AddListener(() =>
                     {
@@ -204,6 +216,47 @@ namespace CardGame.Unity
                 else
                     label.color = Color.gray;
             }
+        }
+
+        /// <summary>Remplit les champs CardName, Description, Mana du prefab carte (recherche par nom d'enfant).</summary>
+        private void SetCardPrefabTexts(Transform cardRoot, string cardName, string description, int manaCost)
+        {
+            var cardNameT = cardRoot.Find("CardName");
+            if (cardNameT != null)
+            {
+                var t = cardNameT.GetComponent<TMP_Text>();
+                if (t != null) t.text = cardName;
+            }
+            var descT = cardRoot.Find("Description");
+            if (descT != null)
+            {
+                var t = descT.GetComponent<TMP_Text>();
+                if (t != null) t.text = description ?? "";
+            }
+            var manaT = cardRoot.Find("Mana");
+            if (manaT != null)
+            {
+                var t = manaT.GetComponent<TMP_Text>();
+                if (t != null) t.text = manaCost.ToString();
+            }
+            // Fallback : un seul label (ancien prefab)
+            if (cardNameT == null && descT == null && manaT == null)
+            {
+                var label = cardRoot.GetComponentInChildren<TMP_Text>();
+                if (label != null)
+                    label.text = string.IsNullOrEmpty(description) ? $"{cardName} ({manaCost})" : $"{cardName} ({manaCost})\n{description}";
+            }
+        }
+
+        private void OnBackToMenu()
+        {
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            {
+                var relay = FindObjectOfType<RelayManager>();
+                if (relay != null) relay.Shutdown();
+                else NetworkManager.Singleton.Shutdown();
+            }
+            SceneManager.LoadScene(MenuController.SceneNames.Menu);
         }
 
         private GameObject CreateDefaultEquipmentLabel(Transform parent)
