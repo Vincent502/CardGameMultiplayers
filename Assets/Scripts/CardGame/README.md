@@ -72,6 +72,7 @@ Rapport d’implémentation : `Assets/Document/RAPPORT_phase1_implementation.md`
 - **1 frappe par tour** ; si l’arme est gelée, la frappe peut servir à briser le gel (sans dégâts).
 - **Équipement gelé** (bleu) : se dégèle en jouant une carte qui fait des dégâts ou en utilisant Frappe pour briser le gel.
 - **Éphémère** : chaque exemplaire n’est jouable qu’une fois ; les autres exemplaires restent jouables.
+- **Magicien** : passif +1 mana à chaque carte Éphémère jouée.
 - **Guerrier** : passif +1 Force et +1 Résistance de base (dès le début de partie).
 
 ---

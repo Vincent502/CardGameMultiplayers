@@ -71,6 +71,8 @@ namespace CardGame.Core
             player.RemovedFromGame.Clear();
             player.Equipments.Clear();
             player.CardsDiscardedThisTurn.Clear();
+            player.EphemeralConsumedThisRound = 0;
+            player.EphemeralConsumedThisGame = 0;
             player.EphemereUsed.Clear();
             player.InvincibleUntilNextTurn = false;
             player.HasPlayedDisciplineEternelThisGame = false;
@@ -147,6 +149,7 @@ namespace CardGame.Core
         {
             var p = State.CurrentPlayer;
             p.CardsDiscardedThisTurn.Clear();
+            p.EphemeralConsumedThisRound = 0;
             foreach (var c in p.Hand)
                 p.CardsDiscardedThisTurn.Add(c);
             p.Graveyard.AddRange(p.Hand);
@@ -224,7 +227,7 @@ namespace CardGame.Core
                     _log.Log("ForceBonusExpired", new { playerIndex = State.CurrentPlayerIndex });
                 }
             }
-            _resolver.ResolveEndOfTurnEffects(State);
+            _resolver.ResolveEndOfTurnEffects(State, State.CurrentPlayerIndex);
             // Glace localisée : dégel uniquement par carte dégâts ou frappe "briser le gel", pas en fin de tour.
             State.Phase = TurnPhase.EndTurn;
         }
@@ -313,6 +316,18 @@ namespace CardGame.Core
 
             if (data.Type == CardType.Normal || (data.Type == CardType.Ephemere && toGraveyard))
                 p.AttackDoneThisTurn = true;
+
+            // Cartes Éphémère consommées (RemovedFromGame)
+            if (data.Type == CardType.Ephemere && !toGraveyard)
+            {
+                p.EphemeralConsumedThisRound++;
+                p.EphemeralConsumedThisGame++;
+                if (p.DeckKind == DeckKind.Magicien)
+                {
+                    p.Mana += 1;
+                    _log.Log("PassifMagicien", new { playerIndex = State.CurrentPlayerIndex, ephemeralConsumedThisRound = p.EphemeralConsumedThisRound, manaRecovered = 1 });
+                }
+            }
 
             if (pendingDamage != null)
             {

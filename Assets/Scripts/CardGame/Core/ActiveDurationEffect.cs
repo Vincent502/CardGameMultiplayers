@@ -14,7 +14,9 @@ namespace CardGame.Core
     }
 
     /// <summary>
-    /// Effet actif avec une durée en nombre de tours de jeu (spec : 1 tour = 1 joueur).
+    /// Effet actif avec une durée en "tours du joueur cible" : on décrémente uniquement quand le joueur cible termine son tour.
+    /// Ex. Armure psychique (2 tours) = 2 tours du joueur qui a la buff = 2 rounds complets.
+    /// Les équipements (RoundsUntilActive) restent en tours de partie (chaque tour compte).
     /// </summary>
     public class ActiveDurationEffect
     {

@@ -90,6 +90,7 @@ CardeGameProject/
 - **Joueur 1** = toi (humain), **Joueur 2** = adversaire (IA ou humain)
 - **1 frappe par tour** ; arme gelée → frappe pour briser le gel (sans dégâts)
 - **Cartes Rapides** : 3 secondes pour réagir à une attaque (Parade = annuler, Contre-attaque = annuler + 2 dégâts)
+- **Passif Magicien** : +1 mana à chaque carte Éphémère jouée (sans plafond)
 - **Passif Guerrier** : +1 Force et +1 Résistance de base
 - **Victoire** : réduire les PV adverses à 0
 

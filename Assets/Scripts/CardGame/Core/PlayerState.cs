@@ -25,8 +25,12 @@ namespace CardGame.Core
         public List<CardInstance> RemovedFromGame { get; } = new List<CardInstance>();
         public List<EquipmentState> Equipments { get; } = new List<EquipmentState>();
 
-        /// <summary>Cartes défaussées ce tour (pour Explosion magie éphémère).</summary>
+        /// <summary>Cartes défaussées ce tour (main défaussée en début de tour).</summary>
         public List<CardInstance> CardsDiscardedThisTurn { get; } = new List<CardInstance>();
+        /// <summary>Nombre de cartes Éphémère consommées ce tour/round (passif Magicien).</summary>
+        public int EphemeralConsumedThisRound { get; set; }
+        /// <summary>Nombre de cartes Éphémère consommées depuis le début de la partie (Explosion magie éphémère).</summary>
+        public int EphemeralConsumedThisGame { get; set; }
         /// <summary>Discipline éternel jouée → Souffle éternel va au cimetière.</summary>
         public bool HasPlayedDisciplineEternelThisGame { get; set; }
         /// <summary>Cartes Éphémère déjà utilisées cette partie.</summary>

@@ -5,6 +5,7 @@ namespace CardGame.Data
 {
     /// <summary>
     /// Définition des decks Magicien et Guerrier selon carte_spec_complete.md (34 cartes, 4 obligatoires).
+    /// Passifs : Magicien = +1 mana à chaque carte Éphémère jouée (sans plafond) ; Guerrier = +1 Force et +1 Résistance de base.
     /// </summary>
     public static class DeckDefinitions
     {
@@ -16,7 +17,7 @@ namespace CardGame.Data
                 (new CardData(CardId.RuneEnergieArcanique, "Rune d'énergie arcanique", CardType.Equipe, 6, "Pioche 2 cartes supplémentaires en début de tour"), 1),
                 (new CardData(CardId.RuneEssenceArcanique, "Rune d'essence arcanique", CardType.Equipe, 1, "Donne 5 bouclier à la fin du tour, si résistance est à 0"), 1),
                 (new CardData(CardId.RuneForceArcanique, "Rune de force arcanique", CardType.Equipe, 4, "Inflige 2 × 1 dégât quand vous frappez"), 1),
-                (new CardData(CardId.ExplosionMagieEphemere, "Explosion de magie éphémère", CardType.Normal, 1, "Inflige (cartes défaussées ce tour) × 2 dégâts"), 1),
+                (new CardData(CardId.ExplosionMagieEphemere, "Explosion de magie éphémère", CardType.Normal, 1, "Inflige (cartes Éphémère consommées cette partie) × 2 dégâts"), 1),
                 (new CardData(CardId.Divination, "Divination", CardType.Normal, 1, "Pioche 2 cartes, choisit laquelle poser au-dessus du deck"), 3),
                 (new CardData(CardId.ArmurePsychique, "Armure psychique", CardType.Ephemere, 3, "23 bouclier durant 2 tours"), 3),
                 (new CardData(CardId.BouleDeFeu, "Boule de feu", CardType.Ephemere, 3, "15 dégâts"), 3),

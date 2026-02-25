@@ -112,8 +112,8 @@ namespace CardGame.Core
                 case CardId.AttaqueLourde: return (7, caster.Force);
                 case CardId.FendoireMortel: return (20, 0);
                 case CardId.ExplosionMagieEphemere:
-                    int consumed = caster.CardsDiscardedThisTurn.Count;
-                    return (consumed * 2, 0);
+                    int ephemeralConsumed = caster.EphemeralConsumedThisGame;
+                    return (ephemeralConsumed * 2, 0);
                 default: return (0, 0);
             }
         }
@@ -190,8 +190,8 @@ namespace CardGame.Core
                 case CardId.ExplosionMagieEphemere:
                     if (pendingDamage == null)
                     {
-                        int consumed = caster.CardsDiscardedThisTurn.Count;
-                        int dmg = consumed * 2;
+                        int ephemeralConsumed = caster.EphemeralConsumedThisGame;
+                        int dmg = ephemeralConsumed * 2;
                         ApplyDamage(state, targetIndex, dmg, 0, data.Name);
                         UnfreezeOneEquipmentIfAny(state, casterIndex);
                     }
@@ -391,19 +391,21 @@ namespace CardGame.Core
         }
 
         /// <summary>
-        /// Résout les effets "avant fin de tour" (ex. Orage de poche) puis décrémente la durée de tous les effets.
-        /// À appeler en fin de tour (DoResolveEndOfTurn).
+        /// Résout les effets "avant fin de tour" (ex. Orage de poche) puis décrémente la durée des effets.
+        /// Les effets à durée (cartes) sont en "tours du joueur cible" : on ne décrémente que quand le joueur cible termine son tour.
+        /// Les équipements restent en "tours de partie" (chaque tour de jeu compte).
         /// </summary>
-        public void ResolveEndOfTurnEffects(GameState state)
+        public void ResolveEndOfTurnEffects(GameState state, int currentPlayerIndex)
         {
             foreach (var effect in state.ActiveDurationEffects.ToList())
             {
-                if (effect.Kind == DurationEffectKind.DamageEachTurn)
+                if (effect.Kind == DurationEffectKind.DamageEachTurn && effect.TargetPlayerIndex == currentPlayerIndex)
                     ApplyDamage(state, effect.TargetPlayerIndex, effect.Value, 0, DeckDefinitions.GetCard(effect.CardId).Name);
             }
             for (int i = state.ActiveDurationEffects.Count - 1; i >= 0; i--)
             {
                 var effect = state.ActiveDurationEffects[i];
+                if (effect.TargetPlayerIndex != currentPlayerIndex) continue;
                 effect.TurnsRemaining--;
                 if (effect.TurnsRemaining <= 0)
                 {
