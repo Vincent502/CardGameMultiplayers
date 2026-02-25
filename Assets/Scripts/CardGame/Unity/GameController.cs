@@ -40,10 +40,14 @@ namespace CardGame.Unity
             _session = new GameSession(_logger);
             _bot = new SimpleBot();
 
+            var deckJ1 = SoloGameParamsHolder.DeckJoueur1 ?? _deckJoueur1;
+            var deckJ2 = SoloGameParamsHolder.DeckJoueur2 ?? _deckJoueur2;
+            SoloGameParamsHolder.Clear();
+
             int seed = System.Environment.TickCount;
             var rng = new System.Random(seed);
             int first = rng.Next(2);
-            _session.StartGame(_humanIsJoueur1, first, _deckJoueur1, _deckJoueur2, seed);
+            _session.StartGame(_humanIsJoueur1, first, deckJ1, deckJ2, seed);
             _waitingForHumanAction = false;
             StartCoroutine(RunGameLoop());
         }

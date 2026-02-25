@@ -946,8 +946,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardGame.Unity.GameController
   _humanIsJoueur1: 1
   _writeLogToFile: 1
-  _deckJoueur1: 0
-  _deckJoueur2: 1
+  _deckJoueur1: 1
+  _deckJoueur2: 0
 --- !u!4 &801899258
 Transform:
   m_ObjectHideFlags: 0

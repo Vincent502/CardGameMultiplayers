@@ -308,6 +308,7 @@ namespace CardGame.Unity
 
         private void OnBackToMenu()
         {
+            SoloGameParamsHolder.Clear();
             NetworkGameController.ResetOpponentDisconnected();
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
             {
