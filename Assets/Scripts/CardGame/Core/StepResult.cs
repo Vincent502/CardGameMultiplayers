@@ -7,6 +7,7 @@ namespace CardGame.Core
     {
         PhaseAdvanced,
         NeedPlayAction,
+        NeedDivinationChoice,
         NeedReaction,
         GameOver
     }

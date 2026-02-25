@@ -15,6 +15,12 @@ namespace CardGame.Core
         private readonly IGameLogger _log;
         private readonly EffectResolver _resolver;
         private int _nextInstanceId;
+        /// <summary>Générateur aléatoire déterministe (initialisé avec la graine au StartGame). Utilisé pour mélanges et tirages.</summary>
+        private Random _rng;
+        private bool _pendingDivinationChoice;
+
+        /// <summary>True si on attend que le joueur choisisse laquelle des 2 cartes piochées par Divination remettre sur le deck.</summary>
+        public bool PendingDivinationChoice => _pendingDivinationChoice;
 
         public GameSession(IGameLogger log)
         {
@@ -26,11 +32,13 @@ namespace CardGame.Core
         /// <summary>
         /// Démarre une partie.
         /// humanIsJoueur1 = true si l'humain joue en tant que Joueur 1 (index 0).
-        /// firstPlayerIndex = GameState.Player1Index ou Player2Index (tirage au sort côté appelant).
+        /// firstPlayerIndex = GameState.Player1Index ou Player2Index (tirage au sort côté appelant ou envoyé en P2P).
         /// deckJoueur1 / deckJoueur2 = choix de deck pour Joueur 1 et Joueur 2.
+        /// seed = graine pour tout aléatoire (mélanges, etc.). Même seed → même état initial (lockstep P2P).
         /// </summary>
-        public void StartGame(bool humanIsJoueur1, int firstPlayerIndex, DeckKind deckJoueur1, DeckKind deckJoueur2)
+        public void StartGame(bool humanIsJoueur1, int firstPlayerIndex, DeckKind deckJoueur1, DeckKind deckJoueur2, int seed)
         {
+            _rng = new Random(seed);
             State.Players[GameState.Player1Index].IsHuman = humanIsJoueur1;
             State.Players[GameState.Player2Index].IsHuman = !humanIsJoueur1;
             State.FirstPlayerIndex = firstPlayerIndex;
@@ -43,7 +51,7 @@ namespace CardGame.Core
             BuildDecks(GameState.Player1Index, deckJoueur1);
             BuildDecks(GameState.Player2Index, deckJoueur2);
 
-            _log.Log("GameStart", new { firstPlayerIndex, deckJoueur1 = deckJoueur1.ToString(), deckJoueur2 = deckJoueur2.ToString() });
+            _log.Log("GameStart", new { firstPlayerIndex, deckJoueur1 = deckJoueur1.ToString(), deckJoueur2 = deckJoueur2.ToString(), seed });
         }
 
         private void BuildDecks(int playerIndex, DeckKind deckKind)
@@ -88,9 +96,10 @@ namespace CardGame.Core
         }
 
         private CardInstance NewCard(CardId id) => new CardInstance(id, _nextInstanceId++);
-        private static readonly Random _rng = new Random();
-        private static void Shuffle(List<CardInstance> list)
+
+        private void Shuffle(List<CardInstance> list)
         {
+            if (_rng == null) return;
             int n = list.Count;
             while (n > 1)
             {
@@ -119,6 +128,7 @@ namespace CardGame.Core
                     DoDraw();
                     return StepResult.PhaseAdvanced;
                 case TurnPhase.Play:
+                    if (_pendingDivinationChoice) return StepResult.NeedDivinationChoice;
                     return StepResult.NeedPlayAction;
                 case TurnPhase.ResolveEndOfTurn:
                     DoResolveEndOfTurn();
@@ -144,6 +154,7 @@ namespace CardGame.Core
             p.Shield = 0;
             p.AttackDoneThisTurn = false;
             p.ConsecutiveStrikesThisTurn = 0;
+            p.HasPlayedRepositionnementThisTurn = false;
             _log.Log("StartTurn", new { playerIndex = State.CurrentPlayerIndex, turnNumber = State.GetCurrentTurnNumber(), discarded = p.CardsDiscardedThisTurn.Count });
             State.Phase = TurnPhase.ResolveStartOfTurn;
         }
@@ -158,7 +169,7 @@ namespace CardGame.Core
                 switch (eq.Card.Id)
                 {
                     case CardId.RuneEnergieArcanique:
-                        _resolver.DrawCards(State, State.CurrentPlayerIndex, 2, _log);
+                        _resolver.DrawCards(State, State.CurrentPlayerIndex, 2, _log, _rng);
                         break;
                     case CardId.RuneEnduranceOublie:
                         p.PV = Math.Min(100, p.PV + 3);
@@ -233,10 +244,22 @@ namespace CardGame.Core
         public bool SubmitAction(GameAction action)
         {
             if (State.WinnerIndex >= 0) return false;
-            if (action.PlayerIndex != State.CurrentPlayerIndex) return false;
 
+            if (State.Phase == TurnPhase.Reaction)
+            {
+                if (action.PlayerIndex != State.ReactionTargetPlayerIndex) return false;
+                if (action is PlayRapidAction rapid)
+                    return TryPlayRapid(rapid);
+                if (action is NoReactionAction)
+                    return TryNoReaction();
+                return false;
+            }
+
+            if (action.PlayerIndex != State.CurrentPlayerIndex) return false;
             if (action is PlayCardAction playCard)
                 return TryPlayCard(playCard);
+            if (action is DivinationPutBackAction divBack)
+                return TryDivinationPutBack(divBack);
             if (action is StrikeAction)
                 return TryStrike();
             if (action is EndTurnAction)
@@ -255,21 +278,29 @@ namespace CardGame.Core
             if (data.Type == CardType.Rapide) return false; // Rapides en réaction uniquement
             int cost = data.Type == CardType.Equipe ? 0 : data.Cost;
             if (p.Mana < cost) return false;
+            if (card.Id == CardId.Repositionnement && p.HasPlayedRepositionnementThisTurn) return false;
             // Éphémère : chaque exemplaire (instance) n'est jouable qu'une fois ; les autres exemplaires restent disponibles.
 
             p.Mana -= cost;
             p.Hand.RemoveAt(a.HandIndex);
 
-            bool toGraveyard = _resolver.ResolveCardEffect(State, card.Id, State.CurrentPlayerIndex, 1 - State.CurrentPlayerIndex, a.DivinationPutBackIndex);
-            if (card.Id == CardId.Divination && a.DivinationPutBackIndex.HasValue)
+            int targetIndex = 1 - State.CurrentPlayerIndex;
+            bool deferDamage = _resolver.CardDealsDamage(card.Id);
+            bool toGraveyard = _resolver.ResolveCardEffect(State, card.Id, State.CurrentPlayerIndex, targetIndex, _rng, a.DivinationPutBackIndex, out var pendingDamage, deferDamage);
+            if (card.Id == CardId.Divination)
             {
-                int idx = p.Hand.Count - 2 + a.DivinationPutBackIndex.Value;
-                if (idx >= 0 && idx < p.Hand.Count)
+                if (a.DivinationPutBackIndex.HasValue)
                 {
-                    var putBack = p.Hand[idx];
-                    p.Hand.RemoveAt(idx);
-                    p.Deck.Add(putBack);
+                    int idx = p.Hand.Count - 2 + a.DivinationPutBackIndex.Value;
+                    if (idx >= 0 && idx < p.Hand.Count)
+                    {
+                        var putBack = p.Hand[idx];
+                        p.Hand.RemoveAt(idx);
+                        p.Deck.Add(putBack);
+                    }
                 }
+                else
+                    _pendingDivinationChoice = true;
             }
 
             if (toGraveyard)
@@ -277,11 +308,71 @@ namespace CardGame.Core
             else
                 p.RemovedFromGame.Add(card);
 
+            if (card.Id == CardId.Repositionnement)
+                p.HasPlayedRepositionnementThisTurn = true;
+
             if (data.Type == CardType.Normal || (data.Type == CardType.Ephemere && toGraveyard))
-                p.AttackDoneThisTurn = true; // carte portant dégâts compte comme attaque
+                p.AttackDoneThisTurn = true;
+
+            if (pendingDamage != null)
+            {
+                State.PendingReaction = pendingDamage;
+                State.ReactionTargetPlayerIndex = targetIndex;
+                State.Phase = TurnPhase.Reaction;
+                _log.Log("ReactionPhase", new { attackerIndex = State.CurrentPlayerIndex, defenderIndex = targetIndex });
+            }
 
             _log.Log("PlayCard", new { playerIndex = a.PlayerIndex, card = data.Name, handIndex = a.HandIndex });
             CheckVictory();
+            return true;
+        }
+
+        private bool TryPlayRapid(PlayRapidAction a)
+        {
+            if (State.Phase != TurnPhase.Reaction || State.PendingReaction == null) return false;
+            var p = State.Players[State.ReactionTargetPlayerIndex];
+            if (a.HandIndex < 0 || a.HandIndex >= p.Hand.Count) return false;
+            var card = p.Hand[a.HandIndex];
+            var data = DeckDefinitions.GetCard(card.Id);
+            if (data.Type != CardType.Rapide) return false;
+            int cost = data.Cost;
+            if (p.ManaReservedForReaction < cost) return false;
+
+            p.ManaReservedForReaction -= cost;
+            p.Hand.RemoveAt(a.HandIndex);
+            p.Graveyard.Add(card);
+
+            _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, State.PendingReaction.AttackerIndex);
+            State.PendingReaction = null;
+            State.Phase = TurnPhase.Play;
+            _log.Log("PlayRapid", new { playerIndex = a.PlayerIndex, card = data.Name });
+            CheckVictory();
+            return true;
+        }
+
+        private bool TryNoReaction()
+        {
+            if (State.Phase != TurnPhase.Reaction || State.PendingReaction == null) return false;
+            _resolver.ApplyPendingReaction(State, State.PendingReaction);
+            State.PendingReaction = null;
+            State.Phase = TurnPhase.Play;
+            _log.Log("NoReaction", new { });
+            CheckVictory();
+            return true;
+        }
+
+        private bool TryDivinationPutBack(DivinationPutBackAction a)
+        {
+            if (!_pendingDivinationChoice) return false;
+            var p = State.CurrentPlayer;
+            if (a.PutBackIndex != 0 && a.PutBackIndex != 1) return false;
+            if (p.Hand.Count < 2) return false;
+            int idx = p.Hand.Count - 2 + a.PutBackIndex;
+            var putBack = p.Hand[idx];
+            p.Hand.RemoveAt(idx);
+            p.Deck.Add(putBack);
+            _pendingDivinationChoice = false;
+            _log.Log("DivinationPutBack", new { playerIndex = a.PlayerIndex, putBackIndex = a.PutBackIndex, card = DeckDefinitions.GetCard(putBack.Id).Name });
             return true;
         }
 
@@ -299,17 +390,34 @@ namespace CardGame.Core
         {
             if (State.CurrentPlayer.ConsecutiveStrikesThisTurn >= 1) return false;
             var p = State.CurrentPlayer;
-            if (_resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex) <= 0 && !p.Equipments.Any(e => e.IsFrozen)) return false;
+            int baseDmg = _resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex);
+            if (baseDmg <= 0)
+            {
+                var frozen = p.Equipments.FirstOrDefault(e => e.IsFrozen);
+                if (frozen != null)
+                {
+                    frozen.IsFrozen = false;
+                    _log.Log("EquipmentUnfrozen", new { playerIndex = State.CurrentPlayerIndex, cardId = frozen.Card.Id.ToString(), reason = "frappe briser le gel" });
+                }
+                return true;
+            }
 
-            _resolver.ResolveStrike(State, State.CurrentPlayerIndex, 1 - State.CurrentPlayerIndex);
+            int targetIndex = 1 - State.CurrentPlayerIndex;
+            State.PendingReaction = new PendingReactionInfo
+            {
+                TargetIndex = targetIndex,
+                AttackerIndex = State.CurrentPlayerIndex,
+                BaseDamage = baseDmg,
+                CasterForce = p.Force,
+                SourceName = "Frappe",
+                UnfreezeAttacker = false,
+                IsStrike = true
+            };
+            State.ReactionTargetPlayerIndex = targetIndex;
+            State.Phase = TurnPhase.Reaction;
             p.AttackDoneThisTurn = true;
             p.ConsecutiveStrikesThisTurn++;
-            if (p.ConsecutiveStrikesThisTurn == 2 && p.Equipments.Any(e => e.IsActive && e.Card.Id == CardId.RuneProtectionOublie))
-            {
-                _resolver.ApplyShield(State, State.CurrentPlayerIndex, 2, "Rune de protection de l'oublié");
-            }
-            _log.Log("Strike", new { playerIndex = State.CurrentPlayerIndex });
-            CheckVictory();
+            _log.Log("StrikeReactionPhase", new { strikerIndex = State.CurrentPlayerIndex, defenderIndex = targetIndex });
             return true;
         }
 

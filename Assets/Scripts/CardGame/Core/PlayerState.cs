@@ -37,6 +37,8 @@ namespace CardGame.Core
         public int ConsecutiveStrikesThisTurn { get; set; }
         /// <summary>Une attaque (frappe ou dégâts) a été faite ce tour (Défense Magicien).</summary>
         public bool AttackDoneThisTurn { get; set; }
+        /// <summary>Repositionnement joué ce tour (1 seule fois par tour).</summary>
+        public bool HasPlayedRepositionnementThisTurn { get; set; }
 
         /// <summary>Modificateurs temporaires (ex. Concentration) : (valeur, tours restants).</summary>
         public int ForceBonusTurnsLeft { get; set; }

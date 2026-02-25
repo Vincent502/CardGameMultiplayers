@@ -25,6 +25,10 @@ namespace CardGame.Core
         public int FirstPlayerIndex { get; set; }
         /// <summary>Partie terminée : index du gagnant (Player1Index ou Player2Index), -1 si pas fini.</summary>
         public int WinnerIndex { get; set; } = -1;
+        /// <summary>En phase Reaction : dégâts en attente. Null si pas en attente de réaction.</summary>
+        public PendingReactionInfo PendingReaction { get; set; }
+        /// <summary>En phase Reaction : index du défenseur (celui qui peut jouer Parade/Contre-attaque).</summary>
+        public int ReactionTargetPlayerIndex { get; set; }
         /// <summary>Numéro affiché du gagnant (1 ou 2), -1 si partie non terminée.</summary>
         public int WinnerDisplayNumber => WinnerIndex < 0 ? -1 : WinnerIndex + 1;
 
