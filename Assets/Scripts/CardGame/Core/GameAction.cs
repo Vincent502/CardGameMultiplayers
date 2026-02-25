@@ -25,4 +25,10 @@ namespace CardGame.Core
     }
 
     public class NoReactionAction : GameAction { }
+
+    /// <summary>Choix de la carte à remettre sur le deck après Divination (index 0 ou 1 dans les 2 dernières).</summary>
+    public class DivinationPutBackAction : GameAction
+    {
+        public int PutBackIndex { get; set; }
+    }
 }

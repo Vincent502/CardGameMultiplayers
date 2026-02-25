@@ -119,9 +119,9 @@ Pour le **code ami** et la connexion derrière NAT sans serveur de jeu dédié :
 - **NetworkGameController** : même moteur que GameController, pas de bot ; quand c’est mon tour j’envoie l’action + application locale, quand c’est son tour j’attends le RPC puis j’applique.
 - **GameUI** utilise **IGameController** (GameController en Solo, NetworkGameController en P2P). Voir **PHASE2_ETAPE3_LOBBY_ET_JEU.md**.
 
-### Étape 6 – Gestion des erreurs et déconnexions
+### Étape 6 – Gestion des erreurs et déconnexions **(fait)**
 
-- Détecter la **déconnexion** (perte de lien réseau).
+- Détecter la **déconnexion** via `OnClientDisconnectCallback` (Host reçoit quand Client part ; Client reçoit quand Host part).
 - Afficher un message (“Adversaire déconnecté”) et proposer de quitter ou de sauvegarder (optionnel).
 - (Optionnel) Reprise de partie : sauvegarder la séquence d’actions + état initial ; plus tard, permettre de “rejoindre” avec rejeu des actions.
 
@@ -132,7 +132,7 @@ Pour le **code ami** et la connexion derrière NAT sans serveur de jeu dédié :
 3. **Netcode + Relay** : connexion par code ami, puis **Lobby** (choix deck, confirmation).  
 4. **Protocole StartGame** + chargement scène jeu en Multiplayer. **(fait)**  
 5. **Envoi / réception des GameAction** et boucle de jeu P2P. **(fait)**  
-6. **Déconnexion** et retour menu si besoin.
+6. **Déconnexion** et retour menu si besoin. **(fait)**
 
 ---
 

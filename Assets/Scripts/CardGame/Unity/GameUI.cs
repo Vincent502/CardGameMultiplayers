@@ -40,6 +40,7 @@ namespace CardGame.Unity
 
         private int _lastHandCount = -1;
         private int _lastMana = -1;
+        private bool _lastNeedsDivinationChoice;
 
         private void Start()
         {
@@ -87,30 +88,43 @@ namespace CardGame.Unity
                 if (_textStatus != null) _textStatus.text = msg;
                 if (_textGameOver != null) _textGameOver.text = msg;
                 if (_panelGameOver != null) _panelGameOver.SetActive(true);
+                if (_handContainer != null) _handContainer.gameObject.SetActive(false);
+                return;
+            }
+            if (NetworkGameController.OpponentDisconnected)
+            {
+                if (_textStatus != null) _textStatus.text = "Adversaire déconnecté.";
+                if (_textGameOver != null) _textGameOver.text = "Adversaire déconnecté.\nRetournez au menu.";
+                if (_panelGameOver != null) _panelGameOver.SetActive(true);
+                if (_handContainer != null) _handContainer.gameObject.SetActive(false);
                 return;
             }
 
             if (_textStatus != null)
-                _textStatus.text = _controller.IsHumanTurn
-                    ? "À vous de jouer."
-                    : "Tour de l'adversaire...";
+                _textStatus.text = _controller.NeedsDivinationChoice
+                    ? "Choisissez une carte à remettre sur le deck."
+                    : _controller.IsHumanTurn
+                        ? "À vous de jouer."
+                        : "Tour de l'adversaire...";
 
             RefreshHand(state);
             RefreshEquipments(state);
             RefreshEffects(state);
-            if (_buttonStrike != null) _buttonStrike.interactable = _controller.CanStrike;
-            if (_buttonEndTurn != null) _buttonEndTurn.interactable = _controller.IsHumanTurn;
+            if (_buttonStrike != null) _buttonStrike.interactable = _controller.CanStrike && !_controller.NeedsDivinationChoice;
+            if (_buttonEndTurn != null) _buttonEndTurn.interactable = _controller.IsHumanTurn && !_controller.NeedsDivinationChoice;
         }
 
         private void RefreshHand(GameState state)
         {
             if (_handContainer == null) return;
-            if (!_controller.IsHumanTurn) return;
+            if (!_controller.IsHumanTurn && !_controller.NeedsDivinationChoice) return;
 
             var p = state.CurrentPlayer;
-            if (p.Hand.Count == _lastHandCount && p.Mana == _lastMana) return;
+            bool needsDiv = _controller.NeedsDivinationChoice;
+            if (p.Hand.Count == _lastHandCount && p.Mana == _lastMana && needsDiv == _lastNeedsDivinationChoice) return;
             _lastHandCount = p.Hand.Count;
             _lastMana = p.Mana;
+            _lastNeedsDivinationChoice = needsDiv;
 
             foreach (Transform t in _handContainer)
                 Destroy(t.gameObject);
@@ -145,10 +159,18 @@ namespace CardGame.Unity
                     SetCardPrefabTexts(btn.transform, data.Name, data.Description, cost);
                     int manaCost = data.Type == CardType.Equipe ? 0 : data.Cost;
                     bool canPlay = p.Mana >= manaCost;
-                    btn.interactable = canPlay;
+                    // En mode Divination : seules les 2 cartes piochées sont cliquables pour choisir laquelle remettre sur le deck. Les autres sont désactivées.
+                    int handCount = p.Hand.Count;
+                    bool isLastTwo = index >= handCount - 2;
+                    int putBackIndex = index == handCount - 2 ? 0 : (index == handCount - 1 ? 1 : -1);
+                    bool isDivinationChoice = needsDiv && isLastTwo;
+                    btn.interactable = needsDiv ? isDivinationChoice : canPlay;
                     btn.onClick.AddListener(() =>
                     {
-                        if (_controller.WaitingForHumanAction && canPlay)
+                        if (!_controller.WaitingForHumanAction) return;
+                        if (isDivinationChoice && putBackIndex >= 0)
+                            _controller.HumanDivinationPutBack(putBackIndex);
+                        else if (canPlay)
                             _controller.HumanPlayCard(index);
                     });
                 }
@@ -250,6 +272,7 @@ namespace CardGame.Unity
 
         private void OnBackToMenu()
         {
+            NetworkGameController.ResetOpponentDisconnected();
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
             {
                 var relay = FindObjectOfType<RelayManager>();

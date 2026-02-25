@@ -34,6 +34,10 @@ namespace CardGame.Unity
         public bool IsHumanTurn => State != null && State.CurrentPlayer.IsHuman;
         public bool WaitingForHumanAction => _waitingForHumanAction;
         public bool CanStrike => IsHumanTurn && (_session?.CanStrike() ?? false);
+        public bool NeedsDivinationChoice => _session?.PendingDivinationChoice ?? false;
+        /// <summary>True si l'adversaire s'est déconnecté (Host ou Client perdu).</summary>
+        public static bool OpponentDisconnected { get; private set; }
+        public static void ResetOpponentDisconnected() => OpponentDisconnected = false;
 
         private void Awake()
         {
@@ -43,6 +47,8 @@ namespace CardGame.Unity
         private void OnDestroy()
         {
             if (Instance == this) Instance = null;
+            if (NetworkManager.Singleton != null)
+                NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
         }
 
         private void Start()
@@ -78,7 +84,19 @@ namespace CardGame.Unity
 
             _waitingForHumanAction = false;
             _hasPendingRemoteAction = false;
+            OpponentDisconnected = false;
+            if (NetworkManager.Singleton != null)
+                NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
             StartCoroutine(RunGameLoop());
+        }
+
+        private void OnClientDisconnect(ulong clientId)
+        {
+            // Host : un client s'est déconnecté. Client : on a perdu la connexion (Host parti).
+            if (NetworkManager.Singleton.IsHost && clientId != NetworkManager.Singleton.LocalClientId)
+                OpponentDisconnected = true;
+            else if (!NetworkManager.Singleton.IsHost)
+                OpponentDisconnected = true;
         }
 
         private void Update()
@@ -99,6 +117,26 @@ namespace CardGame.Unity
                     case StepResult.PhaseAdvanced:
                         yield return null;
                         break;
+                    case StepResult.NeedDivinationChoice:
+                        if (State.CurrentPlayer.IsHuman)
+                        {
+                            _waitingForHumanAction = true;
+                            yield return new WaitUntil(() => !_waitingForHumanAction || IsGameOver);
+                        }
+                        else
+                        {
+                            yield return new WaitUntil(() => _hasPendingRemoteAction || IsGameOver || OpponentDisconnected);
+                            if (!IsGameOver && _hasPendingRemoteAction)
+                            {
+                                var action = _pendingRemoteAction.ToGameAction(State.CurrentPlayerIndex);
+                                if (action != null)
+                                    _session.SubmitAction(action);
+                                _hasPendingRemoteAction = false;
+                            }
+                            while (!IsGameOver && _session.Step() == StepResult.PhaseAdvanced)
+                                yield return new WaitForSeconds(0.05f);
+                        }
+                        break;
                     case StepResult.NeedPlayAction:
                         if (State.CurrentPlayer.IsHuman)
                         {
@@ -108,7 +146,7 @@ namespace CardGame.Unity
                         else
                         {
                             // On attend qu'une action réseau soit reçue pour le joueur adverse.
-                            yield return new WaitUntil(() => _hasPendingRemoteAction || IsGameOver);
+                            yield return new WaitUntil(() => _hasPendingRemoteAction || IsGameOver || OpponentDisconnected);
                             if (!IsGameOver && _hasPendingRemoteAction)
                             {
                                 var action = _pendingRemoteAction.ToGameAction(State.CurrentPlayerIndex);
@@ -174,6 +212,21 @@ namespace CardGame.Unity
             {
                 _waitingForHumanAction = false;
                 var a = new EndTurnAction { PlayerIndex = State.CurrentPlayerIndex };
+                var netMsg = NetworkActionMessage.From(a);
+                if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
+                    _gameNetwork.SendActionToOtherClient(netMsg);
+                else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
+                    _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+            }
+        }
+
+        public void HumanDivinationPutBack(int putBackIndex)
+        {
+            if (!_waitingForHumanAction || !IsHumanTurn) return;
+            var a = new DivinationPutBackAction { PlayerIndex = State.CurrentPlayerIndex, PutBackIndex = putBackIndex };
+            if (_session.SubmitAction(a))
+            {
+                _waitingForHumanAction = false;
                 var netMsg = NetworkActionMessage.From(a);
                 if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
                     _gameNetwork.SendActionToOtherClient(netMsg);

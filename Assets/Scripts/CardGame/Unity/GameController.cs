@@ -31,6 +31,7 @@ namespace CardGame.Unity
         public bool WaitingForHumanAction => _waitingForHumanAction;
         /// <summary>True si le joueur humain peut encore frapper (1 frappe par tour, équipement "strike" une seule fois).</summary>
         public bool CanStrike => IsHumanTurn && (_session?.CanStrike() ?? false);
+        public bool NeedsDivinationChoice => _session?.PendingDivinationChoice ?? false;
 
         private void Start()
         {
@@ -56,6 +57,10 @@ namespace CardGame.Unity
                 {
                     case StepResult.PhaseAdvanced:
                         yield return null;
+                        break;
+                    case StepResult.NeedDivinationChoice:
+                        _waitingForHumanAction = true;
+                        yield return new WaitUntil(() => !_waitingForHumanAction || IsGameOver);
                         break;
                     case StepResult.NeedPlayAction:
                         if (State.CurrentPlayer.IsHuman)
@@ -90,6 +95,14 @@ namespace CardGame.Unity
             if (!_waitingForHumanAction || !IsHumanTurn) return;
             var a = new PlayCardAction { PlayerIndex = State.CurrentPlayerIndex, HandIndex = handIndex, DivinationPutBackIndex = divinationPutBackIndex };
             if (_session.SubmitAction(a))
+                _waitingForHumanAction = false;
+        }
+
+        /// <summary>Appelé par l'UI quand le joueur humain choisit quelle carte remettre sur le deck après Divination.</summary>
+        public void HumanDivinationPutBack(int putBackIndex)
+        {
+            if (!_waitingForHumanAction || !IsHumanTurn) return;
+            if (_session.SubmitAction(new DivinationPutBackAction { PlayerIndex = State.CurrentPlayerIndex, PutBackIndex = putBackIndex }))
                 _waitingForHumanAction = false;
         }
 

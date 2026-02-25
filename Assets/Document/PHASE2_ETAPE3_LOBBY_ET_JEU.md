@@ -97,6 +97,7 @@ Comportement : Host = Joueur 1 (choix deck 1), Client = Joueur 2 (choix deck 2).
 
 ---
 
-## 9. Suite (Étape 6)
+## 9. Étape 6 – Déconnexion **(fait)**
 
-Gestion des **déconnexions** : détecter la perte de lien, afficher « Adversaire déconnecté », proposer de revenir au menu.
+- **NetworkGameController** : abonnement à `OnClientDisconnectCallback`. Quand l'adversaire se déconnecte (Host reçoit quand Client part ; Client reçoit quand Host part), `OpponentDisconnected = true`.
+- **GameUI** : si `NetworkGameController.OpponentDisconnected`, affiche le panneau fin de partie avec « Adversaire déconnecté. Retournez au menu. » et le bouton Retour au menu.

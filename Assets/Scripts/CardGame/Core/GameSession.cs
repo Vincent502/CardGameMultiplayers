@@ -17,6 +17,10 @@ namespace CardGame.Core
         private int _nextInstanceId;
         /// <summary>Générateur aléatoire déterministe (initialisé avec la graine au StartGame). Utilisé pour mélanges et tirages.</summary>
         private Random _rng;
+        private bool _pendingDivinationChoice;
+
+        /// <summary>True si on attend que le joueur choisisse laquelle des 2 cartes piochées par Divination remettre sur le deck.</summary>
+        public bool PendingDivinationChoice => _pendingDivinationChoice;
 
         public GameSession(IGameLogger log)
         {
@@ -124,6 +128,7 @@ namespace CardGame.Core
                     DoDraw();
                     return StepResult.PhaseAdvanced;
                 case TurnPhase.Play:
+                    if (_pendingDivinationChoice) return StepResult.NeedDivinationChoice;
                     return StepResult.NeedPlayAction;
                 case TurnPhase.ResolveEndOfTurn:
                     DoResolveEndOfTurn();
@@ -242,6 +247,8 @@ namespace CardGame.Core
 
             if (action is PlayCardAction playCard)
                 return TryPlayCard(playCard);
+            if (action is DivinationPutBackAction divBack)
+                return TryDivinationPutBack(divBack);
             if (action is StrikeAction)
                 return TryStrike();
             if (action is EndTurnAction)
@@ -266,15 +273,20 @@ namespace CardGame.Core
             p.Hand.RemoveAt(a.HandIndex);
 
             bool toGraveyard = _resolver.ResolveCardEffect(State, card.Id, State.CurrentPlayerIndex, 1 - State.CurrentPlayerIndex, _rng, a.DivinationPutBackIndex);
-            if (card.Id == CardId.Divination && a.DivinationPutBackIndex.HasValue)
+            if (card.Id == CardId.Divination)
             {
-                int idx = p.Hand.Count - 2 + a.DivinationPutBackIndex.Value;
-                if (idx >= 0 && idx < p.Hand.Count)
+                if (a.DivinationPutBackIndex.HasValue)
                 {
-                    var putBack = p.Hand[idx];
-                    p.Hand.RemoveAt(idx);
-                    p.Deck.Add(putBack);
+                    int idx = p.Hand.Count - 2 + a.DivinationPutBackIndex.Value;
+                    if (idx >= 0 && idx < p.Hand.Count)
+                    {
+                        var putBack = p.Hand[idx];
+                        p.Hand.RemoveAt(idx);
+                        p.Deck.Add(putBack);
+                    }
                 }
+                else
+                    _pendingDivinationChoice = true;
             }
 
             if (toGraveyard)
@@ -287,6 +299,21 @@ namespace CardGame.Core
 
             _log.Log("PlayCard", new { playerIndex = a.PlayerIndex, card = data.Name, handIndex = a.HandIndex });
             CheckVictory();
+            return true;
+        }
+
+        private bool TryDivinationPutBack(DivinationPutBackAction a)
+        {
+            if (!_pendingDivinationChoice) return false;
+            var p = State.CurrentPlayer;
+            if (a.PutBackIndex != 0 && a.PutBackIndex != 1) return false;
+            if (p.Hand.Count < 2) return false;
+            int idx = p.Hand.Count - 2 + a.PutBackIndex;
+            var putBack = p.Hand[idx];
+            p.Hand.RemoveAt(idx);
+            p.Deck.Add(putBack);
+            _pendingDivinationChoice = false;
+            _log.Log("DivinationPutBack", new { playerIndex = a.PlayerIndex, putBackIndex = a.PutBackIndex, card = DeckDefinitions.GetCard(putBack.Id).Name });
             return true;
         }
 
