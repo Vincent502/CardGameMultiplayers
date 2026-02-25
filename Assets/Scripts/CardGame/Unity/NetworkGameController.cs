@@ -35,6 +35,7 @@ namespace CardGame.Unity
         public bool WaitingForHumanAction => _waitingForHumanAction;
         public bool CanStrike => IsHumanTurn && (_session?.CanStrike() ?? false);
         public bool NeedsDivinationChoice => _session?.PendingDivinationChoice ?? false;
+        public bool NeedsReaction => State?.Phase == TurnPhase.Reaction && State?.ReactionTargetPlayerIndex == LocalPlayerIndex;
         /// <summary>True si l'adversaire s'est déconnecté (Host ou Client perdu).</summary>
         public static bool OpponentDisconnected { get; private set; }
         public static void ResetOpponentDisconnected() => OpponentDisconnected = false;
@@ -159,7 +160,24 @@ namespace CardGame.Unity
                         }
                         break;
                     case StepResult.NeedReaction:
-                        yield return null;
+                        if (State.ReactionTargetPlayerIndex == LocalPlayerIndex)
+                        {
+                            _waitingForHumanAction = true;
+                            yield return new WaitUntil(() => !_waitingForHumanAction || IsGameOver);
+                        }
+                        else
+                        {
+                            yield return new WaitUntil(() => _hasPendingRemoteAction || IsGameOver || OpponentDisconnected);
+                            if (!IsGameOver && _hasPendingRemoteAction)
+                            {
+                                var action = _pendingRemoteAction.ToGameAction(State.ReactionTargetPlayerIndex);
+                                if (action != null)
+                                    _session.SubmitAction(action);
+                                _hasPendingRemoteAction = false;
+                            }
+                            while (!IsGameOver && _session.Step() == StepResult.PhaseAdvanced)
+                                yield return new WaitForSeconds(0.05f);
+                        }
                         break;
                     case StepResult.GameOver:
                         yield break;
@@ -224,6 +242,36 @@ namespace CardGame.Unity
         {
             if (!_waitingForHumanAction || !IsHumanTurn) return;
             var a = new DivinationPutBackAction { PlayerIndex = State.CurrentPlayerIndex, PutBackIndex = putBackIndex };
+            if (_session.SubmitAction(a))
+            {
+                _waitingForHumanAction = false;
+                var netMsg = NetworkActionMessage.From(a);
+                if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
+                    _gameNetwork.SendActionToOtherClient(netMsg);
+                else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
+                    _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+            }
+        }
+
+        public void HumanPlayRapid(int handIndex)
+        {
+            if (!_waitingForHumanAction || !NeedsReaction) return;
+            var a = new PlayRapidAction { PlayerIndex = State.ReactionTargetPlayerIndex, HandIndex = handIndex };
+            if (_session.SubmitAction(a))
+            {
+                _waitingForHumanAction = false;
+                var netMsg = NetworkActionMessage.From(a);
+                if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
+                    _gameNetwork.SendActionToOtherClient(netMsg);
+                else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
+                    _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+            }
+        }
+
+        public void HumanNoReaction()
+        {
+            if (!_waitingForHumanAction || !NeedsReaction) return;
+            var a = new NoReactionAction { PlayerIndex = State.ReactionTargetPlayerIndex };
             if (_session.SubmitAction(a))
             {
                 _waitingForHumanAction = false;

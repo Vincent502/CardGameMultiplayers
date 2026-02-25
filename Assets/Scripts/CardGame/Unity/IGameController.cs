@@ -15,8 +15,11 @@ namespace CardGame.Unity
         bool WaitingForHumanAction { get; }
         bool CanStrike { get; }
         bool NeedsDivinationChoice { get; }
+        bool NeedsReaction { get; }
         void HumanPlayCard(int handIndex, int? divinationPutBackIndex = null);
         void HumanDivinationPutBack(int putBackIndex);
+        void HumanPlayRapid(int handIndex);
+        void HumanNoReaction();
         void HumanStrike();
         void HumanEndTurn();
     }

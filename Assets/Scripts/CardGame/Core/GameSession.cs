@@ -154,6 +154,7 @@ namespace CardGame.Core
             p.Shield = 0;
             p.AttackDoneThisTurn = false;
             p.ConsecutiveStrikesThisTurn = 0;
+            p.HasPlayedRepositionnementThisTurn = false;
             _log.Log("StartTurn", new { playerIndex = State.CurrentPlayerIndex, turnNumber = State.GetCurrentTurnNumber(), discarded = p.CardsDiscardedThisTurn.Count });
             State.Phase = TurnPhase.ResolveStartOfTurn;
         }
@@ -243,8 +244,18 @@ namespace CardGame.Core
         public bool SubmitAction(GameAction action)
         {
             if (State.WinnerIndex >= 0) return false;
-            if (action.PlayerIndex != State.CurrentPlayerIndex) return false;
 
+            if (State.Phase == TurnPhase.Reaction)
+            {
+                if (action.PlayerIndex != State.ReactionTargetPlayerIndex) return false;
+                if (action is PlayRapidAction rapid)
+                    return TryPlayRapid(rapid);
+                if (action is NoReactionAction)
+                    return TryNoReaction();
+                return false;
+            }
+
+            if (action.PlayerIndex != State.CurrentPlayerIndex) return false;
             if (action is PlayCardAction playCard)
                 return TryPlayCard(playCard);
             if (action is DivinationPutBackAction divBack)
@@ -267,12 +278,15 @@ namespace CardGame.Core
             if (data.Type == CardType.Rapide) return false; // Rapides en réaction uniquement
             int cost = data.Type == CardType.Equipe ? 0 : data.Cost;
             if (p.Mana < cost) return false;
+            if (card.Id == CardId.Repositionnement && p.HasPlayedRepositionnementThisTurn) return false;
             // Éphémère : chaque exemplaire (instance) n'est jouable qu'une fois ; les autres exemplaires restent disponibles.
 
             p.Mana -= cost;
             p.Hand.RemoveAt(a.HandIndex);
 
-            bool toGraveyard = _resolver.ResolveCardEffect(State, card.Id, State.CurrentPlayerIndex, 1 - State.CurrentPlayerIndex, _rng, a.DivinationPutBackIndex);
+            int targetIndex = 1 - State.CurrentPlayerIndex;
+            bool deferDamage = _resolver.CardDealsDamage(card.Id);
+            bool toGraveyard = _resolver.ResolveCardEffect(State, card.Id, State.CurrentPlayerIndex, targetIndex, _rng, a.DivinationPutBackIndex, out var pendingDamage, deferDamage);
             if (card.Id == CardId.Divination)
             {
                 if (a.DivinationPutBackIndex.HasValue)
@@ -294,10 +308,55 @@ namespace CardGame.Core
             else
                 p.RemovedFromGame.Add(card);
 
+            if (card.Id == CardId.Repositionnement)
+                p.HasPlayedRepositionnementThisTurn = true;
+
             if (data.Type == CardType.Normal || (data.Type == CardType.Ephemere && toGraveyard))
-                p.AttackDoneThisTurn = true; // carte portant dégâts compte comme attaque
+                p.AttackDoneThisTurn = true;
+
+            if (pendingDamage != null)
+            {
+                State.PendingReaction = pendingDamage;
+                State.ReactionTargetPlayerIndex = targetIndex;
+                State.Phase = TurnPhase.Reaction;
+                _log.Log("ReactionPhase", new { attackerIndex = State.CurrentPlayerIndex, defenderIndex = targetIndex });
+            }
 
             _log.Log("PlayCard", new { playerIndex = a.PlayerIndex, card = data.Name, handIndex = a.HandIndex });
+            CheckVictory();
+            return true;
+        }
+
+        private bool TryPlayRapid(PlayRapidAction a)
+        {
+            if (State.Phase != TurnPhase.Reaction || State.PendingReaction == null) return false;
+            var p = State.Players[State.ReactionTargetPlayerIndex];
+            if (a.HandIndex < 0 || a.HandIndex >= p.Hand.Count) return false;
+            var card = p.Hand[a.HandIndex];
+            var data = DeckDefinitions.GetCard(card.Id);
+            if (data.Type != CardType.Rapide) return false;
+            int cost = data.Cost;
+            if (p.ManaReservedForReaction < cost) return false;
+
+            p.ManaReservedForReaction -= cost;
+            p.Hand.RemoveAt(a.HandIndex);
+            p.Graveyard.Add(card);
+
+            _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, State.PendingReaction.AttackerIndex);
+            State.PendingReaction = null;
+            State.Phase = TurnPhase.Play;
+            _log.Log("PlayRapid", new { playerIndex = a.PlayerIndex, card = data.Name });
+            CheckVictory();
+            return true;
+        }
+
+        private bool TryNoReaction()
+        {
+            if (State.Phase != TurnPhase.Reaction || State.PendingReaction == null) return false;
+            _resolver.ApplyPendingReaction(State, State.PendingReaction);
+            State.PendingReaction = null;
+            State.Phase = TurnPhase.Play;
+            _log.Log("NoReaction", new { });
             CheckVictory();
             return true;
         }
@@ -331,17 +390,34 @@ namespace CardGame.Core
         {
             if (State.CurrentPlayer.ConsecutiveStrikesThisTurn >= 1) return false;
             var p = State.CurrentPlayer;
-            if (_resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex) <= 0 && !p.Equipments.Any(e => e.IsFrozen)) return false;
+            int baseDmg = _resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex);
+            if (baseDmg <= 0)
+            {
+                var frozen = p.Equipments.FirstOrDefault(e => e.IsFrozen);
+                if (frozen != null)
+                {
+                    frozen.IsFrozen = false;
+                    _log.Log("EquipmentUnfrozen", new { playerIndex = State.CurrentPlayerIndex, cardId = frozen.Card.Id.ToString(), reason = "frappe briser le gel" });
+                }
+                return true;
+            }
 
-            _resolver.ResolveStrike(State, State.CurrentPlayerIndex, 1 - State.CurrentPlayerIndex);
+            int targetIndex = 1 - State.CurrentPlayerIndex;
+            State.PendingReaction = new PendingReactionInfo
+            {
+                TargetIndex = targetIndex,
+                AttackerIndex = State.CurrentPlayerIndex,
+                BaseDamage = baseDmg,
+                CasterForce = p.Force,
+                SourceName = "Frappe",
+                UnfreezeAttacker = false,
+                IsStrike = true
+            };
+            State.ReactionTargetPlayerIndex = targetIndex;
+            State.Phase = TurnPhase.Reaction;
             p.AttackDoneThisTurn = true;
             p.ConsecutiveStrikesThisTurn++;
-            if (p.ConsecutiveStrikesThisTurn == 2 && p.Equipments.Any(e => e.IsActive && e.Card.Id == CardId.RuneProtectionOublie))
-            {
-                _resolver.ApplyShield(State, State.CurrentPlayerIndex, 2, "Rune de protection de l'oublié");
-            }
-            _log.Log("Strike", new { playerIndex = State.CurrentPlayerIndex });
-            CheckVictory();
+            _log.Log("StrikeReactionPhase", new { strikerIndex = State.CurrentPlayerIndex, defenderIndex = targetIndex });
             return true;
         }
 

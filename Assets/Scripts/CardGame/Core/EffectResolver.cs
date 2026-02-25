@@ -98,27 +98,104 @@ namespace CardGame.Core
             }
         }
 
-        /// <summary>Résout l'effet d'une carte jouée. Retourne true si la carte va au cimetière (false = retirée du jeu Éphémère).</summary>
-        public bool ResolveCardEffect(GameState state, CardId cardId, int casterIndex, int targetIndex, Random rng, int? divinationPutBackHandIndex = null)
+        /// <summary>Paramètres de dégâts pour une carte (utilisé pour différer en phase Réaction).</summary>
+        public (int baseDamage, int casterForce) GetDamageParamsForCard(CardId cardId, int casterIndex, GameState state)
         {
+            var caster = state.Players[casterIndex];
+            switch (cardId)
+            {
+                case CardId.Attaque: return (5, caster.Force);
+                case CardId.AttaquePlus: return (9, caster.Force);
+                case CardId.BouleDeFeu: return (15, 0);
+                case CardId.AttaqueTactique: return (2, caster.Force);
+                case CardId.AttaqueLegere: return (3, caster.Force);
+                case CardId.AttaqueLourde: return (7, caster.Force);
+                case CardId.FendoireMortel: return (20, 0);
+                case CardId.ExplosionMagieEphemere:
+                    int consumed = caster.CardsDiscardedThisTurn.Count;
+                    return (consumed * 2, 0);
+                default: return (0, 0);
+            }
+        }
+
+        /// <summary>True si la carte inflige des dégâts (susceptible d'être annulée par Parade/Contre-attaque).</summary>
+        public bool CardDealsDamage(CardId cardId)
+        {
+            switch (cardId)
+            {
+                case CardId.Attaque:
+                case CardId.AttaquePlus:
+                case CardId.BouleDeFeu:
+                case CardId.AttaqueTactique:
+                case CardId.AttaqueLegere:
+                case CardId.AttaqueLourde:
+                case CardId.FendoireMortel:
+                case CardId.ExplosionMagieEphemere:
+                    return true;
+                default: return false;
+            }
+        }
+
+        /// <summary>Résout l'effet d'une carte jouée. Si deferDamage=true et carte à dégâts, ne fait pas ApplyDamage (retourne via out pendingDamage).</summary>
+        public bool ResolveCardEffect(GameState state, CardId cardId, int casterIndex, int targetIndex, Random rng, int? divinationPutBackHandIndex, out PendingReactionInfo pendingDamage, bool deferDamage = false)
+        {
+            pendingDamage = null;
             var caster = state.Players[casterIndex];
             var target = state.Players[targetIndex];
             var data = DeckDefinitions.GetCard(cardId);
 
+            if (deferDamage && CardDealsDamage(cardId))
+            {
+                var (baseDmg, casterForce) = GetDamageParamsForCard(cardId, casterIndex, state);
+                if (baseDmg > 0)
+                {
+                    pendingDamage = new PendingReactionInfo
+                    {
+                        TargetIndex = targetIndex,
+                        AttackerIndex = casterIndex,
+                        BaseDamage = baseDmg,
+                        CasterForce = casterForce,
+                        SourceName = data.Name,
+                        UnfreezeAttacker = true
+                    };
+                }
+            }
+
             switch (cardId)
             {
                 case CardId.Attaque:
-                    ApplyDamage(state, targetIndex, 5, caster.Force, data.Name);
-                    UnfreezeOneEquipmentIfAny(state, casterIndex);
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 5, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
                     return true;
                 case CardId.AttaquePlus:
-                    ApplyDamage(state, targetIndex, 9, caster.Force, data.Name);
-                    UnfreezeOneEquipmentIfAny(state, casterIndex);
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 9, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
                     return true;
                 case CardId.BouleDeFeu:
-                    ApplyDamage(state, targetIndex, 15, 0, data.Name); // pas influencé par Force
-                    UnfreezeOneEquipmentIfAny(state, casterIndex);
-                    return false; // Éphémère
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 15, 0, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    return false;
+                case CardId.AttaqueTactique:
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 2, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    ApplyShield(state, casterIndex, 1, data.Name);
+                    return true;
+                case CardId.AttaqueLegere:
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 3, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    ApplyShield(state, casterIndex, 2, data.Name);
+                    return true;
+                case CardId.AttaqueLourde:
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 7, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    ApplyShield(state, casterIndex, 4, data.Name);
+                    return true;
+                case CardId.FendoireMortel:
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 20, 0, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    return false;
+                case CardId.ExplosionMagieEphemere:
+                    if (pendingDamage == null)
+                    {
+                        int consumed = caster.CardsDiscardedThisTurn.Count;
+                        int dmg = consumed * 2;
+                        ApplyDamage(state, targetIndex, dmg, 0, data.Name);
+                        UnfreezeOneEquipmentIfAny(state, casterIndex);
+                    }
+                    return true;
                 case CardId.Defense:
                     ApplyShield(state, casterIndex, 4, data.Name);
                     // +4 si aucune attaque ce tour : vérifié en fin de tour
@@ -144,25 +221,6 @@ namespace CardGame.Core
                     ApplyShield(state, casterIndex, 2, data.Name);
                     DrawCards(state, casterIndex, 1, _log, rng);
                     return true;
-                case CardId.AttaqueTactique:
-                    ApplyDamage(state, targetIndex, 2, caster.Force, data.Name);
-                    UnfreezeOneEquipmentIfAny(state, casterIndex);
-                    ApplyShield(state, casterIndex, 1, data.Name);
-                    return true;
-                case CardId.AttaqueLegere:
-                    ApplyDamage(state, targetIndex, 3, caster.Force, data.Name);
-                    UnfreezeOneEquipmentIfAny(state, casterIndex);
-                    ApplyShield(state, casterIndex, 2, data.Name);
-                    return true;
-                case CardId.AttaqueLourde:
-                    ApplyDamage(state, targetIndex, 7, caster.Force, data.Name);
-                    UnfreezeOneEquipmentIfAny(state, casterIndex);
-                    ApplyShield(state, casterIndex, 4, data.Name);
-                    return true;
-                case CardId.FendoireMortel:
-                    ApplyDamage(state, targetIndex, 20, 0, data.Name);
-                    UnfreezeOneEquipmentIfAny(state, casterIndex);
-                    return false;
                 case CardId.DefenseLourde:
                     ApplyShield(state, casterIndex, 10, data.Name);
                     return true;
@@ -183,12 +241,6 @@ namespace CardGame.Core
                     caster.PV = Math.Min(100, caster.PV + 15);
                     _log.Log("SouffleEternel", new { casterIndex, heal = 15 });
                     return caster.HasPlayedDisciplineEternelThisGame; // cimetière si Discipline jouée
-                case CardId.ExplosionMagieEphemere:
-                    int consumed = caster.CardsDiscardedThisTurn.Count;
-                    int dmg = consumed * 2;
-                    ApplyDamage(state, targetIndex, dmg, 0, data.Name);
-                    UnfreezeOneEquipmentIfAny(state, casterIndex);
-                    return true;
                 case CardId.ArmurePsychique:
                     ApplyShield(state, casterIndex, 23, data.Name);
                     state.ActiveDurationEffects.Add(new ActiveDurationEffect
@@ -252,6 +304,42 @@ namespace CardGame.Core
                     _log.Log("EffectNotImplemented", new { cardId = cardId.ToString() });
                     return data.Type == CardType.Normal;
             }
+        }
+
+        /// <summary>Applique les dégâts en attente (NoReaction).</summary>
+        public void ApplyPendingReaction(GameState state, PendingReactionInfo pending)
+        {
+            if (pending == null) return;
+            ApplyDamage(state, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
+            if (pending.UnfreezeAttacker)
+                UnfreezeOneEquipmentIfAny(state, pending.AttackerIndex);
+            if (pending.IsStrike)
+            {
+                var striker = state.Players[pending.AttackerIndex];
+                foreach (var eq in striker.Equipments.Where(e => e.IsActive))
+                {
+                    if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint)
+                        ApplyShield(state, pending.AttackerIndex, 1, DeckDefinitions.GetCard(eq.Card.Id).Name);
+                    if (eq.Card.Id == CardId.RuneAgressiviteOublie)
+                    {
+                        striker.Force += 1;
+                        striker.ForceBonusValue += 1;
+                        striker.ForceBonusTurnsLeft = Math.Max(striker.ForceBonusTurnsLeft, 1);
+                        _log.Log("RuneAgressivite", new { strikerIndex = pending.AttackerIndex });
+                    }
+                }
+                if (striker.ConsecutiveStrikesThisTurn == 2 && striker.Equipments.Any(e => e.IsActive && e.Card.Id == CardId.RuneProtectionOublie))
+                    ApplyShield(state, pending.AttackerIndex, 2, "Rune de protection de l'oublié");
+            }
+        }
+
+        /// <summary>Résout l'effet d'une carte Rapide (Contre-attaque, Parade). Annule l'attaque en attente. Contre-attaque inflige aussi 2 dégâts à l'attaquant.</summary>
+        public void ResolveRapidCardEffect(GameState state, CardId cardId, int casterIndex, int attackerIndex)
+        {
+            var data = DeckDefinitions.GetCard(cardId);
+            _log.Log("RapidPlayed", new { cardId = cardId.ToString(), casterIndex, attackerIndex });
+            if (cardId == CardId.ContreAttaque)
+                ApplyDamage(state, attackerIndex, 2, 0, data.Name);
         }
 
         /// <summary>Dégâts de base de la frappe (Hache 5, Rune force arcanique 2) + bonus ce tour (ex. Appuis solide).</summary>

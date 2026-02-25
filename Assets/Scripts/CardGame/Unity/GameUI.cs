@@ -1,3 +1,4 @@
+using System.Linq;
 using CardGame.Core;
 using CardGame.Data;
 using UnityEngine;
@@ -41,6 +42,10 @@ namespace CardGame.Unity
         private int _lastHandCount = -1;
         private int _lastMana = -1;
         private bool _lastNeedsDivinationChoice;
+        private bool _lastNeedsReaction;
+        private string _lastHandKey;
+        private float _reactionTimeRemaining = -1f;
+        private const float ReactionWindowDuration = 3f;
 
         private void Start()
         {
@@ -100,31 +105,58 @@ namespace CardGame.Unity
                 return;
             }
 
-            if (_textStatus != null)
-                _textStatus.text = _controller.NeedsDivinationChoice
-                    ? "Choisissez une carte à remettre sur le deck."
-                    : _controller.IsHumanTurn
-                        ? "À vous de jouer."
-                        : "Tour de l'adversaire...";
+            // Fenêtre d'opportunité : 3 sec pour jouer une carte Rapide (uniquement quand c'est notre tour de réagir)
+            if (_controller.NeedsReaction && state.ReactionTargetPlayerIndex == _controller.LocalPlayerIndex)
+            {
+                if (_reactionTimeRemaining < 0)
+                    _reactionTimeRemaining = ReactionWindowDuration;
+                _reactionTimeRemaining -= Time.deltaTime;
+                int secLeft = Mathf.Max(0, Mathf.CeilToInt(_reactionTimeRemaining));
+                if (_textStatus != null)
+                    _textStatus.text = secLeft > 0 ? $"Réagissez ! {secLeft} sec pour jouer une carte Rapide" : "Temps écoulé...";
+                if (_reactionTimeRemaining <= 0)
+                {
+                    _controller.HumanNoReaction();
+                    _reactionTimeRemaining = -1f;
+                }
+            }
+            else
+            {
+                _reactionTimeRemaining = -1f;
+                if (_textStatus != null)
+                    _textStatus.text = _controller.NeedsReaction
+                        ? "L'adversaire réfléchit..."
+                        : _controller.NeedsDivinationChoice
+                            ? "Choisissez une carte à remettre sur le deck."
+                            : _controller.IsHumanTurn
+                                ? "À vous de jouer."
+                                : "Tour de l'adversaire...";
+            }
 
             RefreshHand(state);
             RefreshEquipments(state);
             RefreshEffects(state);
-            if (_buttonStrike != null) _buttonStrike.interactable = _controller.CanStrike && !_controller.NeedsDivinationChoice;
-            if (_buttonEndTurn != null) _buttonEndTurn.interactable = _controller.IsHumanTurn && !_controller.NeedsDivinationChoice;
+            if (_buttonStrike != null) _buttonStrike.interactable = _controller.CanStrike && !_controller.NeedsDivinationChoice && !_controller.NeedsReaction;
+            if (_buttonEndTurn != null) _buttonEndTurn.interactable = _controller.IsHumanTurn && !_controller.NeedsDivinationChoice && !_controller.NeedsReaction;
         }
 
         private void RefreshHand(GameState state)
         {
             if (_handContainer == null) return;
-            if (!_controller.IsHumanTurn && !_controller.NeedsDivinationChoice) return;
+            if (!_controller.IsHumanTurn && !_controller.NeedsDivinationChoice && !_controller.NeedsReaction) return;
+            if (_controller.NeedsReaction && state.ReactionTargetPlayerIndex != _controller.LocalPlayerIndex) return;
 
-            var p = state.CurrentPlayer;
+            var p = _controller.NeedsReaction ? state.Players[state.ReactionTargetPlayerIndex] : state.CurrentPlayer;
             bool needsDiv = _controller.NeedsDivinationChoice;
-            if (p.Hand.Count == _lastHandCount && p.Mana == _lastMana && needsDiv == _lastNeedsDivinationChoice) return;
+            bool needsReaction = _controller.NeedsReaction;
+            string handKey = string.Join(",", p.Hand.Select(c => c.InstanceId.ToString()));
+            int manaOrReserved = needsReaction ? p.ManaReservedForReaction : p.Mana;
+            if (p.Hand.Count == _lastHandCount && manaOrReserved == _lastMana && needsDiv == _lastNeedsDivinationChoice && needsReaction == _lastNeedsReaction && handKey == _lastHandKey) return;
             _lastHandCount = p.Hand.Count;
-            _lastMana = p.Mana;
+            _lastMana = manaOrReserved;
             _lastNeedsDivinationChoice = needsDiv;
+            _lastNeedsReaction = needsReaction;
+            _lastHandKey = handKey;
 
             foreach (Transform t in _handContainer)
                 Destroy(t.gameObject);
@@ -137,7 +169,6 @@ namespace CardGame.Unity
                 int index = i;
                 var card = p.Hand[i];
                 var data = DeckDefinitions.GetCard(card.Id);
-                if (data.Type == CardType.Rapide) continue;
                 Button btn = _cardButtonPrefab != null
                     ? Instantiate(_cardButtonPrefab, parent, false).GetComponent<Button>()
                     : CreateDefaultButton(parent);
@@ -158,7 +189,10 @@ namespace CardGame.Unity
                     int cost = data.Type == CardType.Equipe ? 0 : data.Cost;
                     SetCardPrefabTexts(btn.transform, data.Name, data.Description, cost);
                     int manaCost = data.Type == CardType.Equipe ? 0 : data.Cost;
-                    bool canPlay = p.Mana >= manaCost;
+                    bool isRapide = data.Type == CardType.Rapide;
+                    bool canPlay = needsReaction
+                        ? (isRapide && manaOrReserved >= manaCost)
+                        : (!isRapide && p.Mana >= manaCost && (card.Id != CardId.Repositionnement || !p.HasPlayedRepositionnementThisTurn));
                     // En mode Divination : seules les 2 cartes piochées sont cliquables pour choisir laquelle remettre sur le deck. Les autres sont désactivées.
                     int handCount = p.Hand.Count;
                     bool isLastTwo = index >= handCount - 2;
@@ -170,6 +204,8 @@ namespace CardGame.Unity
                         if (!_controller.WaitingForHumanAction) return;
                         if (isDivinationChoice && putBackIndex >= 0)
                             _controller.HumanDivinationPutBack(putBackIndex);
+                        else if (needsReaction && canPlay)
+                            _controller.HumanPlayRapid(index);
                         else if (canPlay)
                             _controller.HumanPlayCard(index);
                     });

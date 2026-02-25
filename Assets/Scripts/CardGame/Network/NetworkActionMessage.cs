@@ -8,7 +8,9 @@ namespace CardGame.Unity
         PlayCard = 0,
         Strike = 1,
         EndTurn = 2,
-        DivinationPutBack = 3
+        DivinationPutBack = 3,
+        PlayRapid = 4,
+        NoReaction = 5
     }
 
     /// <summary>
@@ -45,6 +47,13 @@ namespace CardGame.Unity
                 m.ActionType = (byte)NetworkActionType.DivinationPutBack;
                 m.HandIndex = d.PutBackIndex;
             }
+            else if (a is PlayRapidAction r)
+            {
+                m.ActionType = (byte)NetworkActionType.PlayRapid;
+                m.HandIndex = r.HandIndex;
+            }
+            else if (a is NoReactionAction)
+                m.ActionType = (byte)NetworkActionType.NoReaction;
             return m;
         }
 
@@ -65,6 +74,10 @@ namespace CardGame.Unity
                     return new EndTurnAction { PlayerIndex = playerIndex };
                 case NetworkActionType.DivinationPutBack:
                     return new DivinationPutBackAction { PlayerIndex = playerIndex, PutBackIndex = HandIndex };
+                case NetworkActionType.PlayRapid:
+                    return new PlayRapidAction { PlayerIndex = playerIndex, HandIndex = HandIndex };
+                case NetworkActionType.NoReaction:
+                    return new NoReactionAction { PlayerIndex = playerIndex };
                 default:
                     return null;
             }
