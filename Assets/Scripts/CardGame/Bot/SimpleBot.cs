@@ -18,10 +18,11 @@ namespace CardGame.Bot
             var p = state.CurrentPlayer;
             if (p.IsHuman) return null;
 
-            // Option 1: Frappe si l'arme fait des dégâts (1 frappe max par tour, équipement "strike" une seule fois)
+            // Option 1: Frappe si l'arme fait des dégâts (1 frappe max par tour)
             int weaponDmg = 0;
             foreach (var eq in p.Equipments.Where(e => e.IsActive))
             {
+                if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint) weaponDmg = 1;
                 if (eq.Card.Id == CardId.HacheOublie) weaponDmg = 5;
                 if (eq.Card.Id == CardId.RuneForceArcanique) weaponDmg += 2;
             }

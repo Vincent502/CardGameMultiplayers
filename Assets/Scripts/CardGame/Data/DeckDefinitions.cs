@@ -13,7 +13,7 @@ namespace CardGame.Data
         {
             return new List<(CardData, int)>
             {
-                (new CardData(CardId.CatalyseurArcanaiqueRestraint, "Catalyseur arcanaique restraint", CardType.Equipe, 0, "Donne 1 bouclier à chaque fois que vous frappez"), 1),
+                (new CardData(CardId.CatalyseurArcanaiqueRestraint, "Catalyseur arcanique restreint", CardType.Equipe, 0, "Arme : 1 + Force dégâts. Donne 1 bouclier à chaque frappe."), 1),
                 (new CardData(CardId.RuneEnergieArcanique, "Rune d'énergie arcanique", CardType.Equipe, 6, "Pioche 2 cartes supplémentaires en début de tour"), 1),
                 (new CardData(CardId.RuneEssenceArcanique, "Rune d'essence arcanique", CardType.Equipe, 1, "Donne 5 bouclier à la fin du tour, si résistance est à 0"), 1),
                 (new CardData(CardId.RuneForceArcanique, "Rune de force arcanique", CardType.Equipe, 4, "Inflige 2 × 1 dégât quand vous frappez"), 1),

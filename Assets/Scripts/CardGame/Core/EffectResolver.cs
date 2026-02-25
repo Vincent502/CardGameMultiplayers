@@ -342,13 +342,14 @@ namespace CardGame.Core
                 ApplyDamage(state, attackerIndex, 2, 0, data.Name);
         }
 
-        /// <summary>Dégâts de base de la frappe (Hache 5, Rune force arcanique 2) + bonus ce tour (ex. Appuis solide).</summary>
+        /// <summary>Dégâts de base de la frappe : Catalyseur 1, Hache 5, Rune force arcanique +2. Formule finale = base + Force.</summary>
         public int GetWeaponBaseDamage(GameState state, int playerIndex)
         {
             int baseDmg = 0;
             var player = state.Players[playerIndex];
             foreach (var eq in player.Equipments.Where(e => e.IsActive))
             {
+                if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint) baseDmg = 1;
                 if (eq.Card.Id == CardId.HacheOublie) baseDmg = 5;
                 if (eq.Card.Id == CardId.RuneForceArcanique) baseDmg += 2;
             }
