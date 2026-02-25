@@ -30,7 +30,7 @@ namespace CardGame.Data
                 (new CardData(CardId.Evaluation, "Evaluation", CardType.Ephemere, 1, "Pioche 3 cartes"), 2),
                 (new CardData(CardId.Attaque, "Attaque", CardType.Normal, 1, "5 dégâts"), 3),
                 (new CardData(CardId.OrageDePoche, "Orage de poche", CardType.Ephemere, 3, "1 dégât avant fin de chaque tour, 3 tours"), 2),
-                (new CardData(CardId.GlaceLocalisee, "Glace localisée", CardType.Ephemere, 1, "Gèle un équipement adverse (frappe pour dégeler)"), 2),
+                (new CardData(CardId.GlaceLocalisee, "Glace localisée", CardType.Ephemere, 1, "Gèle un équipement adverse 2 tours du joueur (ou frappe/carte dégâts pour dégeler)"), 2),
             };
         }
 
@@ -51,7 +51,7 @@ namespace CardGame.Data
                 (new CardData(CardId.PositionDefensive, "Position défensive", CardType.Ephemere, 1, "Donne 1 Résistance"), 2),
                 (new CardData(CardId.SouffleEternel, "Souffle éternel", CardType.Ephemere, 0, "Rend 15 PV ; va au cimetière si après Discipline éternel"), 1),
                 (new CardData(CardId.DisciplineEternel, "Discipline éternel", CardType.Normal, 3, "Invincible jusqu'au prochain tour"), 1),
-                (new CardData(CardId.Guillotine, "Guillotine", CardType.Normal, 1, "Attaque avec arme, Force × 2, met fin au tour"), 2),
+                (new CardData(CardId.Guillotine, "Guillotine", CardType.Normal, 1, "Attaque avec arme, Force compte double, met fin au tour"), 2),
                 (new CardData(CardId.FendoireMortel, "Fendoire mortel", CardType.Ephemere, 1, "20 dégâts"), 1),
                 (new CardData(CardId.AttaqueLourde, "Attaque lourde", CardType.Normal, 2, "7 dégâts, 4 bouclier"), 2),
                 (new CardData(CardId.AttaqueLegere, "Attaque légère", CardType.Normal, 1, "3 dégâts, 2 bouclier"), 3),

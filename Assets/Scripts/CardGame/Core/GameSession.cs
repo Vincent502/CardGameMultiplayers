@@ -148,6 +148,16 @@ namespace CardGame.Core
         private void DoStartTurn()
         {
             var p = State.CurrentPlayer;
+            foreach (var eq in p.Equipments.Where(e => e.IsFrozen))
+            {
+                eq.FrozenTurnsRemaining--;
+                if (eq.FrozenTurnsRemaining <= 0)
+                {
+                    eq.IsFrozen = false;
+                    eq.FrozenTurnsRemaining = 0;
+                    _log.Log("EquipmentUnfrozen", new { playerIndex = State.CurrentPlayerIndex, cardId = eq.Card.Id.ToString(), reason = "2 tours du joueur écoulés" });
+                }
+            }
             p.CardsDiscardedThisTurn.Clear();
             p.EphemeralConsumedThisRound = 0;
             foreach (var c in p.Hand)
@@ -158,6 +168,7 @@ namespace CardGame.Core
             p.AttackDoneThisTurn = false;
             p.ConsecutiveStrikesThisTurn = 0;
             p.HasPlayedRepositionnementThisTurn = false;
+            State.EndTurnAfterReaction = false;
             _log.Log("StartTurn", new { playerIndex = State.CurrentPlayerIndex, turnNumber = State.GetCurrentTurnNumber(), discarded = p.CardsDiscardedThisTurn.Count });
             State.Phase = TurnPhase.ResolveStartOfTurn;
         }
@@ -228,7 +239,7 @@ namespace CardGame.Core
                 }
             }
             _resolver.ResolveEndOfTurnEffects(State, State.CurrentPlayerIndex);
-            // Glace localisée : dégel uniquement par carte dégâts ou frappe "briser le gel", pas en fin de tour.
+            // Glace localisée : dégel par carte dégâts, frappe "brise le gel", ou après 2 tours du joueur propriétaire.
             State.Phase = TurnPhase.EndTurn;
         }
 
@@ -334,7 +345,13 @@ namespace CardGame.Core
                 State.PendingReaction = pendingDamage;
                 State.ReactionTargetPlayerIndex = targetIndex;
                 State.Phase = TurnPhase.Reaction;
+                if (card.Id == CardId.Guillotine)
+                    State.EndTurnAfterReaction = true;
                 _log.Log("ReactionPhase", new { attackerIndex = State.CurrentPlayerIndex, defenderIndex = targetIndex });
+            }
+            else if (card.Id == CardId.Guillotine)
+            {
+                State.Phase = TurnPhase.ResolveEndOfTurn;
             }
 
             _log.Log("PlayCard", new { playerIndex = a.PlayerIndex, card = data.Name, handIndex = a.HandIndex });
@@ -359,7 +376,8 @@ namespace CardGame.Core
 
             _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, State.PendingReaction.AttackerIndex);
             State.PendingReaction = null;
-            State.Phase = TurnPhase.Play;
+            State.Phase = State.EndTurnAfterReaction ? TurnPhase.ResolveEndOfTurn : TurnPhase.Play;
+            State.EndTurnAfterReaction = false;
             _log.Log("PlayRapid", new { playerIndex = a.PlayerIndex, card = data.Name });
             CheckVictory();
             return true;
@@ -370,7 +388,8 @@ namespace CardGame.Core
             if (State.Phase != TurnPhase.Reaction || State.PendingReaction == null) return false;
             _resolver.ApplyPendingReaction(State, State.PendingReaction);
             State.PendingReaction = null;
-            State.Phase = TurnPhase.Play;
+            State.Phase = State.EndTurnAfterReaction ? TurnPhase.ResolveEndOfTurn : TurnPhase.Play;
+            State.EndTurnAfterReaction = false;
             _log.Log("NoReaction", new { });
             CheckVictory();
             return true;
@@ -412,6 +431,7 @@ namespace CardGame.Core
                 if (frozen != null)
                 {
                     frozen.IsFrozen = false;
+                    frozen.FrozenTurnsRemaining = 0;
                     _log.Log("EquipmentUnfrozen", new { playerIndex = State.CurrentPlayerIndex, cardId = frozen.Card.Id.ToString(), reason = "frappe briser le gel" });
                 }
                 return true;

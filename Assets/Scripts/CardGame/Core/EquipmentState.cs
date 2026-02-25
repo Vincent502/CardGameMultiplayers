@@ -9,6 +9,8 @@ namespace CardGame.Core
         /// <summary>0 = actif. Diminué de 1 à chaque tour de jeu.</summary>
         public int RoundsUntilActive { get; set; }
         public bool IsFrozen { get; set; }
+        /// <summary>Nombre de tours du joueur propriétaire restants avant dégel automatique. Décrémenté au début de chaque tour du propriétaire.</summary>
+        public int FrozenTurnsRemaining { get; set; }
 
         public bool IsActive => RoundsUntilActive <= 0 && !IsFrozen;
     }

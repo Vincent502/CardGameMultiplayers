@@ -47,6 +47,7 @@ namespace CardGame.Core
             if (frozen != null)
             {
                 frozen.IsFrozen = false;
+                frozen.FrozenTurnsRemaining = 0;
                 _log.Log("EquipmentUnfrozen", new { playerIndex, cardId = frozen.Card.Id.ToString(), reason = "carte dégâts" });
             }
         }
@@ -114,6 +115,9 @@ namespace CardGame.Core
                 case CardId.ExplosionMagieEphemere:
                     int ephemeralConsumed = caster.EphemeralConsumedThisGame;
                     return (ephemeralConsumed * 2, 0);
+                case CardId.Guillotine:
+                    int weaponBase = GetWeaponBaseDamage(state, casterIndex);
+                    return (weaponBase, caster.Force * 2);
                 default: return (0, 0);
             }
         }
@@ -147,7 +151,8 @@ namespace CardGame.Core
             if (deferDamage && CardDealsDamage(cardId))
             {
                 var (baseDmg, casterForce) = GetDamageParamsForCard(cardId, casterIndex, state);
-                if (baseDmg > 0)
+                int totalDamage = baseDmg + casterForce;
+                if (totalDamage > 0)
                 {
                     pendingDamage = new PendingReactionInfo
                     {
@@ -193,6 +198,14 @@ namespace CardGame.Core
                         int ephemeralConsumed = caster.EphemeralConsumedThisGame;
                         int dmg = ephemeralConsumed * 2;
                         ApplyDamage(state, targetIndex, dmg, 0, data.Name);
+                        UnfreezeOneEquipmentIfAny(state, casterIndex);
+                    }
+                    return true;
+                case CardId.Guillotine:
+                    if (pendingDamage == null)
+                    {
+                        int weaponBase = GetWeaponBaseDamage(state, casterIndex);
+                        ApplyDamage(state, targetIndex, weaponBase, caster.Force * 2, data.Name);
                         UnfreezeOneEquipmentIfAny(state, casterIndex);
                     }
                     return true;
@@ -297,6 +310,7 @@ namespace CardGame.Core
                     if (toFreeze != null)
                     {
                         toFreeze.IsFrozen = true;
+                        toFreeze.FrozenTurnsRemaining = 2;
                         _log.Log("GlaceLocalisee", new { casterIndex, targetIndex, equipment = DeckDefinitions.GetCard(toFreeze.Card.Id).Name });
                     }
                     return false;
@@ -369,6 +383,7 @@ namespace CardGame.Core
                 if (frozen != null)
                 {
                     frozen.IsFrozen = false;
+                    frozen.FrozenTurnsRemaining = 0;
                     _log.Log("EquipmentUnfrozen", new { strikerIndex, cardId = frozen.Card.Id.ToString(), reason = "frappe briser le gel" });
                 }
                 return;

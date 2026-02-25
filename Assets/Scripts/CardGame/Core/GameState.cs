@@ -29,6 +29,8 @@ namespace CardGame.Core
         public PendingReactionInfo PendingReaction { get; set; }
         /// <summary>En phase Reaction : index du défenseur (celui qui peut jouer Parade/Contre-attaque).</summary>
         public int ReactionTargetPlayerIndex { get; set; }
+        /// <summary>True si le tour du lanceur doit se terminer après la phase Réaction (ex. Guillotine).</summary>
+        public bool EndTurnAfterReaction { get; set; }
         /// <summary>Numéro affiché du gagnant (1 ou 2), -1 si partie non terminée.</summary>
         public int WinnerDisplayNumber => WinnerIndex < 0 ? -1 : WinnerIndex + 1;
 
