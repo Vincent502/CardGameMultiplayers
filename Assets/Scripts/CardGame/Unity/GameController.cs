@@ -10,7 +10,7 @@ namespace CardGame.Unity
     /// Pilote Unity : crée la session, fait avancer le moteur, délègue au bot quand ce n'est pas le tour du joueur.
     /// Joueur 1 = index 0 (humain en solo), Joueur 2 = index 1 (bot ou P2P).
     /// </summary>
-    public class GameController : MonoBehaviour
+    public class GameController : MonoBehaviour, IGameController
     {
         [SerializeField] [FormerlySerializedAs("_humanIsPlayer0")] private bool _humanIsJoueur1 = true;
         [SerializeField] private bool _writeLogToFile = true;
@@ -25,6 +25,7 @@ namespace CardGame.Unity
         private bool _waitingForHumanAction;
 
         public GameState State => _session?.State;
+        public int LocalPlayerIndex => 0; // Solo : humain = toujours Joueur 1
         public bool IsGameOver => State != null && State.WinnerIndex >= 0;
         public bool IsHumanTurn => State != null && State.CurrentPlayer.IsHuman;
         public bool WaitingForHumanAction => _waitingForHumanAction;

@@ -84,11 +84,11 @@ Pour le **code ami** et la connexion derrière NAT sans serveur de jeu dédié :
 - **Multiplayer** : affiche un écran « Créer une partie » (affiche le code ami après création) ou « Rejoindre » (champ pour saisir le code + bouton Rejoindre). Une fois connecté, transition vers le Lobby ; après confirmation des deux, charge la **scène de jeu Multiplayer** (P2P).
 - **Quitter** : `Application.Quit()` (ou équivalent selon plateforme).
 
-### Étape 0b – Lobby (après connexion P2P)
+### Étape 0b – Lobby (après connexion P2P) **(fait)**
 
 - Écran **Lobby** : chaque joueur choisit son deck (Magicien / Guerrier) et confirme.
 - Synchroniser les choix (Host envoie le sien, Client envoie le sien ; les deux affichent « Joueur 1 : Magicien, Joueur 2 : Guerrier » une fois les deux reçus).
-- Quand **les deux ont confirmé** : le Host tire le premier joueur et la graine, envoie `StartGameParams` (firstPlayerIndex, deckJoueur1, deckJoueur2, seed), puis les deux chargent la scène de jeu et appellent `StartGame(...)` avec ces paramètres.
+- Quand **les deux ont confirmé** : le Host tire le premier joueur et la graine, envoie `StartGameParams` (firstPlayerIndex, deckJoueur1, deckJoueur2, seed), puis les deux chargent la scène de jeu et appellent `StartGame(...)` avec ces paramètres. Voir **PHASE2_ETAPE3_LOBBY_ET_JEU.md**.
 
 ### Étape 1 – Préparer le moteur pour le déterministe **(fait)**
 
@@ -102,26 +102,22 @@ Pour le **code ami** et la connexion derrière NAT sans serveur de jeu dédié :
 - Mettre en place **création de partie** : Host crée une allocation Relay, récupère un **code de join** (court, affiché à l’écran). **Rejoindre** : Client saisit le code, rejoint l’allocation Relay.
 - Une fois connectés, les deux ont un `NetworkManager` (ou équivalent) et peuvent s’envoyer des messages (RPC ou `NetworkVariable` / messages custom pour le lobby et les `GameAction`).
 
-### Étape 3 – Protocole de démarrage de partie
+### Étape 3 – Protocole de démarrage de partie **(fait)**
 
 - Définir les **messages de démarrage** :
   - Host → Client : `StartGameParams` (firstPlayerIndex, deckJoueur1, deckJoueur2, seed).
   - Les deux appellent localement `GameSession.StartGame(...)` avec les **mêmes** paramètres et la **même** graine.
-- Chaque client crée sa `GameSession` et sa `GameState` ; après cette étape, les deux ont le **même état initial**.
+- Chaque client crée sa `GameSession` et sa `GameState` ; après cette étape, les deux ont le **même état initial**. Voir **PHASE2_ETAPE3_LOBBY_ET_JEU.md**.
 
-### Étape 4 – Envoi et réception des actions
+### Étape 4 – Envoi et réception des actions **(fait)**
 
-- **Sérialiser** les `GameAction` (PlayCard, Strike, EndTurn, etc.) en messages binaires ou JSON.
-- Règle simple : **le joueur qui joue envoie son action** ; l’**autre** la reçoit et l’applique sur sa propre `GameSession` avec `SubmitAction` (ou équivalent interne).
-- Pour éviter les conflits : **un seul “maître” par phase** (celui dont c’est le tour envoie ; l’autre n’envoie que des réactions si on ajoute les Rapides plus tard). Ou bien les deux envoient et on applique dans un ordre convenu (ex. numéro de séquence).
+- **Sérialiser** les `GameAction` (PlayCard, Strike, EndTurn, etc.) en messages (NetworkActionMessage + INetworkSerializable).
+- Le joueur qui joue envoie son action (Host → ClientRpc, Client → ServerRpc) ; l’autre la reçoit et l’applique sur sa `GameSession` avec `SubmitAction`.
 
-### Étape 5 – Boucle de jeu Unity côté P2P
+### Étape 5 – Boucle de jeu Unity côté P2P **(fait)**
 
-- Adapter le **GameController** (ou un nouveau **NetworkGameController**) :
-  - Plus de `SimpleBot` pour le Joueur 2 quand en mode P2P.
-  - Quand c’est “mon” tour : je produis une action (UI) et je l’**envoie** au pair + je l’applique localement.
-  - Quand c’est “son” tour : j’**attends** de recevoir son action, puis je l’applique localement et j’avance la boucle (phases, etc.).
-- Réutiliser la **même UI** (GameUI) : elle lit `GameState` ; peu importe que l’action vienne du local ou du réseau, l’état reste cohérent si le lockstep est respecté.
+- **NetworkGameController** : même moteur que GameController, pas de bot ; quand c’est mon tour j’envoie l’action + application locale, quand c’est son tour j’attends le RPC puis j’applique.
+- **GameUI** utilise **IGameController** (GameController en Solo, NetworkGameController en P2P). Voir **PHASE2_ETAPE3_LOBBY_ET_JEU.md**.
 
 ### Étape 6 – Gestion des erreurs et déconnexions
 
@@ -134,8 +130,8 @@ Pour le **code ami** et la connexion derrière NAT sans serveur de jeu dédié :
 1. **Menu** (Solo / Multiplayer / Quitter) + chargement scène jeu en Solo.  
 2. **Moteur déterministe** (graine partagée). **(fait)**  
 3. **Netcode + Relay** : connexion par code ami, puis **Lobby** (choix deck, confirmation).  
-4. **Protocole StartGame** + chargement scène jeu en Multiplayer.  
-5. **Envoi / réception des GameAction** et boucle de jeu P2P.  
+4. **Protocole StartGame** + chargement scène jeu en Multiplayer. **(fait)**  
+5. **Envoi / réception des GameAction** et boucle de jeu P2P. **(fait)**  
 6. **Déconnexion** et retour menu si besoin.
 
 ---

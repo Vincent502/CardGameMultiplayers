@@ -9,11 +9,12 @@ namespace CardGame.Unity
 {
     /// <summary>
     /// UI minimale : PV, mana, main (boutons), Frappe, Fin de tour.
-    /// Joueur 1 = humain (index 0), Joueur 2 = adversaire (index 1).
+    /// Toujours du point de vue local : 1ère position = Moi, 2ème = Adversaire (Solo ou P2P).
     /// </summary>
     public class GameUI : MonoBehaviour
     {
-        [SerializeField] private GameController _controller;
+        [SerializeField] private MonoBehaviour _controllerMono;
+        private IGameController _controller;
         [SerializeField] private TMP_Text _textStatus;
         [SerializeField] [FormerlySerializedAs("_textPlayer0")] private TMP_Text _textJoueur1;
         [SerializeField] [FormerlySerializedAs("_textPlayer1")] private TMP_Text _textJoueur2;
@@ -36,9 +37,10 @@ namespace CardGame.Unity
 
         private void Start()
         {
-            if (_controller == null) _controller = FindObjectOfType<GameController>();
-            if (_buttonStrike != null) _buttonStrike.onClick.AddListener(() => _controller.HumanStrike());
-            if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller.HumanEndTurn());
+            _controller = _controllerMono as IGameController ?? _controllerMono?.GetComponent<IGameController>();
+            if (_controller == null) _controller = FindObjectOfType<GameController>() ?? (IGameController)FindObjectOfType<NetworkGameController>();
+            if (_buttonStrike != null) _buttonStrike.onClick.AddListener(() => _controller?.HumanStrike());
+            if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller?.HumanEndTurn());
         }
 
         private void Update()
@@ -46,17 +48,20 @@ namespace CardGame.Unity
             if (_controller?.State == null) return;
 
             var state = _controller.State;
+            int localIdx = _controller.LocalPlayerIndex;
+            int oppIdx = 1 - localIdx;
+            // 1ère position = toujours moi, 2ème = adversaire
             if (_textJoueur1 != null)
             {
-                var joueur1 = state.Players[GameState.Player1Index];
+                var me = state.Players[localIdx];
                 _textJoueur1.text =
-                    $"Joueur 1 - humain ({joueur1.DeckKind})\nPV: {joueur1.PV} Bouclier: {joueur1.Shield}\nForce: {joueur1.Force} Résistance: {joueur1.Resistance}\nMana: {joueur1.Mana} Main: {joueur1.Hand.Count}";
+                    $"Moi - Joueur {localIdx + 1} ({me.DeckKind})\nPV: {me.PV} Bouclier: {me.Shield}\nForce: {me.Force} Résistance: {me.Resistance}\nMana: {me.Mana} Main: {me.Hand.Count}";
             }
             if (_textJoueur2 != null)
             {
-                var joueur2 = state.Players[GameState.Player2Index];
+                var adv = state.Players[oppIdx];
                 _textJoueur2.text =
-                    $"Joueur 2 ({joueur2.DeckKind})\nPV: {joueur2.PV} Bouclier: {joueur2.Shield}\nForce: {joueur2.Force} Résistance: {joueur2.Resistance}\nMana: {joueur2.Mana} Main: {joueur2.Hand.Count}";
+                    $"Adversaire - Joueur {oppIdx + 1} ({adv.DeckKind})\nPV: {adv.PV} Bouclier: {adv.Shield}\nForce: {adv.Force} Résistance: {adv.Resistance}\nMana: {adv.Mana} Main: {adv.Hand.Count}";
             }
 
             // Tour actuel = 1 quand le premier joueur joue, 2 quand le second, 3 au tour suivant, etc.
@@ -68,14 +73,16 @@ namespace CardGame.Unity
 
             if (_controller.IsGameOver)
             {
-                if (_textStatus != null) _textStatus.text = $"Partie terminée. Gagnant : Joueur {state.WinnerDisplayNumber}";
+                int winnerNum = state.WinnerIndex + 1;
+                bool iWon = state.WinnerIndex == localIdx;
+                if (_textStatus != null) _textStatus.text = iWon ? $"Partie terminée. Vous avez gagné !" : $"Partie terminée. Joueur {winnerNum} a gagné.";
                 return;
             }
 
             if (_textStatus != null)
                 _textStatus.text = _controller.IsHumanTurn
                     ? "À vous de jouer."
-                    : "Tour du bot...";
+                    : "Tour de l'adversaire...";
 
             RefreshHand(state);
             RefreshEquipments(state);
@@ -165,8 +172,10 @@ namespace CardGame.Unity
 
         private void RefreshEquipments(GameState state)
         {
-            RefreshEquipmentsForPlayer(state, GameState.Player1Index, _equipmentsJoueur1Container);
-            RefreshEquipmentsForPlayer(state, GameState.Player2Index, _equipmentsJoueur2Container);
+            int localIdx = _controller.LocalPlayerIndex;
+            int oppIdx = 1 - localIdx;
+            RefreshEquipmentsForPlayer(state, localIdx, _equipmentsJoueur1Container);
+            RefreshEquipmentsForPlayer(state, oppIdx, _equipmentsJoueur2Container);
         }
 
         private void RefreshEquipmentsForPlayer(GameState state, int playerIndex, Transform container)
@@ -218,8 +227,10 @@ namespace CardGame.Unity
 
         private void RefreshEffects(GameState state)
         {
-            RefreshEffectsForPlayer(state, GameState.Player1Index, _effectsJoueur1Container);
-            RefreshEffectsForPlayer(state, GameState.Player2Index, _effectsJoueur2Container);
+            int localIdx = _controller.LocalPlayerIndex;
+            int oppIdx = 1 - localIdx;
+            RefreshEffectsForPlayer(state, localIdx, _effectsJoueur1Container);
+            RefreshEffectsForPlayer(state, oppIdx, _effectsJoueur2Container);
         }
 
         private void RefreshEffectsForPlayer(GameState state, int playerIndex, Transform container)
