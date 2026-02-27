@@ -13,5 +13,9 @@ namespace CardGame.Core
         public bool UnfreezeAttacker { get; set; }
         /// <summary>True si l'attaque vient d'une frappe (effets à la frappe à appliquer).</summary>
         public bool IsStrike { get; set; }
+        /// <summary>Nombre d'attaques de la Rune de force arcanique (2×(1+Force)). 0 si pas de rune.</summary>
+        public int RuneStrikeCount { get; set; }
+        /// <summary>True si la frappe inclut une attaque d'arme (Catalyseur/Hache). False = rune seule.</summary>
+        public bool HasWeaponAttack { get; set; }
     }
 }

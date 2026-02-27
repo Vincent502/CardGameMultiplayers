@@ -142,6 +142,21 @@ namespace CardGame.Core
             }
         }
 
+        /// <summary>Applique dégâts d'une carte + effet rune si équipée (2×(1+Force)).</summary>
+        private void ApplyCardDamageWithRune(GameState state, int targetIndex, int casterIndex, int baseDamage, int casterForce, string sourceName)
+        {
+            ApplyDamage(state, targetIndex, baseDamage, casterForce, sourceName);
+            ApplyRuneDamageIfEquipped(state, targetIndex, casterIndex, casterForce);
+        }
+
+        /// <summary>Applique 2×(1+Force) de la Rune de force arcanique si le caster l'a équipée.</summary>
+        private void ApplyRuneDamageIfEquipped(GameState state, int targetIndex, int casterIndex, int casterForce)
+        {
+            if (!HasRuneForceArcanique(state, casterIndex)) return;
+            for (int i = 0; i < 2; i++)
+                ApplyDamage(state, targetIndex, 1, casterForce, "Rune de force arcanique");
+        }
+
         /// <summary>True si la carte inflige des dégâts (susceptible d'être annulée par Parade/Contre-attaque).</summary>
         public bool CardDealsDamage(CardId cardId)
         {
@@ -189,42 +204,43 @@ namespace CardGame.Core
             switch (cardId)
             {
                 case CardId.Attaque:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 5, caster.Force, data.Name); }
+                    if (pendingDamage == null) { ApplyCardDamageWithRune(state, targetIndex, casterIndex, 5, caster.Force, data.Name); }
                     return true;
                 case CardId.AttaquePlus:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 9, caster.Force, data.Name); }
+                    if (pendingDamage == null) { ApplyCardDamageWithRune(state, targetIndex, casterIndex, 9, caster.Force, data.Name); }
                     return true;
                 case CardId.BouleDeFeu:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 15, 0, data.Name); }
+                    if (pendingDamage == null) { ApplyCardDamageWithRune(state, targetIndex, casterIndex, 15, 0, data.Name); }
                     return false;
                 case CardId.AttaqueTactique:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 2, caster.Force, data.Name); }
+                    if (pendingDamage == null) { ApplyCardDamageWithRune(state, targetIndex, casterIndex, 2, caster.Force, data.Name); }
                     ApplyShield(state, casterIndex, 1, data.Name);
                     return true;
                 case CardId.AttaqueLegere:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 3, caster.Force, data.Name); }
+                    if (pendingDamage == null) { ApplyCardDamageWithRune(state, targetIndex, casterIndex, 3, caster.Force, data.Name); }
                     ApplyShield(state, casterIndex, 2, data.Name);
                     return true;
                 case CardId.AttaqueLourde:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 7, caster.Force, data.Name); }
+                    if (pendingDamage == null) { ApplyCardDamageWithRune(state, targetIndex, casterIndex, 7, caster.Force, data.Name); }
                     ApplyShield(state, casterIndex, 4, data.Name);
                     return true;
                 case CardId.FendoireMortel:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 20, 0, data.Name); }
+                    if (pendingDamage == null) { ApplyCardDamageWithRune(state, targetIndex, casterIndex, 20, 0, data.Name); }
                     return false;
                 case CardId.ExplosionMagieEphemere:
                     if (pendingDamage == null)
                     {
                         int ephemeralConsumed = caster.EphemeralConsumedThisGame;
                         int dmg = ephemeralConsumed * 2;
-                        ApplyDamage(state, targetIndex, dmg, 0, data.Name);
+                        ApplyCardDamageWithRune(state, targetIndex, casterIndex, dmg, 0, data.Name);
                     }
                     return true;
                 case CardId.Guillotine:
                     if (pendingDamage == null)
                     {
-                        int weaponBase = GetWeaponBaseDamage(state, casterIndex);
+                        int weaponBase = GetWeaponOnlyBase(state, casterIndex);
                         ApplyDamage(state, targetIndex, weaponBase, caster.Force * 2, data.Name);
+                        ApplyRuneDamageIfEquipped(state, targetIndex, casterIndex, caster.Force);
                     }
                     return true;
                 case CardId.Defense:
@@ -394,11 +410,24 @@ namespace CardGame.Core
             }
         }
 
-        /// <summary>Applique les dégâts en attente (NoReaction).</summary>
+        /// <summary>Applique les dégâts en attente (NoReaction). Rune = 2 attaques distinctes de (1+Force).</summary>
         public void ApplyPendingReaction(GameState state, PendingReactionInfo pending)
         {
             if (pending == null) return;
-            ApplyDamage(state, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
+            if (pending.IsStrike)
+            {
+                if (pending.HasWeaponAttack)
+                    ApplyDamage(state, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
+                for (int i = 0; i < pending.RuneStrikeCount; i++)
+                    ApplyDamage(state, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
+            }
+            else
+            {
+                ApplyDamage(state, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
+                if (pending.AttackerIndex >= 0 && HasRuneForceArcanique(state, pending.AttackerIndex))
+                    for (int i = 0; i < 2; i++)
+                        ApplyDamage(state, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
+            }
             if (pending.IsStrike)
             {
                 var striker = state.Players[pending.AttackerIndex];
@@ -438,18 +467,36 @@ namespace CardGame.Core
                 ApplyDamage(state, attackerIndex, 2, 0, data.Name);
         }
 
-        /// <summary>Dégâts de base de la frappe : Catalyseur 1, Hache 5, Rune force arcanique +2. Formule finale = base + Force.</summary>
+        /// <summary>True si le joueur peut frapper (arme ou rune seule).</summary>
+        public bool CanStrike(GameState state, int playerIndex)
+        {
+            return GetWeaponOnlyBase(state, playerIndex) > 0 || HasRuneForceArcanique(state, playerIndex);
+        }
+
+        /// <summary>Dégâts de base pour CanStrike : >0 si arme ou rune. Rune seule = 2 attaques de 1+Force.</summary>
         public int GetWeaponBaseDamage(GameState state, int playerIndex)
         {
-            int baseDmg = 0;
+            int weaponBase = GetWeaponOnlyBase(state, playerIndex);
+            bool hasRune = HasRuneForceArcanique(state, playerIndex);
+            if (hasRune && weaponBase == 0) return 2;
+            if (hasRune) return weaponBase + 2;
+            return weaponBase + state.Players[playerIndex].WeaponDamageBonusThisTurn;
+        }
+
+        /// <summary>True si le joueur a la Rune de force arcanique active (2 attaques de 1+Force).</summary>
+        public bool HasRuneForceArcanique(GameState state, int playerIndex) =>
+            state.Players[playerIndex].Equipments.Any(e => e.IsActive && e.Card.Id == CardId.RuneForceArcanique);
+
+        /// <summary>Base de l'arme seule (Catalyseur 1, Hache 5), sans rune ni bonus.</summary>
+        public int GetWeaponOnlyBase(GameState state, int playerIndex)
+        {
             var player = state.Players[playerIndex];
             foreach (var eq in player.Equipments.Where(e => e.IsActive))
             {
-                if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint) baseDmg = 1;
-                if (eq.Card.Id == CardId.HacheOublie) baseDmg = 5;
-                if (eq.Card.Id == CardId.RuneForceArcanique) baseDmg += 2;
+                if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint) return 1;
+                if (eq.Card.Id == CardId.HacheOublie) return 5;
             }
-            return baseDmg + player.WeaponDamageBonusThisTurn;
+            return 0;
         }
 
         /// <summary>

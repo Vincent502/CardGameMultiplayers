@@ -115,6 +115,7 @@ namespace CardGame.Unity
         {
             string firstMeta = null;
             string gameStartLine = null;
+            string victoryLine = null;
             string lastLine = null;
             using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var sr = new StreamReader(fs))
@@ -127,9 +128,11 @@ namespace CardGame.Unity
                         if (lastLine.StartsWith("#META\t") && firstMeta == null)
                             firstMeta = lastLine.Substring(6).TrimStart();
                         if (lastLine.StartsWith("#SUMMARY\t"))
-                            firstMeta = null; // on a un résumé complet
+                            firstMeta = null;
                         if (gameStartLine == null && lastLine.Contains("\tGameStart\t"))
                             gameStartLine = lastLine;
+                        if (lastLine.Contains("\tVictory\t"))
+                            victoryLine = lastLine;
                     }
                 }
             }
@@ -144,7 +147,50 @@ namespace CardGame.Unity
                 }
             }
 
+            if (!string.IsNullOrEmpty(victoryLine))
+            {
+                var summary = ParseVictoryLine(victoryLine, firstMeta, filePath);
+                if (summary != null) return summary;
+            }
+
             return BuildSummaryFromPartial(firstMeta, gameStartLine, filePath);
+        }
+
+        private static ReportSummary ParseVictoryLine(string victoryLine, string metaJson, string filePath)
+        {
+            var parts = victoryLine.Split(new[] { '\t' }, 4);
+            if (parts.Length < 4) return null;
+            string data = parts[3];
+            string gagnant = ExtractFromData(data, "gagnant");
+            string turnCountStr = ExtractFromData(data, "turnCount");
+            int turnCount = int.TryParse(turnCountStr, out int tc) ? tc : 0;
+            string deck1 = ExtractFromData(data, "deckJoueur1");
+            string deck2 = ExtractFromData(data, "deckJoueur2");
+            if (string.IsNullOrEmpty(gagnant)) return null;
+
+            string endedAt = parts.Length >= 2 ? parts[1] : "";
+            var summary = new ReportSummary
+            {
+                FilePath = filePath,
+                Winner = gagnant,
+                TurnCount = turnCount,
+                EndedAt = endedAt,
+                DeckJoueur1 = deck1 ?? "?",
+                DeckJoueur2 = deck2 ?? "?"
+            };
+            if (!string.IsNullOrEmpty(metaJson))
+            {
+                try
+                {
+                    var m = JsonUtility.FromJson<ReportSummaryJson>(metaJson);
+                    summary.Id = m.id ?? "";
+                    summary.StartedAt = m.startedAt ?? "";
+                }
+                catch { }
+            }
+            if (string.IsNullOrEmpty(summary.Id))
+                summary.Id = Path.GetFileNameWithoutExtension(filePath);
+            return summary;
         }
 
         private static ReportSummary BuildSummaryFromPartial(string metaJson, string gameStartLine, string filePath)

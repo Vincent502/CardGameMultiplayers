@@ -503,22 +503,26 @@ namespace CardGame.Core
             return true;
         }
 
-        /// <summary>True si le joueur actuel peut encore frapper (1 frappe max par tour : arme active ou arme gelée pour briser le gel).</summary>
+        /// <summary>True si le joueur actuel peut encore frapper (1 frappe max par tour : arme active ou rune seule).</summary>
         public bool CanStrike()
         {
             if (State == null || State.WinnerIndex >= 0) return false;
             if (State.Phase != TurnPhase.Play) return false;
             if (State.CurrentPlayer.ConsecutiveStrikesThisTurn >= 1) return false;
-            var p = State.CurrentPlayer;
-            return _resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex) > 0;
+            return _resolver.CanStrike(State, State.CurrentPlayerIndex);
         }
 
         private bool TryStrike()
         {
             if (State.CurrentPlayer.ConsecutiveStrikesThisTurn >= 1) return false;
             var p = State.CurrentPlayer;
-            int baseDmg = _resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex);
-            if (baseDmg <= 0) return false;
+            if (!_resolver.CanStrike(State, State.CurrentPlayerIndex)) return false;
+
+            int weaponBase = _resolver.GetWeaponOnlyBase(State, State.CurrentPlayerIndex);
+            bool hasRune = _resolver.HasRuneForceArcanique(State, State.CurrentPlayerIndex);
+            int baseDmg = weaponBase > 0 ? weaponBase + p.WeaponDamageBonusThisTurn : 1;
+            int runeCount = hasRune ? 2 : 0;
+            bool hasWeaponAttack = weaponBase > 0;
 
             int targetIndex = 1 - State.CurrentPlayerIndex;
             State.PendingReaction = new PendingReactionInfo
@@ -529,18 +533,23 @@ namespace CardGame.Core
                 CasterForce = p.Force,
                 SourceName = "Frappe",
                 UnfreezeAttacker = false,
-                IsStrike = true
+                IsStrike = true,
+                RuneStrikeCount = runeCount,
+                HasWeaponAttack = hasWeaponAttack
             };
             State.ReactionTargetPlayerIndex = targetIndex;
             State.Phase = TurnPhase.Reaction;
             p.AttackDoneThisTurn = true;
             p.ConsecutiveStrikesThisTurn++;
+            int dmgWeapon = hasWeaponAttack ? (baseDmg + p.Force) : 0;
+            int dmgRune = runeCount * (1 + p.Force);
             _log.Log("StrikeReactionPhase", new {
                 frappeur = $"Joueur {State.CurrentPlayerIndex + 1}",
                 cible = $"Joueur {targetIndex + 1}",
                 baseDamage = baseDmg,
                 casterForce = p.Force,
-                damageTotal = baseDmg + p.Force,
+                runeStrikes = runeCount,
+                damageTotal = dmgWeapon + dmgRune,
                 turnNumber = State.GetCurrentTurnNumber()
             });
             return true;

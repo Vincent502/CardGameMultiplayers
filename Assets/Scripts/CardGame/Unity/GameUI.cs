@@ -187,7 +187,7 @@ namespace CardGame.Unity
                         rt.sizeDelta = new Vector2(120f, 40f);
                     }
                     int cost = data.Type == CardType.Equipe ? 0 : data.Cost;
-                    SetCardPrefabTexts(btn.transform, data.Name, data.Description, cost);
+                    SetCardPrefabTexts(btn.transform, data.Name, data.Description, cost, data.Type);
                     int manaCost = data.Type == CardType.Equipe ? 0 : data.Cost;
                     bool isRapide = data.Type == CardType.Rapide;
                     bool canPlay = needsReaction
@@ -276,14 +276,22 @@ namespace CardGame.Unity
             }
         }
 
-        /// <summary>Remplit les champs CardName, Description, Mana du prefab carte (recherche par nom d'enfant).</summary>
-        private void SetCardPrefabTexts(Transform cardRoot, string cardName, string description, int manaCost)
+        /// <summary>Remplit les champs CardName, Description, Mana, Type du prefab carte (recherche par nom d'enfant).</summary>
+        private void SetCardPrefabTexts(Transform cardRoot, string cardName, string description, int manaCost, CardType cardType)
         {
+            string typeLabel = GetCardTypeLabel(cardType);
             var cardNameT = cardRoot.Find("CardName");
+            var typeT = cardRoot.Find("Type");
             if (cardNameT != null)
             {
                 var t = cardNameT.GetComponent<TMP_Text>();
-                if (t != null) t.text = cardName;
+                if (t != null)
+                    t.text = typeT != null ? cardName : $"{cardName} [{typeLabel}]";
+            }
+            if (typeT != null)
+            {
+                var t = typeT.GetComponent<TMP_Text>();
+                if (t != null) t.text = typeLabel;
             }
             var descT = cardRoot.Find("Description");
             if (descT != null)
@@ -298,11 +306,25 @@ namespace CardGame.Unity
                 if (t != null) t.text = manaCost.ToString();
             }
             // Fallback : un seul label (ancien prefab)
-            if (cardNameT == null && descT == null && manaT == null)
+            if (cardNameT == null && descT == null && manaT == null && typeT == null)
             {
                 var label = cardRoot.GetComponentInChildren<TMP_Text>();
                 if (label != null)
-                    label.text = string.IsNullOrEmpty(description) ? $"{cardName} ({manaCost})" : $"{cardName} ({manaCost})\n{description}";
+                    label.text = string.IsNullOrEmpty(description)
+                        ? $"{cardName} [{typeLabel}] ({manaCost})"
+                        : $"{cardName} [{typeLabel}] ({manaCost})\n{description}";
+            }
+        }
+
+        private static string GetCardTypeLabel(CardType t)
+        {
+            switch (t)
+            {
+                case CardType.Equipe: return "Équipé";
+                case CardType.Normal: return "Normal";
+                case CardType.Ephemere: return "Éphémère";
+                case CardType.Rapide: return "Rapide";
+                default: return t.ToString();
             }
         }
 
