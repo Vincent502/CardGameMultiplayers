@@ -24,7 +24,10 @@ namespace CardGame.Unity
         [Header("Boutons")]
         [SerializeField] private Button _buttonSolo;
         [SerializeField] private Button _buttonMultiplayer;
+        [SerializeField] private Button _buttonHistorique;
         [SerializeField] private Button _buttonQuit;
+        [Header("Historique")]
+        [SerializeField] private HistoryController _historyController;
         [Header("Solo - Choix deck")]
         [SerializeField] private GameObject _panelSoloDeckSelection;
         [SerializeField] private Button _buttonDeckMagicien;
@@ -39,6 +42,7 @@ namespace CardGame.Unity
         {
             if (_buttonSolo != null) _buttonSolo.onClick.AddListener(OnSolo);
             if (_buttonMultiplayer != null) _buttonMultiplayer.onClick.AddListener(OnMultiplayer);
+            if (_buttonHistorique != null) _buttonHistorique.onClick.AddListener(OnHistorique);
             if (_buttonQuit != null) _buttonQuit.onClick.AddListener(OnQuit);
             if (_buttonDeckMagicien != null) _buttonDeckMagicien.onClick.AddListener(() => { _selectedDeck = DeckKind.Magicien; UpdateSoloDeckUI(); });
             if (_buttonDeckGuerrier != null) _buttonDeckGuerrier.onClick.AddListener(() => { _selectedDeck = DeckKind.Guerrier; UpdateSoloDeckUI(); });
@@ -86,6 +90,12 @@ namespace CardGame.Unity
             if (_panelSoloDeckSelection != null)
                 _panelSoloDeckSelection.SetActive(false);
             SceneManager.LoadScene(SceneNames.SoloBoard);
+        }
+
+        private void OnHistorique()
+        {
+            if (_historyController != null)
+                _historyController.ShowHistorique();
         }
 
         private void OnMultiplayer()

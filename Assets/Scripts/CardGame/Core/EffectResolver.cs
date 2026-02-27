@@ -29,36 +29,55 @@ namespace CardGame.Core
             var target = state.Players[targetPlayerIndex];
             if (target.InvincibleUntilNextTurn)
             {
-                _log.Log("DamageBlocked", new { targetPlayerIndex, source = sourceName, reason = "Invincible" });
+                _log.Log("DamageBlocked", new {
+                cible = $"Joueur {targetPlayerIndex + 1}",
+                source = sourceName,
+                reason = "Invincible",
+                targetPV = target.PV,
+                targetShield = target.Shield
+            });
                 return;
             }
             int damage = ComputeDamage(baseDamage, casterForce);
             int toShield = Math.Min(damage, target.Shield);
             int toPV = damage - toShield;
+            int pvAvant = target.PV;
+            int shieldAvant = target.Shield;
             target.Shield -= toShield;
             target.PV = Math.Max(0, target.PV - toPV);
-            _log.Log("DamageApplied", new { targetPlayerIndex, baseDamage, casterForce, damage, toShield, toPV, targetPV = target.PV, source = sourceName });
+            _log.Log("DamageApplied", new {
+                cible = $"Joueur {targetPlayerIndex + 1}",
+                source = sourceName,
+                baseDamage,
+                casterForce,
+                damageTotal = damage,
+                toShield,
+                toPV,
+                pvAvant,
+                pvApres = target.PV,
+                shieldAvant,
+                shieldApres = target.Shield
+            });
         }
 
-        /// <summary>Glace localisée : jouer une carte qui fait des dégâts dégèle un équipement du joueur (celui qui a joué la carte).</summary>
-        private void UnfreezeOneEquipmentIfAny(GameState state, int playerIndex)
-        {
-            var frozen = state.Players[playerIndex].Equipments.FirstOrDefault(e => e.IsFrozen);
-            if (frozen != null)
-            {
-                frozen.IsFrozen = false;
-                frozen.FrozenTurnsRemaining = 0;
-                _log.Log("EquipmentUnfrozen", new { playerIndex, cardId = frozen.Card.Id.ToString(), reason = "carte dégâts" });
-            }
-        }
+        /// <summary>Glace localisée : le gel ne se retire que par le passage des tours (2 tours du joueur propriétaire), pas par frappe ni carte dégâts.</summary>
 
         /// <summary>Ajoute du bouclier (formule Résistance).</summary>
         public void ApplyShield(GameState state, int targetPlayerIndex, int baseShield, string sourceName)
         {
             var target = state.Players[targetPlayerIndex];
             int amount = ComputeShield(baseShield, target.Resistance);
+            int shieldAvant = target.Shield;
             target.Shield += amount;
-            _log.Log("ShieldApplied", new { targetPlayerIndex, baseShield, resistance = target.Resistance, amount, source = sourceName });
+            _log.Log("ShieldApplied", new {
+                cible = $"Joueur {targetPlayerIndex + 1}",
+                source = sourceName,
+                baseShield,
+                resistance = target.Resistance,
+                amount,
+                shieldAvant,
+                shieldApres = target.Shield
+            });
         }
 
         /// <summary>Pioche n cartes (mélange cimetière si deck vide). Utilise rng pour un mélange déterministe (lockstep P2P).</summary>
@@ -71,10 +90,11 @@ namespace CardGame.Core
                 if (player.Deck.Count == 0)
                 {
                     if (player.Graveyard.Count == 0) break;
+                    int fromGraveyard = player.Graveyard.Count;
                     foreach (var c in player.Graveyard) player.Deck.Add(c);
                     player.Graveyard.Clear();
                     if (rng != null) Shuffle(player.Deck, rng);
-                    log.Log("DeckReshuffled", new { playerIndex, cardsFromGraveyard = player.Deck.Count });
+                    log.Log("DeckReshuffled", new { joueur = $"Joueur {playerIndex + 1}", cardsFromGraveyard = fromGraveyard, deckSize = player.Deck.Count });
                 }
                 if (player.Deck.Count == 0) break;
                 var card = player.Deck[player.Deck.Count - 1];
@@ -82,7 +102,7 @@ namespace CardGame.Core
                 player.Hand.Add(card);
                 drawn++;
             }
-            log.Log("Draw", new { playerIndex, requested = count, drawn, deckRemaining = player.Deck.Count });
+            log.Log("Draw", new { joueur = $"Joueur {playerIndex + 1}", requested = count, drawn, deckRemaining = player.Deck.Count, handCount = player.Hand.Count });
         }
 
         private static void Shuffle(List<CardInstance> list, Random rng)
@@ -161,7 +181,7 @@ namespace CardGame.Core
                         BaseDamage = baseDmg,
                         CasterForce = casterForce,
                         SourceName = data.Name,
-                        UnfreezeAttacker = true
+                        UnfreezeAttacker = false
                     };
                 }
             }
@@ -169,28 +189,28 @@ namespace CardGame.Core
             switch (cardId)
             {
                 case CardId.Attaque:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 5, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 5, caster.Force, data.Name); }
                     return true;
                 case CardId.AttaquePlus:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 9, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 9, caster.Force, data.Name); }
                     return true;
                 case CardId.BouleDeFeu:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 15, 0, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 15, 0, data.Name); }
                     return false;
                 case CardId.AttaqueTactique:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 2, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 2, caster.Force, data.Name); }
                     ApplyShield(state, casterIndex, 1, data.Name);
                     return true;
                 case CardId.AttaqueLegere:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 3, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 3, caster.Force, data.Name); }
                     ApplyShield(state, casterIndex, 2, data.Name);
                     return true;
                 case CardId.AttaqueLourde:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 7, caster.Force, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 7, caster.Force, data.Name); }
                     ApplyShield(state, casterIndex, 4, data.Name);
                     return true;
                 case CardId.FendoireMortel:
-                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 20, 0, data.Name); UnfreezeOneEquipmentIfAny(state, casterIndex); }
+                    if (pendingDamage == null) { ApplyDamage(state, targetIndex, 20, 0, data.Name); }
                     return false;
                 case CardId.ExplosionMagieEphemere:
                     if (pendingDamage == null)
@@ -198,7 +218,6 @@ namespace CardGame.Core
                         int ephemeralConsumed = caster.EphemeralConsumedThisGame;
                         int dmg = ephemeralConsumed * 2;
                         ApplyDamage(state, targetIndex, dmg, 0, data.Name);
-                        UnfreezeOneEquipmentIfAny(state, casterIndex);
                     }
                     return true;
                 case CardId.Guillotine:
@@ -206,7 +225,6 @@ namespace CardGame.Core
                     {
                         int weaponBase = GetWeaponBaseDamage(state, casterIndex);
                         ApplyDamage(state, targetIndex, weaponBase, caster.Force * 2, data.Name);
-                        UnfreezeOneEquipmentIfAny(state, casterIndex);
                     }
                     return true;
                 case CardId.Defense:
@@ -221,7 +239,14 @@ namespace CardGame.Core
                     caster.Force += forceBonus;
                     caster.ForceBonusValue = forceBonus;
                     caster.ForceBonusTurnsLeft = 1; // jusqu'à fin du tour
-                    _log.Log("Galvanisation", new { casterIndex, forceBonus });
+                    _log.Log("Galvanisation", new {
+                    joueur = $"Joueur {casterIndex + 1}",
+                    handCount = caster.Hand.Count,
+                    forceBonus,
+                    forceAvant = caster.Force - forceBonus,
+                    forceApres = caster.Force,
+                    duree = "jusqu'à fin du tour"
+                });
                     return true;
                 case CardId.Evaluation:
                     DrawCards(state, casterIndex, 3, _log, rng);
@@ -239,20 +264,39 @@ namespace CardGame.Core
                     return true;
                 case CardId.PositionOffensive:
                     caster.Force += 1;
-                    _log.Log("PositionOffensive", new { casterIndex });
+                    _log.Log("PositionOffensive", new {
+                    joueur = $"Joueur {casterIndex + 1}",
+                    forceAvant = caster.Force - 1,
+                    forceApres = caster.Force,
+                    bonus = 1
+                });
                     return false;
                 case CardId.PositionDefensive:
                     caster.Resistance += 1;
-                    _log.Log("PositionDefensive", new { casterIndex });
+                    _log.Log("PositionDefensive", new {
+                    joueur = $"Joueur {casterIndex + 1}",
+                    resistanceAvant = caster.Resistance - 1,
+                    resistanceApres = caster.Resistance,
+                    bonus = 1
+                });
                     return false;
                 case CardId.DisciplineEternel:
                     caster.InvincibleUntilNextTurn = true;
                     caster.HasPlayedDisciplineEternelThisGame = true;
-                    _log.Log("DisciplineEternel", new { casterIndex });
+                    _log.Log("DisciplineEternel", new {
+                    joueur = $"Joueur {casterIndex + 1}",
+                    effet = "Invincible jusqu'au prochain tour"
+                });
                     return true;
                 case CardId.SouffleEternel:
                     caster.PV = Math.Min(100, caster.PV + 15);
-                    _log.Log("SouffleEternel", new { casterIndex, heal = 15 });
+                    _log.Log("SouffleEternel", new {
+                    joueur = $"Joueur {casterIndex + 1}",
+                    pvAvant = caster.PV - 15,
+                    pvApres = caster.PV,
+                    heal = 15,
+                    toGraveyard = caster.HasPlayedDisciplineEternelThisGame
+                });
                     return caster.HasPlayedDisciplineEternelThisGame; // cimetière si Discipline jouée
                 case CardId.ArmurePsychique:
                     ApplyShield(state, casterIndex, 23, data.Name);
@@ -265,7 +309,13 @@ namespace CardGame.Core
                         TurnsRemaining = 2,
                         Value = 23
                     });
-                    _log.Log("ArmurePsychique", new { casterIndex, turns = 2 });
+                    _log.Log("ArmurePsychique", new {
+                    joueur = $"Joueur {casterIndex + 1}",
+                    shieldAvant = caster.Shield - 23,
+                    shieldApres = caster.Shield,
+                    amount = 23,
+                    dureeTours = 2
+                });
                     return false;
                 case CardId.Concentration:
                     caster.Force += 3;
@@ -273,7 +323,12 @@ namespace CardGame.Core
                     caster.ForceBonusTurnsLeft = 1;
                     caster.ResistanceBonusValue = 3;
                     caster.ResistanceBonusTurnsLeft = 2; // prochain tour
-                    _log.Log("Concentration", new { casterIndex });
+                    _log.Log("Concentration", new {
+                    joueur = $"Joueur {casterIndex + 1}",
+                    forceBonus = 3,
+                    resistanceBonus = 3,
+                    duree = "prochain tour"
+                });
                     return false;
                 case CardId.LienKarmique:
                     caster.Resistance += 3;
@@ -286,11 +341,19 @@ namespace CardGame.Core
                         TurnsRemaining = 3,
                         Value = 3
                     });
-                    _log.Log("LienKarmique", new { casterIndex, turns = 3 });
+                    _log.Log("LienKarmique", new {
+                    joueur = $"Joueur {casterIndex + 1}",
+                    resistanceBonus = 3,
+                    dureeTours = 3
+                });
                     return true;
                 case CardId.AppuisSolide:
                     caster.WeaponDamageBonusThisTurn += 1;
-                    _log.Log("AppuisSolide", new { casterIndex });
+                    _log.Log("AppuisSolide", new {
+                    joueur = $"Joueur {casterIndex + 1}",
+                    bonusDegatsArme = 1,
+                    duree = "ce tour"
+                });
                     return false;
                 case CardId.OrageDePoche:
                     state.ActiveDurationEffects.Add(new ActiveDurationEffect
@@ -302,7 +365,12 @@ namespace CardGame.Core
                         TurnsRemaining = 3,
                         Value = 1
                     });
-                    _log.Log("OrageDePoche", new { casterIndex, targetIndex, turns = 3 });
+                    _log.Log("OrageDePoche", new {
+                    lanceur = $"Joueur {casterIndex + 1}",
+                    cible = $"Joueur {targetIndex + 1}",
+                    degatsParTour = 1,
+                    dureeTours = 3
+                });
                     return false;
                 case CardId.GlaceLocalisee:
                     var targetEquipments = state.Players[targetIndex].Equipments;
@@ -311,11 +379,17 @@ namespace CardGame.Core
                     {
                         toFreeze.IsFrozen = true;
                         toFreeze.FrozenTurnsRemaining = 2;
-                        _log.Log("GlaceLocalisee", new { casterIndex, targetIndex, equipment = DeckDefinitions.GetCard(toFreeze.Card.Id).Name });
+                        _log.Log("GlaceLocalisee", new {
+                        lanceur = $"Joueur {casterIndex + 1}",
+                        cible = $"Joueur {targetIndex + 1}",
+                        equipementGele = DeckDefinitions.GetCard(toFreeze.Card.Id).Name,
+                        cardId = toFreeze.Card.Id.ToString(),
+                        duree = "2 tours du joueur propriétaire"
+                    });
                     }
                     return false;
                 default:
-                    _log.Log("EffectNotImplemented", new { cardId = cardId.ToString() });
+                    _log.Log("EffectNotImplemented", new { cardId = cardId.ToString(), carte = DeckDefinitions.GetCard(cardId).Name });
                     return data.Type == CardType.Normal;
             }
         }
@@ -325,8 +399,6 @@ namespace CardGame.Core
         {
             if (pending == null) return;
             ApplyDamage(state, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
-            if (pending.UnfreezeAttacker)
-                UnfreezeOneEquipmentIfAny(state, pending.AttackerIndex);
             if (pending.IsStrike)
             {
                 var striker = state.Players[pending.AttackerIndex];
@@ -339,7 +411,11 @@ namespace CardGame.Core
                         striker.Force += 1;
                         striker.ForceBonusValue += 1;
                         striker.ForceBonusTurnsLeft = Math.Max(striker.ForceBonusTurnsLeft, 1);
-                        _log.Log("RuneAgressivite", new { strikerIndex = pending.AttackerIndex });
+                        _log.Log("RuneAgressivite", new {
+                        joueur = $"Joueur {pending.AttackerIndex + 1}",
+                        forceBonus = 1,
+                        duree = "jusqu'à fin du tour"
+                    });
                     }
                 }
                 if (striker.ConsecutiveStrikesThisTurn == 2 && striker.Equipments.Any(e => e.IsActive && e.Card.Id == CardId.RuneProtectionOublie))
@@ -351,7 +427,13 @@ namespace CardGame.Core
         public void ResolveRapidCardEffect(GameState state, CardId cardId, int casterIndex, int attackerIndex)
         {
             var data = DeckDefinitions.GetCard(cardId);
-            _log.Log("RapidPlayed", new { cardId = cardId.ToString(), casterIndex, attackerIndex });
+            _log.Log("RapidPlayed", new {
+            carte = DeckDefinitions.GetCard(cardId).Name,
+            cardId = cardId.ToString(),
+            joueur = $"Joueur {casterIndex + 1}",
+            attaquant = $"Joueur {attackerIndex + 1}",
+            type = cardId == CardId.ContreAttaque ? "Contre-attaque" : "Parade"
+        });
             if (cardId == CardId.ContreAttaque)
                 ApplyDamage(state, attackerIndex, 2, 0, data.Name);
         }
@@ -371,23 +453,13 @@ namespace CardGame.Core
         }
 
         /// <summary>
-        /// Frappe : si seule arme gelée, un coup "brise le gel" (dégel sans dégâts). Sinon dégâts (arme + Force) + effets « à la frappe ».
+        /// Frappe : dégâts (arme + Force) + effets « à la frappe ». Le gel ne se retire que par le passage des tours.
         /// </summary>
         public void ResolveStrike(GameState state, int strikerIndex, int targetIndex)
         {
             var striker = state.Players[strikerIndex];
             int baseDmg = GetWeaponBaseDamage(state, strikerIndex);
-            if (baseDmg <= 0)
-            {
-                var frozen = striker.Equipments.FirstOrDefault(e => e.IsFrozen);
-                if (frozen != null)
-                {
-                    frozen.IsFrozen = false;
-                    frozen.FrozenTurnsRemaining = 0;
-                    _log.Log("EquipmentUnfrozen", new { strikerIndex, cardId = frozen.Card.Id.ToString(), reason = "frappe briser le gel" });
-                }
-                return;
-            }
+            if (baseDmg <= 0) return;
             ApplyDamage(state, targetIndex, baseDmg, striker.Force, "Frappe");
 
             foreach (var eq in striker.Equipments.Where(e => e.IsActive))
@@ -401,7 +473,11 @@ namespace CardGame.Core
                     striker.Force += 1;
                     striker.ForceBonusValue += 1;
                     striker.ForceBonusTurnsLeft = Math.Max(striker.ForceBonusTurnsLeft, 1);
-                    _log.Log("RuneAgressivite", new { strikerIndex });
+                    _log.Log("RuneAgressivite", new {
+                    joueur = $"Joueur {strikerIndex + 1}",
+                    forceBonus = 1,
+                    duree = "jusqu'à fin du tour"
+                });
                 }
             }
         }
@@ -429,13 +505,23 @@ namespace CardGame.Core
                     {
                         var target = state.Players[effect.TargetPlayerIndex];
                         target.Shield = Math.Max(0, target.Shield - effect.Value);
-                        _log.Log("ShieldBuffExpired", new { cardId = effect.CardId.ToString(), targetPlayerIndex = effect.TargetPlayerIndex, value = effect.Value });
+                        _log.Log("ShieldBuffExpired", new {
+                        carte = DeckDefinitions.GetCard(effect.CardId).Name,
+                        cardId = effect.CardId.ToString(),
+                        joueur = $"Joueur {effect.TargetPlayerIndex + 1}",
+                        bouclierRetire = effect.Value
+                    });
                     }
                     else if (effect.Kind == DurationEffectKind.ResistanceBuff)
                     {
                         var target = state.Players[effect.TargetPlayerIndex];
                         target.Resistance = Math.Max(0, target.Resistance - effect.Value);
-                        _log.Log("ResistanceBuffExpired", new { cardId = effect.CardId.ToString(), targetPlayerIndex = effect.TargetPlayerIndex, value = effect.Value });
+                        _log.Log("ResistanceBuffExpired", new {
+                        carte = DeckDefinitions.GetCard(effect.CardId).Name,
+                        cardId = effect.CardId.ToString(),
+                        joueur = $"Joueur {effect.TargetPlayerIndex + 1}",
+                        resistanceRetiree = effect.Value
+                    });
                     }
                     state.ActiveDurationEffects.RemoveAt(i);
                 }

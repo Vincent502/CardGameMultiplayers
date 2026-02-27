@@ -30,7 +30,7 @@ namespace CardGame.Data
                 (new CardData(CardId.Evaluation, "Evaluation", CardType.Ephemere, 1, "Pioche 3 cartes"), 2),
                 (new CardData(CardId.Attaque, "Attaque", CardType.Normal, 1, "5 dégâts"), 3),
                 (new CardData(CardId.OrageDePoche, "Orage de poche", CardType.Ephemere, 3, "1 dégât avant fin de chaque tour, 3 tours"), 2),
-                (new CardData(CardId.GlaceLocalisee, "Glace localisée", CardType.Ephemere, 1, "Gèle un équipement adverse 2 tours du joueur (ou frappe/carte dégâts pour dégeler)"), 2),
+                (new CardData(CardId.GlaceLocalisee, "Glace localisée", CardType.Ephemere, 1, "Gèle un équipement adverse pendant 2 tours du joueur (dégel uniquement par passage des tours)"), 2),
             };
         }
 

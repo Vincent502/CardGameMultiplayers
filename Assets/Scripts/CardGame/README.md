@@ -9,7 +9,7 @@ Jeu de cartes **2 joueurs** en tour par tour pour Unity (PC/Mobile). Phase 1 : *
 - **2 decks** : Magicien et Guerrier (34 cartes chacun, 4 équipements obligatoires). **Passif Guerrier** : +1 Force et +1 Résistance de base.
 - **Règles complètes** : PV, bouclier, Force, Résistance, mana, pioche, frappe (1/tour), équipements actifs à la frappe / début / fin de tour
 - **Effets à durée** : Orage de poche, Armure psychique, Lien karmique (compteur de tours, expiration)
-- **Glace localisée** : gel d’un équipement adverse, dégel par carte dégâts ou frappe « briser le gel », affichage en bleu
+- **Glace localisée** : gel d’un équipement adverse, dégel uniquement par passage des tours (2 tours du joueur), affichage en bleu
 - **Cartes Éphémère** : chaque exemplaire jouable une fois, les autres exemplaires restent disponibles
 - **IA** : bot simple (SimpleBot) pour le Joueur 2
 - **UI** : TextMeshPro, statut joueurs (Joueur 1 humain / Joueur 2), main, Frappe, Fin de tour, équipements, effets à durée
@@ -69,8 +69,8 @@ Rapport d’implémentation : `Assets/Document/RAPPORT_phase1_implementation.md`
 ## 🎮 Règles rapides
 
 - **Joueur 1** = humain (index 0), **Joueur 2** = adversaire (index 1).
-- **1 frappe par tour** ; si l’arme est gelée, la frappe peut servir à briser le gel (sans dégâts).
-- **Équipement gelé** (bleu) : se dégèle en jouant une carte qui fait des dégâts ou en utilisant Frappe pour briser le gel.
+- **1 frappe par tour** ; si l’arme est gelée, la frappe n'est pas possible (dégel uniquement après 2 tours du joueur).
+- **Équipement gelé** (bleu) : se dégèle uniquement après 2 tours du joueur propriétaire (pas par frappe ni carte dégâts).
 - **Éphémère** : chaque exemplaire n’est jouable qu’une fois ; les autres exemplaires restent jouables.
 - **Magicien** : passif +1 mana à chaque carte Éphémère jouée.
 - **Guerrier** : passif +1 Force et +1 Résistance de base (dès le début de partie).

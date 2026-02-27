@@ -180,7 +180,8 @@ namespace CardGame.Unity
                         }
                         break;
                     case StepResult.GameOver:
-                        yield break;
+                            _logger?.FinalizeReport(State);
+                            yield break;
                 }
             }
         }

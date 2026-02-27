@@ -6,5 +6,7 @@ namespace CardGame.Core
     public interface IGameLogger
     {
         void Log(string eventType, object data);
+        /// <summary>Finalise le rapport quand la partie se termine (pour l'historique).</summary>
+        void FinalizeReport(GameState state);
     }
 }

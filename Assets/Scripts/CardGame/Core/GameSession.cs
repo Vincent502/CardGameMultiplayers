@@ -51,7 +51,13 @@ namespace CardGame.Core
             BuildDecks(GameState.Player1Index, deckJoueur1);
             BuildDecks(GameState.Player2Index, deckJoueur2);
 
-            _log.Log("GameStart", new { firstPlayerIndex, deckJoueur1 = deckJoueur1.ToString(), deckJoueur2 = deckJoueur2.ToString(), seed });
+            _log.Log("GameStart", new {
+                firstPlayer = $"Joueur {firstPlayerIndex + 1}",
+                deckJoueur1 = deckJoueur1.ToString(),
+                deckJoueur2 = deckJoueur2.ToString(),
+                seed,
+                pvInitial = 100
+            });
         }
 
         private void BuildDecks(int playerIndex, DeckKind deckKind)
@@ -155,7 +161,13 @@ namespace CardGame.Core
                 {
                     eq.IsFrozen = false;
                     eq.FrozenTurnsRemaining = 0;
-                    _log.Log("EquipmentUnfrozen", new { playerIndex = State.CurrentPlayerIndex, cardId = eq.Card.Id.ToString(), reason = "2 tours du joueur écoulés" });
+                    _log.Log("EquipmentUnfrozen", new {
+                    joueur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                    equipement = DeckDefinitions.GetCard(eq.Card.Id).Name,
+                    cardId = eq.Card.Id.ToString(),
+                    reason = "2 tours du joueur écoulés",
+                    turnNumber = State.GetCurrentTurnNumber()
+                });
                 }
             }
             p.CardsDiscardedThisTurn.Clear();
@@ -169,7 +181,13 @@ namespace CardGame.Core
             p.ConsecutiveStrikesThisTurn = 0;
             p.HasPlayedRepositionnementThisTurn = false;
             State.EndTurnAfterReaction = false;
-            _log.Log("StartTurn", new { playerIndex = State.CurrentPlayerIndex, turnNumber = State.GetCurrentTurnNumber(), discarded = p.CardsDiscardedThisTurn.Count });
+            _log.Log("StartTurn", new {
+                joueur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                turnNumber = State.GetCurrentTurnNumber(),
+                turnCount = State.TurnCount,
+                discarded = p.CardsDiscardedThisTurn.Count,
+                deckKind = p.DeckKind.ToString()
+            });
             State.Phase = TurnPhase.ResolveStartOfTurn;
         }
 
@@ -187,7 +205,13 @@ namespace CardGame.Core
                         break;
                     case CardId.RuneEnduranceOublie:
                         p.PV = Math.Min(100, p.PV + 3);
-                        _log.Log("RuneEndurance", new { playerIndex = State.CurrentPlayerIndex });
+                        _log.Log("RuneEndurance", new {
+                        joueur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                        pvAvant = p.PV - 3,
+                        pvApres = p.PV,
+                        heal = 3,
+                        turnNumber = State.GetCurrentTurnNumber()
+                    });
                         break;
                 }
             }
@@ -204,10 +228,16 @@ namespace CardGame.Core
                 if (p.Deck.Count == 0)
                 {
                     if (p.Graveyard.Count == 0) break;
+                    int fromGraveyard = p.Graveyard.Count;
                     p.Deck.AddRange(p.Graveyard);
                     p.Graveyard.Clear();
                     Shuffle(p.Deck);
-                    _log.Log("DeckReshuffled", new { playerIndex = State.CurrentPlayerIndex });
+                    _log.Log("DeckReshuffled", new {
+                        joueur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                        cardsFromGraveyard = fromGraveyard,
+                        deckSize = p.Deck.Count,
+                        turnNumber = State.GetCurrentTurnNumber()
+                    });
                 }
                 if (p.Deck.Count == 0) break;
                 var card = p.Deck[p.Deck.Count - 1];
@@ -216,7 +246,15 @@ namespace CardGame.Core
                 drawn++;
             }
             p.Mana = State.GetManaThisTurn();
-            _log.Log("Draw", new { playerIndex = State.CurrentPlayerIndex, requested = drawCount, drawn, mana = p.Mana });
+            _log.Log("Draw", new {
+                joueur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                requested = drawCount,
+                drawn,
+                deckRemaining = p.Deck.Count,
+                handCount = p.Hand.Count,
+                mana = p.Mana,
+                turnNumber = State.GetCurrentTurnNumber()
+            });
             State.Phase = TurnPhase.Play;
         }
 
@@ -235,11 +273,16 @@ namespace CardGame.Core
                 {
                     p.Force = Math.Max(0, p.Force - p.ForceBonusValue);
                     p.ForceBonusValue = 0;
-                    _log.Log("ForceBonusExpired", new { playerIndex = State.CurrentPlayerIndex });
+                    _log.Log("ForceBonusExpired", new {
+                    joueur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                    forceRetiree = p.ForceBonusValue,
+                    forceApres = p.Force,
+                    turnNumber = State.GetCurrentTurnNumber()
+                });
                 }
             }
             _resolver.ResolveEndOfTurnEffects(State, State.CurrentPlayerIndex);
-            // Glace localisée : dégel par carte dégâts, frappe "brise le gel", ou après 2 tours du joueur propriétaire.
+            // Glace localisée : dégel uniquement après 2 tours du joueur propriétaire (pas par frappe ni carte dégâts).
             State.Phase = TurnPhase.EndTurn;
         }
 
@@ -248,7 +291,14 @@ namespace CardGame.Core
             var p = State.CurrentPlayer;
             p.ManaReservedForReaction = p.Mana;
             p.WeaponDamageBonusThisTurn = 0;
-            _log.Log("EndTurn", new { playerIndex = State.CurrentPlayerIndex, manaReserved = p.Mana });
+            _log.Log("EndTurn", new {
+                joueur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                manaReserved = p.Mana,
+                pv = p.PV,
+                shield = p.Shield,
+                handCount = p.Hand.Count,
+                turnNumber = State.GetCurrentTurnNumber()
+            });
             State.TurnCount++;
             State.CurrentPlayerIndex = 1 - State.CurrentPlayerIndex;
             State.Phase = TurnPhase.StartTurn;
@@ -336,7 +386,14 @@ namespace CardGame.Core
                 if (p.DeckKind == DeckKind.Magicien)
                 {
                     p.Mana += 1;
-                    _log.Log("PassifMagicien", new { playerIndex = State.CurrentPlayerIndex, ephemeralConsumedThisRound = p.EphemeralConsumedThisRound, manaRecovered = 1 });
+                    _log.Log("PassifMagicien", new {
+                    joueur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                    ephemeralConsumedThisRound = p.EphemeralConsumedThisRound,
+                    manaRecovered = 1,
+                    manaAvant = p.Mana - 1,
+                    manaApres = p.Mana,
+                    turnNumber = State.GetCurrentTurnNumber()
+                });
                 }
             }
 
@@ -347,14 +404,30 @@ namespace CardGame.Core
                 State.Phase = TurnPhase.Reaction;
                 if (card.Id == CardId.Guillotine)
                     State.EndTurnAfterReaction = true;
-                _log.Log("ReactionPhase", new { attackerIndex = State.CurrentPlayerIndex, defenderIndex = targetIndex });
+                _log.Log("ReactionPhase", new {
+                attaquant = $"Joueur {State.CurrentPlayerIndex + 1}",
+                defenseur = $"Joueur {targetIndex + 1}",
+                source = data.Name,
+                cardId = card.Id.ToString(),
+                turnNumber = State.GetCurrentTurnNumber()
+            });
             }
             else if (card.Id == CardId.Guillotine)
             {
                 State.Phase = TurnPhase.ResolveEndOfTurn;
             }
 
-            _log.Log("PlayCard", new { playerIndex = a.PlayerIndex, card = data.Name, handIndex = a.HandIndex });
+            _log.Log("PlayCard", new {
+                joueur = $"Joueur {a.PlayerIndex + 1}",
+                carte = data.Name,
+                cardId = card.Id.ToString(),
+                handIndex = a.HandIndex,
+                manaApres = p.Mana,
+                handCount = p.Hand.Count,
+                cible = $"Joueur {targetIndex + 1}",
+                toGraveyard,
+                turnNumber = State.GetCurrentTurnNumber()
+            });
             CheckVictory();
             return true;
         }
@@ -378,7 +451,13 @@ namespace CardGame.Core
             State.PendingReaction = null;
             State.Phase = State.EndTurnAfterReaction ? TurnPhase.ResolveEndOfTurn : TurnPhase.Play;
             State.EndTurnAfterReaction = false;
-            _log.Log("PlayRapid", new { playerIndex = a.PlayerIndex, card = data.Name });
+            _log.Log("PlayRapid", new {
+                joueur = $"Joueur {a.PlayerIndex + 1}",
+                carte = data.Name,
+                cardId = card.Id.ToString(),
+                type = "Parade ou Contre-attaque",
+                turnNumber = State.GetCurrentTurnNumber()
+            });
             CheckVictory();
             return true;
         }
@@ -386,11 +465,19 @@ namespace CardGame.Core
         private bool TryNoReaction()
         {
             if (State.Phase != TurnPhase.Reaction || State.PendingReaction == null) return false;
-            _resolver.ApplyPendingReaction(State, State.PendingReaction);
+            var pending = State.PendingReaction;
+            _resolver.ApplyPendingReaction(State, pending);
             State.PendingReaction = null;
             State.Phase = State.EndTurnAfterReaction ? TurnPhase.ResolveEndOfTurn : TurnPhase.Play;
             State.EndTurnAfterReaction = false;
-            _log.Log("NoReaction", new { });
+            _log.Log("NoReaction", new {
+                defenseur = $"Joueur {State.ReactionTargetPlayerIndex + 1}",
+                attaquant = $"Joueur {pending.AttackerIndex + 1}",
+                source = pending.SourceName,
+                baseDamage = pending.BaseDamage,
+                casterForce = pending.CasterForce,
+                turnNumber = State.GetCurrentTurnNumber()
+            });
             CheckVictory();
             return true;
         }
@@ -406,7 +493,13 @@ namespace CardGame.Core
             p.Hand.RemoveAt(idx);
             p.Deck.Add(putBack);
             _pendingDivinationChoice = false;
-            _log.Log("DivinationPutBack", new { playerIndex = a.PlayerIndex, putBackIndex = a.PutBackIndex, card = DeckDefinitions.GetCard(putBack.Id).Name });
+            _log.Log("DivinationPutBack", new {
+                joueur = $"Joueur {a.PlayerIndex + 1}",
+                putBackIndex = a.PutBackIndex,
+                carteRemise = DeckDefinitions.GetCard(putBack.Id).Name,
+                cardId = putBack.Id.ToString(),
+                turnNumber = State.GetCurrentTurnNumber()
+            });
             return true;
         }
 
@@ -417,7 +510,7 @@ namespace CardGame.Core
             if (State.Phase != TurnPhase.Play) return false;
             if (State.CurrentPlayer.ConsecutiveStrikesThisTurn >= 1) return false;
             var p = State.CurrentPlayer;
-            return _resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex) > 0 || p.Equipments.Any(e => e.IsFrozen);
+            return _resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex) > 0;
         }
 
         private bool TryStrike()
@@ -425,17 +518,7 @@ namespace CardGame.Core
             if (State.CurrentPlayer.ConsecutiveStrikesThisTurn >= 1) return false;
             var p = State.CurrentPlayer;
             int baseDmg = _resolver.GetWeaponBaseDamage(State, State.CurrentPlayerIndex);
-            if (baseDmg <= 0)
-            {
-                var frozen = p.Equipments.FirstOrDefault(e => e.IsFrozen);
-                if (frozen != null)
-                {
-                    frozen.IsFrozen = false;
-                    frozen.FrozenTurnsRemaining = 0;
-                    _log.Log("EquipmentUnfrozen", new { playerIndex = State.CurrentPlayerIndex, cardId = frozen.Card.Id.ToString(), reason = "frappe briser le gel" });
-                }
-                return true;
-            }
+            if (baseDmg <= 0) return false;
 
             int targetIndex = 1 - State.CurrentPlayerIndex;
             State.PendingReaction = new PendingReactionInfo
@@ -452,14 +535,24 @@ namespace CardGame.Core
             State.Phase = TurnPhase.Reaction;
             p.AttackDoneThisTurn = true;
             p.ConsecutiveStrikesThisTurn++;
-            _log.Log("StrikeReactionPhase", new { strikerIndex = State.CurrentPlayerIndex, defenderIndex = targetIndex });
+            _log.Log("StrikeReactionPhase", new {
+                frappeur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                cible = $"Joueur {targetIndex + 1}",
+                baseDamage = baseDmg,
+                casterForce = p.Force,
+                damageTotal = baseDmg + p.Force,
+                turnNumber = State.GetCurrentTurnNumber()
+            });
             return true;
         }
 
         private bool TryEndTurn()
         {
             State.Phase = TurnPhase.ResolveEndOfTurn;
-            _log.Log("EndTurnRequested", new { playerIndex = State.CurrentPlayerIndex });
+            _log.Log("EndTurnRequested", new {
+                joueur = $"Joueur {State.CurrentPlayerIndex + 1}",
+                turnNumber = State.GetCurrentTurnNumber()
+            });
             return true;
         }
 
@@ -469,7 +562,13 @@ namespace CardGame.Core
                 if (State.Players[i].PV <= 0)
                 {
                     State.WinnerIndex = i == GameState.Player1Index ? GameState.Player2Index : GameState.Player1Index;
-                    _log.Log("Victory", new { winnerIndex = State.WinnerIndex });
+                    _log.Log("Victory", new {
+                gagnant = $"Joueur {State.WinnerIndex + 1}",
+                winnerIndex = State.WinnerIndex,
+                turnCount = State.TurnCount,
+                deckJoueur1 = State.Players[0].DeckKind.ToString(),
+                deckJoueur2 = State.Players[1].DeckKind.ToString()
+            });
                 }
         }
     }

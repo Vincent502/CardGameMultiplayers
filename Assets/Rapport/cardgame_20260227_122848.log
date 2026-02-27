@@ -1,0 +1,7 @@
+#META	{"id":"cardgame_20260227_122848","startedAt":"2026-02-27T11:28:48.1581580Z"}
+1	2026-02-27T11:28:48.1651846Z	GameStart	{ firstPlayer = Joueur 1, deckJoueur1 = Magicien, deckJoueur2 = Guerrier, seed = 445061671, pvInitial = 100 }
+2	2026-02-27T11:28:48.1691913Z	StartTurn	{ joueur = Joueur 1, turnNumber = 1, turnCount = 0, discarded = 0, deckKind = Magicien }
+3	2026-02-27T11:28:48.2402122Z	Draw	{ joueur = Joueur 1, requested = 3, drawn = 3, deckRemaining = 27, handCount = 3, mana = 1, turnNumber = 1 }
+4	2026-02-27T11:28:57.0417693Z	StrikeReactionPhase	{ frappeur = Joueur 1, cible = Joueur 2, baseDamage = 1, casterForce = 0, damageTotal = 1, turnNumber = 1 }
+5	2026-02-27T11:28:57.0459097Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 0, toPV = 1, pvAvant = 100, pvApres = 99, shieldAvant = 0, shieldApres = 0 }
+6	2026-02-27T11:28:57.0469095Z	ShieldApplied	{ cible = Joueur 1, source = Catalyseur arcanique restreint, baseShield = 1, resistance = 0, amount = 1, shieldAvant = 0, shieldApres = 1 }
