@@ -13,11 +13,18 @@ namespace CardGame.Unity
     {
         public static class SceneNames
         {
-            public const string Menu = "Menu";
-            public const string SoloBoard = "SoloBoard";
-            public const string Lobby = "Lobby";
-            public const string MultiplayeurBoard = "MultiplayeurBoard";
+            public static bool IsAndroid { get; private set; }
+            public static void SetAndroidMode(bool value) => IsAndroid = value;
+
+            public static string Menu => IsAndroid ? "Androide_Menu" : "Menu";
+            public static string SoloBoard => IsAndroid ? "Androide_SoloBoard" : "SoloBoard";
+            public static string Lobby => IsAndroid ? "Androide_Lobby" : "Lobby";
+            public static string MultiplayeurBoard => IsAndroid ? "Androide_MultiplayeurBoard" : "MultiplayeurBoard";
         }
+
+        [Header("Plateforme")]
+        [SerializeField] [Tooltip("Si true, charge les scènes Android (Androide_Menu, Androide_SoloBoard, etc.). Cochez pour la build Android.")]
+        private bool _android;
 
         [Header("Menu principal")]
         [SerializeField] private GameObject _panelMainMenu;
@@ -37,6 +44,11 @@ namespace CardGame.Unity
         [SerializeField] private TMP_Text _textSoloDeckStatus;
 
         private DeckKind _selectedDeck = DeckKind.Magicien;
+
+        private void Awake()
+        {
+            SceneNames.SetAndroidMode(_android);
+        }
 
         private void Start()
         {

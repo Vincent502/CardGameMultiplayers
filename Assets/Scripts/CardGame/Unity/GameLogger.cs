@@ -6,7 +6,7 @@ using UnityEngine;
 namespace CardGame.Unity
 {
     /// <summary>
-    /// Implémentation du logger : Debug.Log + fichier dans Assets/Rapport pour l'historique des parties.
+    /// Implémentation du logger : Debug.Log + fichier dans persistentDataPath/Rapport (compatible Windows et mobile).
     /// </summary>
     public class GameLogger : IGameLogger
     {
@@ -22,7 +22,7 @@ namespace CardGame.Unity
 
             if (writeToFile)
             {
-                string rapportDir = Path.Combine(Application.dataPath, "Rapport");
+                string rapportDir = Path.Combine(Application.persistentDataPath, "Rapport");
                 try
                 {
                     if (!Directory.Exists(rapportDir))

@@ -6,11 +6,11 @@ using UnityEngine;
 namespace CardGame.Unity
 {
     /// <summary>
-    /// Gère les rapports de parties sauvegardés dans Assets/Rapport pour l'historique.
+    /// Gère les rapports de parties dans persistentDataPath/Rapport (compatible Windows et mobile).
     /// </summary>
     public static class GameReportManager
     {
-        private static string RapportPath => Path.Combine(Application.dataPath, "Rapport");
+        private static string RapportPath => Path.Combine(Application.persistentDataPath, "Rapport");
 
         /// <summary>Résumé d'une partie pour l'affichage dans la liste historique.</summary>
         [Serializable]
