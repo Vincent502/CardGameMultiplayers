@@ -49,7 +49,10 @@ namespace CardGame.Unity
         {
             if (Instance == this) Instance = null;
             if (NetworkManager.Singleton != null)
+            {
                 NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
+                NetworkManager.Singleton.OnConnectionEvent -= OnConnectionEvent;
+            }
         }
 
         private void Start()
@@ -87,7 +90,10 @@ namespace CardGame.Unity
             _hasPendingRemoteAction = false;
             OpponentDisconnected = false;
             if (NetworkManager.Singleton != null)
+            {
                 NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
+                NetworkManager.Singleton.OnConnectionEvent += OnConnectionEvent;
+            }
             StartCoroutine(RunGameLoop());
         }
 
@@ -100,16 +106,46 @@ namespace CardGame.Unity
                 OpponentDisconnected = true;
         }
 
+        private void OnConnectionEvent(NetworkManager nm, ConnectionEventData data)
+        {
+            // OnConnectionEvent est plus fiable qu'OnClientDisconnectCallback (notamment avec Relay/Android).
+            switch (data.EventType)
+            {
+                case ConnectionEvent.ClientDisconnected:
+                    if (nm.IsHost && data.ClientId != nm.LocalClientId)
+                        OpponentDisconnected = true;
+                    else if (!nm.IsHost)
+                        OpponentDisconnected = true; // Client : perte de connexion au Host
+                    break;
+                case ConnectionEvent.PeerDisconnected:
+                    OpponentDisconnected = true; // Host ou Client : l'autre joueur s'est déconnecté
+                    break;
+            }
+        }
+
         private void Update()
         {
             // Client : récupérer la référence au GameNetworkBehaviour une fois répliqué par le Host
             if (_gameNetwork == null && NetworkManager.Singleton != null && !NetworkManager.Singleton.IsHost)
                 _gameNetwork = FindFirstObjectByType<GameNetworkBehaviour>();
+
+            // Fallback : si OnConnectionEvent ne se déclenche pas (ex. fermeture brutale Android),
+            // vérifier périodiquement le nombre de clients connectés.
+            if (!OpponentDisconnected && NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            {
+                if (NetworkManager.Singleton.IsHost)
+                {
+                    if (NetworkManager.Singleton.ConnectedClientsIds.Count < 2)
+                        OpponentDisconnected = true;
+                }
+                else if (!NetworkManager.Singleton.IsConnectedClient)
+                    OpponentDisconnected = true;
+            }
         }
 
         private IEnumerator RunGameLoop()
         {
-            while (!IsGameOver)
+            while (!IsGameOver && !OpponentDisconnected)
             {
                 _lastStepResult = _session.Step();
 

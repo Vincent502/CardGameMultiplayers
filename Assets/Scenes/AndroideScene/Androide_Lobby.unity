@@ -2339,7 +2339,7 @@ GameObject:
   - component: {fileID: 1360325363}
   - component: {fileID: 1360325362}
   m_Layer: 5
-  m_Name: Panel
+  m_Name: PanelDeckSelection
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2867,6 +2867,7 @@ MonoBehaviour:
     Address: 127.0.0.1
     Port: 7777
     ServerListenAddress: 127.0.0.1
+    ClientBindPort: 0
   DebugSimulator:
     PacketDelayMS: 0
     PacketJitterMS: 0
