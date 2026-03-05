@@ -78,3 +78,8 @@ crashlytics-build.properties
 
 # Document folder (not pushed)
 Assets/Document/
+Assets/Document.meta
+
+# Rapports de parties (générés automatiquement)
+Assets/Rapport/cardgame_*.log
+Assets/Rapport/cardgame_*.log.meta
