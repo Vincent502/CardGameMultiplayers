@@ -34,7 +34,8 @@ namespace CardGame.Core
                 source = sourceName,
                 reason = "Invincible",
                 targetPV = target.PV,
-                targetShield = target.Shield
+                targetShield = target.Shield,
+                turnNumber = state.GetCurrentTurnNumber()
             });
                 return;
             }
@@ -56,7 +57,8 @@ namespace CardGame.Core
                 pvAvant,
                 pvApres = target.PV,
                 shieldAvant,
-                shieldApres = target.Shield
+                shieldApres = target.Shield,
+                turnNumber = state.GetCurrentTurnNumber()
             });
         }
 
@@ -76,7 +78,8 @@ namespace CardGame.Core
                 resistance = target.Resistance,
                 amount,
                 shieldAvant,
-                shieldApres = target.Shield
+                shieldApres = target.Shield,
+                turnNumber = state.GetCurrentTurnNumber()
             });
         }
 
@@ -94,7 +97,7 @@ namespace CardGame.Core
                     foreach (var c in player.Graveyard) player.Deck.Add(c);
                     player.Graveyard.Clear();
                     if (rng != null) Shuffle(player.Deck, rng);
-                    log.Log("DeckReshuffled", new { joueur = $"Joueur {playerIndex + 1}", cardsFromGraveyard = fromGraveyard, deckSize = player.Deck.Count });
+                    log.Log("DeckReshuffled", new { joueur = $"Joueur {playerIndex + 1}", cardsFromGraveyard = fromGraveyard, deckSize = player.Deck.Count, turnNumber = state.GetCurrentTurnNumber() });
                 }
                 if (player.Deck.Count == 0) break;
                 var card = player.Deck[player.Deck.Count - 1];
@@ -102,7 +105,7 @@ namespace CardGame.Core
                 player.Hand.Add(card);
                 drawn++;
             }
-            log.Log("Draw", new { joueur = $"Joueur {playerIndex + 1}", requested = count, drawn, deckRemaining = player.Deck.Count, handCount = player.Hand.Count });
+            log.Log("Draw", new { joueur = $"Joueur {playerIndex + 1}", requested = count, drawn, deckRemaining = player.Deck.Count, handCount = player.Hand.Count, turnNumber = state.GetCurrentTurnNumber() });
         }
 
         private static void Shuffle(List<CardInstance> list, Random rng)
@@ -261,7 +264,8 @@ namespace CardGame.Core
                     forceBonus,
                     forceAvant = caster.Force - forceBonus,
                     forceApres = caster.Force,
-                    duree = "jusqu'à fin du tour"
+                    duree = "jusqu'à fin du tour",
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return true;
                 case CardId.Evaluation:
@@ -284,7 +288,8 @@ namespace CardGame.Core
                     joueur = $"Joueur {casterIndex + 1}",
                     forceAvant = caster.Force - 1,
                     forceApres = caster.Force,
-                    bonus = 1
+                    bonus = 1,
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return false;
                 case CardId.PositionDefensive:
@@ -293,7 +298,8 @@ namespace CardGame.Core
                     joueur = $"Joueur {casterIndex + 1}",
                     resistanceAvant = caster.Resistance - 1,
                     resistanceApres = caster.Resistance,
-                    bonus = 1
+                    bonus = 1,
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return false;
                 case CardId.DisciplineEternel:
@@ -301,7 +307,8 @@ namespace CardGame.Core
                     caster.HasPlayedDisciplineEternelThisGame = true;
                     _log.Log("DisciplineEternel", new {
                     joueur = $"Joueur {casterIndex + 1}",
-                    effet = "Invincible jusqu'au prochain tour"
+                    effet = "Invincible jusqu'au prochain tour",
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return true;
                 case CardId.SouffleEternel:
@@ -311,7 +318,8 @@ namespace CardGame.Core
                     pvAvant = caster.PV - 15,
                     pvApres = caster.PV,
                     heal = 15,
-                    toGraveyard = caster.HasPlayedDisciplineEternelThisGame
+                    toGraveyard = caster.HasPlayedDisciplineEternelThisGame,
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return caster.HasPlayedDisciplineEternelThisGame; // cimetière si Discipline jouée
                 case CardId.ArmurePsychique:
@@ -330,7 +338,8 @@ namespace CardGame.Core
                     shieldAvant = caster.Shield - 23,
                     shieldApres = caster.Shield,
                     amount = 23,
-                    dureeTours = 2
+                    dureeTours = 2,
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return false;
                 case CardId.Concentration:
@@ -343,7 +352,8 @@ namespace CardGame.Core
                     joueur = $"Joueur {casterIndex + 1}",
                     forceBonus = 3,
                     resistanceBonus = 3,
-                    duree = "prochain tour"
+                    duree = "prochain tour",
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return false;
                 case CardId.LienKarmique:
@@ -360,7 +370,8 @@ namespace CardGame.Core
                     _log.Log("LienKarmique", new {
                     joueur = $"Joueur {casterIndex + 1}",
                     resistanceBonus = 3,
-                    dureeTours = 3
+                    dureeTours = 3,
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return true;
                 case CardId.AppuisSolide:
@@ -368,7 +379,8 @@ namespace CardGame.Core
                     _log.Log("AppuisSolide", new {
                     joueur = $"Joueur {casterIndex + 1}",
                     bonusDegatsArme = 1,
-                    duree = "ce tour"
+                    duree = "ce tour",
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return false;
                 case CardId.OrageDePoche:
@@ -385,7 +397,8 @@ namespace CardGame.Core
                     lanceur = $"Joueur {casterIndex + 1}",
                     cible = $"Joueur {targetIndex + 1}",
                     degatsParTour = 1,
-                    dureeTours = 3
+                    dureeTours = 3,
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                     return false;
                 case CardId.GlaceLocalisee:
@@ -400,12 +413,13 @@ namespace CardGame.Core
                         cible = $"Joueur {targetIndex + 1}",
                         equipementGele = DeckDefinitions.GetCard(toFreeze.Card.Id).Name,
                         cardId = toFreeze.Card.Id.ToString(),
-                        duree = "2 tours du joueur propriétaire"
+                        duree = "2 tours du joueur propriétaire",
+                        turnNumber = state.GetCurrentTurnNumber()
                     });
                     }
                     return false;
                 default:
-                    _log.Log("EffectNotImplemented", new { cardId = cardId.ToString(), carte = DeckDefinitions.GetCard(cardId).Name });
+                    _log.Log("EffectNotImplemented", new { cardId = cardId.ToString(), carte = DeckDefinitions.GetCard(cardId).Name, turnNumber = state.GetCurrentTurnNumber() });
                     return data.Type == CardType.Normal;
             }
         }
@@ -443,7 +457,8 @@ namespace CardGame.Core
                         _log.Log("RuneAgressivite", new {
                         joueur = $"Joueur {pending.AttackerIndex + 1}",
                         forceBonus = 1,
-                        duree = "jusqu'à fin du tour"
+                        duree = "jusqu'à fin du tour",
+                        turnNumber = state.GetCurrentTurnNumber()
                     });
                     }
                 }
@@ -461,7 +476,8 @@ namespace CardGame.Core
             cardId = cardId.ToString(),
             joueur = $"Joueur {casterIndex + 1}",
             attaquant = $"Joueur {attackerIndex + 1}",
-            type = cardId == CardId.ContreAttaque ? "Contre-attaque" : "Parade"
+            type = cardId == CardId.ContreAttaque ? "Contre-attaque" : "Parade",
+            turnNumber = state.GetCurrentTurnNumber()
         });
             if (cardId == CardId.ContreAttaque)
                 ApplyDamage(state, attackerIndex, 2, 0, data.Name);
@@ -523,7 +539,8 @@ namespace CardGame.Core
                     _log.Log("RuneAgressivite", new {
                     joueur = $"Joueur {strikerIndex + 1}",
                     forceBonus = 1,
-                    duree = "jusqu'à fin du tour"
+                    duree = "jusqu'à fin du tour",
+                    turnNumber = state.GetCurrentTurnNumber()
                 });
                 }
             }
@@ -556,7 +573,8 @@ namespace CardGame.Core
                         carte = DeckDefinitions.GetCard(effect.CardId).Name,
                         cardId = effect.CardId.ToString(),
                         joueur = $"Joueur {effect.TargetPlayerIndex + 1}",
-                        bouclierRetire = effect.Value
+                        bouclierRetire = effect.Value,
+                        turnNumber = state.GetCurrentTurnNumber()
                     });
                     }
                     else if (effect.Kind == DurationEffectKind.ResistanceBuff)
@@ -567,7 +585,8 @@ namespace CardGame.Core
                         carte = DeckDefinitions.GetCard(effect.CardId).Name,
                         cardId = effect.CardId.ToString(),
                         joueur = $"Joueur {effect.TargetPlayerIndex + 1}",
-                        resistanceRetiree = effect.Value
+                        resistanceRetiree = effect.Value,
+                        turnNumber = state.GetCurrentTurnNumber()
                     });
                     }
                     state.ActiveDurationEffects.RemoveAt(i);

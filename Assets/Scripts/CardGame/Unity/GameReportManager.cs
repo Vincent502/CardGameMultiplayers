@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace CardGame.Unity
@@ -40,8 +41,33 @@ namespace CardGame.Unity
         {
             public int Seq;
             public string Time;
+            public int Turn;
             public string Event;
             public string Data;
+
+            /// <summary>Convertit en ActivityRecord avec détails parsés.</summary>
+            public ActivityRecord ToActivityRecord()
+            {
+                var record = new ActivityRecord
+                {
+                    Seq = Seq,
+                    Time = Time,
+                    Turn = Turn,
+                    EventType = Event
+                };
+                record.Detail = ParseActivityDetail(Data);
+                return record;
+            }
+        }
+
+        /// <summary>Groupe d'événements d'un même tour (modèle timeline).</summary>
+        [Serializable]
+        public class TurnGroup
+        {
+            public int TurnIndex;
+            public string Joueur;
+            public int TurnNumber;
+            public List<ReportEntry> Entries = new List<ReportEntry>();
         }
 
         [Serializable]
@@ -49,6 +75,8 @@ namespace CardGame.Unity
         {
             public ReportSummary Summary;
             public List<ReportEntry> Entries = new List<ReportEntry>();
+            /// <summary>Entrées regroupées par tour (modèle timeline).</summary>
+            public List<TurnGroup> TurnGroups = new List<TurnGroup>();
         }
 
         /// <summary>Liste tous les rapports disponibles, du plus récent au plus ancien.</summary>
@@ -72,7 +100,7 @@ namespace CardGame.Unity
             return list;
         }
 
-        /// <summary>Charge un rapport complet à partir de son chemin.</summary>
+        /// <summary>Charge un rapport complet à partir de son chemin. Modèle timeline : regroupement par tour.</summary>
         public static FullReport LoadFullReport(string filePath)
         {
             var report = new FullReport();
@@ -92,23 +120,69 @@ namespace CardGame.Unity
                     continue;
                 else if (!string.IsNullOrWhiteSpace(line))
                 {
-                    var parts = line.Split(new[] { '\t' }, 4);
-                    if (parts.Length >= 4 && int.TryParse(parts[0], out int seq))
-                    {
-                        report.Entries.Add(new ReportEntry
-                        {
-                            Seq = seq,
-                            Time = parts[1],
-                            Event = parts[2],
-                            Data = parts[3]
-                        });
-                    }
+                    var entry = ParseLogLine(line);
+                    if (entry != null)
+                        report.Entries.Add(entry);
                 }
             }
 
+            BuildTurnGroups(report);
             if (report.Summary == null)
                 report.Summary = new ReportSummary { FilePath = filePath };
             return report;
+        }
+
+        /// <summary>Parse une ligne de log. Supporte ancien format (4 cols) et nouveau (5 cols avec turn).</summary>
+        private static ReportEntry ParseLogLine(string line)
+        {
+            var parts = line.Split(new[] { '\t' }, 5);
+            if (parts.Length < 4 || !int.TryParse(parts[0], out int seq)) return null;
+
+            int turn = -1;
+            string time, evt, data;
+            if (parts.Length >= 5 && int.TryParse(parts[2], out int t))
+            {
+                time = parts[1];
+                turn = t;
+                evt = parts[3];
+                data = parts[4];
+            }
+            else
+            {
+                time = parts[1];
+                evt = parts[2];
+                data = parts[3];
+            }
+            return new ReportEntry { Seq = seq, Time = time, Turn = turn, Event = evt, Data = data };
+        }
+
+        /// <summary>Construit les groupes par tour à partir des entrées (StartTurn = nouveau tour).</summary>
+        private static void BuildTurnGroups(FullReport report)
+        {
+            report.TurnGroups.Clear();
+            TurnGroup current = null;
+            foreach (var e in report.Entries)
+            {
+                if (e.Event == "StartTurn")
+                {
+                    string joueur = ExtractFromData(e.Data, "joueur");
+                    string tn = ExtractFromData(e.Data, "turnNumber");
+                    int turnNum = int.TryParse(tn, out int n) ? n : 0;
+                    current = new TurnGroup
+                    {
+                        TurnIndex = report.TurnGroups.Count + 1,
+                        Joueur = joueur ?? "?",
+                        TurnNumber = turnNum
+                    };
+                    report.TurnGroups.Add(current);
+                }
+                if (current == null)
+                {
+                    current = new TurnGroup { TurnIndex = 0, Joueur = "Début", TurnNumber = 0 };
+                    report.TurnGroups.Add(current);
+                }
+                current.Entries.Add(e);
+            }
         }
 
         private static ReportSummary ReadSummary(string filePath)
@@ -158,9 +232,9 @@ namespace CardGame.Unity
 
         private static ReportSummary ParseVictoryLine(string victoryLine, string metaJson, string filePath)
         {
-            var parts = victoryLine.Split(new[] { '\t' }, 4);
+            var parts = victoryLine.Split(new[] { '\t' }, 5);
             if (parts.Length < 4) return null;
-            string data = parts[3];
+            string data = parts.Length >= 5 ? parts[4] : parts[3];
             string gagnant = ExtractFromData(data, "gagnant");
             string turnCountStr = ExtractFromData(data, "turnCount");
             int turnCount = int.TryParse(turnCountStr, out int tc) ? tc : 0;
@@ -208,10 +282,10 @@ namespace CardGame.Unity
             }
             if (!string.IsNullOrEmpty(gameStartLine))
             {
-                var parts = gameStartLine.Split(new[] { '\t' }, 4);
+                var parts = gameStartLine.Split(new[] { '\t' }, 5);
                 if (parts.Length >= 4)
                 {
-                    string data = parts[3];
+                    string data = parts.Length >= 5 ? parts[4] : parts[3];
                     summary.DeckJoueur1 = ExtractFromData(data, "deckJoueur1") ?? "?";
                     summary.DeckJoueur2 = ExtractFromData(data, "deckJoueur2") ?? "?";
                 }
@@ -221,8 +295,30 @@ namespace CardGame.Unity
             return summary;
         }
 
+        /// <summary>Parse le JSON des détails d'activité en ActivityDetail.</summary>
+        public static ActivityDetail ParseActivityDetail(string data)
+        {
+            if (string.IsNullOrWhiteSpace(data)) return new ActivityDetail();
+            try
+            {
+                var detail = JsonUtility.FromJson<ActivityDetail>(data);
+                return detail ?? new ActivityDetail();
+            }
+            catch
+            {
+                return new ActivityDetail();
+            }
+        }
+
         private static string ExtractFromData(string data, string key)
         {
+            if (string.IsNullOrEmpty(data)) return null;
+            // Format JSON : "key": "value" ou "key": 123
+            var jsonMatch = Regex.Match(data, $"\"{key}\"\\s*:\\s*\"([^\"]*)\"", RegexOptions.IgnoreCase);
+            if (jsonMatch.Success) return jsonMatch.Groups[1].Value;
+            var jsonNumMatch = Regex.Match(data, $"\"{key}\"\\s*:\\s*([^,}}]+)", RegexOptions.IgnoreCase);
+            if (jsonNumMatch.Success) return jsonNumMatch.Groups[1].Value.Trim();
+            // Ancien format C# : key = value
             string search = key + " = ";
             int i = data.IndexOf(search, StringComparison.OrdinalIgnoreCase);
             if (i < 0) return null;

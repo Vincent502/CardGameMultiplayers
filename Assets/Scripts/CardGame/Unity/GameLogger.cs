@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using CardGame.Core;
 using UnityEngine;
 
@@ -7,6 +9,7 @@ namespace CardGame.Unity
 {
     /// <summary>
     /// Implémentation du logger : Debug.Log + fichier dans persistentDataPath/Rapport (compatible Windows et mobile).
+    /// Format lisible : une entrée par ligne, payload en JSON.
     /// </summary>
     public class GameLogger : IGameLogger
     {
@@ -46,14 +49,47 @@ namespace CardGame.Unity
         public void Log(string eventType, object data)
         {
             _sequence++;
-            string payload = data != null ? data.ToString() : "";
-            string line = $"{_sequence}\t{DateTime.UtcNow:O}\t{eventType}\t{payload}";
+            string payload = data != null ? ToReadableJson(data.ToString()) : "{}";
+            int turn = ExtractTurnFromPayload(payload);
+            string line = $"{_sequence}\t{DateTime.UtcNow:O}\t{turn}\t{eventType}\t{payload}";
             Debug.Log($"[CardGame] {eventType}: {payload}");
             if (_logPath != null)
             {
                 try { File.AppendAllText(_logPath, line + "\n"); }
                 catch { }
             }
+        }
+
+        /// <summary>Extrait turnNumber ou turnCount du payload JSON pour le modèle timeline.</summary>
+        private static int ExtractTurnFromPayload(string payload)
+        {
+            if (string.IsNullOrEmpty(payload)) return -1;
+            var m = Regex.Match(payload, @"""turnNumber""\s*:\s*(\d+)");
+            if (m.Success && int.TryParse(m.Groups[1].Value, out int t)) return t;
+            m = Regex.Match(payload, @"""turnCount""\s*:\s*(\d+)");
+            return m.Success && int.TryParse(m.Groups[1].Value, out t) ? t : -1;
+        }
+
+        /// <summary>Convertit le format C# { key = value } en JSON lisible {"key": "value"}.</summary>
+        private static string ToReadableJson(string csharpFormat)
+        {
+            if (string.IsNullOrWhiteSpace(csharpFormat)) return "{}";
+            var sb = new System.Text.StringBuilder();
+            sb.Append("{ ");
+            var matches = Regex.Matches(csharpFormat, @"(\w+)\s*=\s*([^,}]+)");
+            for (int i = 0; i < matches.Count; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                string key = matches[i].Groups[1].Value;
+                string val = matches[i].Groups[2].Value.Trim();
+                sb.Append('"').Append(key).Append("\": ");
+                if (int.TryParse(val, out _) || val == "True" || val == "False")
+                    sb.Append(val.ToLowerInvariant());
+                else
+                    sb.Append('"').Append(val.Replace("\\", "\\\\").Replace("\"", "\\\"")).Append('"');
+            }
+            sb.Append(" }");
+            return sb.ToString();
         }
 
         public void FinalizeReport(GameState state)

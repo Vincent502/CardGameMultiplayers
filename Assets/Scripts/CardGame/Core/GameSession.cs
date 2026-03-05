@@ -56,7 +56,8 @@ namespace CardGame.Core
                 deckJoueur1 = deckJoueur1.ToString(),
                 deckJoueur2 = deckJoueur2.ToString(),
                 seed,
-                pvInitial = 100
+                pvInitial = 100,
+                turnCount = 0
             });
         }
 

@@ -89,11 +89,22 @@ namespace CardGame.Unity
             sb.AppendLine($"Date : {summary.DisplayDate}");
             sb.AppendLine($"Tours : {summary.TurnCount}");
             sb.AppendLine();
-            sb.AppendLine("--- Journal de la partie ---");
-            foreach (var e in report.Entries)
+            sb.AppendLine("--- Journal de la partie (timeline) ---");
+            foreach (var turnGroup in report.TurnGroups)
             {
-                string timeShort = e.Time.Length > 19 ? e.Time.Substring(11, 8) : e.Time;
-                sb.AppendLine($"[{timeShort}] {e.Event}: {e.Data}");
+                string header = turnGroup.TurnIndex == 0
+                    ? "▶ Début"
+                    : $"▶ Tour {turnGroup.TurnIndex} — {turnGroup.Joueur} (tour {turnGroup.TurnNumber})";
+                sb.AppendLine(header);
+                foreach (var e in turnGroup.Entries)
+                {
+                    var record = e.ToActivityRecord();
+                    string display = record.Detail?.ToDisplayText(e.Event);
+                    string line = !string.IsNullOrEmpty(display)
+                        ? $"  [{record.TimeShort}] {e.Event}: {display}"
+                        : $"  [{record.TimeShort}] {e.Event}: {e.Data}";
+                    sb.AppendLine(line);
+                }
                 sb.AppendLine();
             }
             _textDetail.text = sb.ToString();

@@ -1,11 +1,11 @@
 #META	{"id":"cardgame_20260227_141015","startedAt":"2026-02-27T13:10:15.5582500Z"}
-1	2026-02-27T13:10:15.5638716Z	GameStart	{ firstPlayer = Joueur 2, deckJoueur1 = Magicien, deckJoueur2 = Guerrier, seed = 451149078, pvInitial = 100 }
-2	2026-02-27T13:10:15.5684879Z	StartTurn	{ joueur = Joueur 2, turnNumber = 1, turnCount = 0, discarded = 0, deckKind = Guerrier }
-3	2026-02-27T13:10:15.6340212Z	Draw	{ joueur = Joueur 2, requested = 3, drawn = 3, deckRemaining = 27, handCount = 3, mana = 1, turnNumber = 1 }
-4	2026-02-27T13:10:15.6515350Z	PlayCard	{ joueur = Joueur 2, carte = Appuis solide, cardId = AppuisSolide, handIndex = 2, manaApres = 0, handCount = 2, cible = Joueur 1, toGraveyard = False, turnNumber = 1 }
-5	2026-02-27T13:10:18.9517440Z	DamageApplied	{ cible = Joueur 1, source = Attaque tactique, baseDamage = 2, casterForce = 1, damageTotal = 3, toShield = 0, toPV = 3, pvAvant = 100, pvApres = 97, shieldAvant = 0, shieldApres = 0 }
-6	2026-02-27T13:10:19.4693899Z	StartTurn	{ joueur = Joueur 1, turnNumber = 1, turnCount = 1, discarded = 0, deckKind = Magicien }
-7	2026-02-27T13:10:29.3280929Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 2, shieldApres = 1 }
-8	2026-02-27T13:10:30.8763161Z	EndTurn	{ joueur = Joueur 1, manaReserved = 0, pv = 97, shield = 10, handCount = 2, turnNumber = 1 }
-9	2026-02-27T13:15:55.3481768Z	Victory	{ gagnant = Joueur 2, winnerIndex = 1, turnCount = 20, deckJoueur1 = Magicien, deckJoueur2 = Guerrier }
+1	2026-02-27T13:10:15.5638716Z	0	GameStart	{ "firstPlayer": "Joueur 2", "deckJoueur1": "Magicien", "deckJoueur2": "Guerrier", "seed": 451149078, "pvInitial": 100, "turnCount": 0 }
+2	2026-02-27T13:10:15.5684879Z	1	StartTurn	{ "joueur": "Joueur 2", "turnNumber": 1, "turnCount": 0, "discarded": 0, "deckKind": "Guerrier" }
+3	2026-02-27T13:10:15.6340212Z	1	Draw	{ "joueur": "Joueur 2", "requested": 3, "drawn": 3, "deckRemaining": 27, "handCount": 3, "mana": 1, "turnNumber": 1 }
+4	2026-02-27T13:10:15.6515350Z	1	PlayCard	{ "joueur": "Joueur 2", "carte": "Appuis solide", "cardId": "AppuisSolide", "handIndex": 2, "manaApres": 0, "handCount": 2, "cible": "Joueur 1", "toGraveyard": false, "turnNumber": 1 }
+5	2026-02-27T13:10:18.9517440Z	1	DamageApplied	{ "cible": "Joueur 1", "source": "Attaque tactique", "baseDamage": 2, "casterForce": 1, "damageTotal": 3, "toShield": 0, "toPV": 3, "pvAvant": 100, "pvApres": 97, "shieldAvant": 0, "shieldApres": 0, "turnNumber": 1 }
+6	2026-02-27T13:10:19.4693899Z	1	StartTurn	{ "joueur": "Joueur 1", "turnNumber": 1, "turnCount": 1, "discarded": 0, "deckKind": "Magicien" }
+7	2026-02-27T13:10:29.3280929Z	1	DamageApplied	{ "cible": "Joueur 2", "source": "Frappe", "baseDamage": 1, "casterForce": 0, "damageTotal": 1, "toShield": 1, "toPV": 0, "pvAvant": 100, "pvApres": 100, "shieldAvant": 2, "shieldApres": 1, "turnNumber": 1 }
+8	2026-02-27T13:10:30.8763161Z	1	EndTurn	{ "joueur": "Joueur 1", "manaReserved": 0, "pv": 97, "shield": 10, "handCount": 2, "turnNumber": 1 }
+9	2026-02-27T13:15:55.3481768Z	20	Victory	{ "gagnant": "Joueur 2", "winnerIndex": 1, "turnCount": 20, "deckJoueur1": "Magicien", "deckJoueur2": "Guerrier" }
 #SUMMARY	{"id":"cardgame_20260227_141015","startedAt":"2026-02-27T13:10:15.5582500Z","endedAt":"2026-02-27T13:15:55.3481768Z","winner":"Joueur 2","turnCount":20,"deckJoueur1":"Magicien","deckJoueur2":"Guerrier"}
