@@ -45,7 +45,7 @@ namespace CardGame.Unity
         private bool _lastNeedsReaction;
         private string _lastHandKey;
         private float _reactionTimeRemaining = -1f;
-        private const float ReactionWindowDuration = 3f;
+        private const float ReactionWindowDuration = 2f;
 
         private void Start()
         {
@@ -105,15 +105,14 @@ namespace CardGame.Unity
                 return;
             }
 
-            // Fenêtre d'opportunité : 3 sec pour jouer une carte Rapide (uniquement quand c'est notre tour de réagir)
+            // Fenêtre d'opportunité : 2 sec pour jouer une carte Rapide. Le contour sur les cartes Rapides indique la fenêtre jouable.
             if (_controller.NeedsReaction && state.ReactionTargetPlayerIndex == _controller.LocalPlayerIndex)
             {
                 if (_reactionTimeRemaining < 0)
                     _reactionTimeRemaining = ReactionWindowDuration;
                 _reactionTimeRemaining -= Time.deltaTime;
-                int secLeft = Mathf.Max(0, Mathf.CeilToInt(_reactionTimeRemaining));
                 if (_textStatus != null)
-                    _textStatus.text = secLeft > 0 ? $"Réagissez ! {secLeft} sec pour jouer une carte Rapide" : "Temps écoulé...";
+                    _textStatus.text = _reactionTimeRemaining > 0 ? "Réagissez ! Jouez une carte Rapide (contour visible)." : "Temps écoulé...";
                 if (_reactionTimeRemaining <= 0)
                 {
                     _controller.HumanNoReaction();
@@ -134,6 +133,7 @@ namespace CardGame.Unity
             }
 
             RefreshHand(state);
+            UpdateRapidCardOutlines(state);
             RefreshEquipments(state);
             RefreshEffects(state);
             if (_buttonStrike != null) _buttonStrike.interactable = _controller.CanStrike && !_controller.NeedsDivinationChoice && !_controller.NeedsReaction;
@@ -190,8 +190,9 @@ namespace CardGame.Unity
                     SetCardPrefabTexts(btn.transform, data.Name, data.Description, cost, data.Type);
                     int manaCost = data.Type == CardType.Equipe ? 0 : data.Cost;
                     bool isRapide = data.Type == CardType.Rapide;
+                    bool outlineVisible = needsReaction && _reactionTimeRemaining > 0;
                     bool canPlay = needsReaction
-                        ? (isRapide && manaOrReserved >= manaCost)
+                        ? (isRapide && manaOrReserved >= manaCost && outlineVisible)
                         : (!isRapide && p.Mana >= manaCost && (card.Id != CardId.Repositionnement || !p.HasPlayedRepositionnementThisTurn));
                     // En mode Divination : seules les 2 cartes piochées sont cliquables pour choisir laquelle remettre sur le deck. Les autres sont désactivées.
                     int handCount = p.Hand.Count;
@@ -199,6 +200,7 @@ namespace CardGame.Unity
                     int putBackIndex = index == handCount - 2 ? 0 : (index == handCount - 1 ? 1 : -1);
                     bool isDivinationChoice = needsDiv && isLastTwo;
                     btn.interactable = needsDiv ? isDivinationChoice : canPlay;
+                    ApplyRapidCardOutline(btn, isRapide && needsReaction, outlineVisible ? Mathf.Clamp01(_reactionTimeRemaining / ReactionWindowDuration) : 0f);
                     btn.onClick.AddListener(() =>
                     {
                         if (!_controller.WaitingForHumanAction) return;
@@ -314,6 +316,41 @@ namespace CardGame.Unity
                         ? $"{cardName} [{typeLabel}] ({manaCost})"
                         : $"{cardName} [{typeLabel}] ({manaCost})\n{description}";
             }
+        }
+
+        /// <summary>Met à jour le contour des cartes Rapides existantes (sans reconstruire la main). Permet le fondu sur 2 sec sans bug IA.</summary>
+        private void UpdateRapidCardOutlines(GameState state)
+        {
+            if (!_controller.NeedsReaction || state.ReactionTargetPlayerIndex != _controller.LocalPlayerIndex || _handContainer == null) return;
+            float alpha = _reactionTimeRemaining > 0 ? Mathf.Clamp01(_reactionTimeRemaining / ReactionWindowDuration) : 0f;
+            var p = state.Players[state.ReactionTargetPlayerIndex];
+            int index = 0;
+            foreach (Transform t in _handContainer)
+            {
+                if (index >= p.Hand.Count) break;
+                var card = p.Hand[index];
+                var data = DeckDefinitions.GetCard(card.Id);
+                if (data.Type == CardType.Rapide)
+                {
+                    var btn = t.GetComponent<Button>();
+                    if (btn != null) ApplyRapidCardOutline(btn, true, alpha);
+                }
+                index++;
+            }
+        }
+
+        /// <summary>Applique un contour spécial aux cartes Rapides pendant la fenêtre de réaction. Le contour disparaît en fondu sur 2 sec.</summary>
+        private void ApplyRapidCardOutline(Button btn, bool isRapidInReaction, float outlineAlpha)
+        {
+            if (btn == null || !isRapidInReaction) return;
+            var img = btn.targetGraphic ?? btn.GetComponent<UnityEngine.UI.Image>();
+            if (img == null) img = btn.GetComponentInChildren<UnityEngine.UI.Image>();
+            if (img == null) return;
+            var outline = img.GetComponent<Outline>();
+            if (outline == null) outline = img.gameObject.AddComponent<Outline>();
+            outline.enabled = outlineAlpha > 0.01f;
+            outline.effectColor = new Color(1f, 0.9f, 0.2f, outlineAlpha);
+            outline.effectDistance = new Vector2(4, 4);
         }
 
         private static string GetCardTypeLabel(CardType t)
