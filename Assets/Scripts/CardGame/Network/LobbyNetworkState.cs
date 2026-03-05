@@ -19,8 +19,6 @@ namespace CardGame.Unity
         private NetworkVariable<int> _clientDeckChoice = new NetworkVariable<int>(DeckNotSet);
         private bool _launchSent;
 
-        public static event Action<StartGameParams> OnLaunchGame;
-
         public override void OnNetworkSpawn()
         {
             if (IsServer)
@@ -67,7 +65,7 @@ namespace CardGame.Unity
         }
 
         /// <summary>Appelé par le Client via RPC quand il confirme son deck (Joueur 2).</summary>
-        [ServerRpc(RequireOwnership = false)]
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void SetClientDeckServerRpc(int deck)
         {
             if (deck < 0 || deck > 1) return; // DeckKind: 0 = Magicien, 1 = Guerrier

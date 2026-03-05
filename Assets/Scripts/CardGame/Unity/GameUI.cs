@@ -50,7 +50,7 @@ namespace CardGame.Unity
         private void Start()
         {
             _controller = _controllerMono as IGameController ?? _controllerMono?.GetComponent<IGameController>();
-            if (_controller == null) _controller = FindObjectOfType<GameController>() ?? (IGameController)FindObjectOfType<NetworkGameController>();
+            if (_controller == null) _controller = FindFirstObjectByType<GameController>() ?? (IGameController)FindFirstObjectByType<NetworkGameController>();
             if (_buttonStrike != null) _buttonStrike.onClick.AddListener(() => _controller?.HumanStrike());
             if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller?.HumanEndTurn());
             if (_buttonBackToMenu != null) _buttonBackToMenu.onClick.AddListener(OnBackToMenu);
@@ -334,7 +334,7 @@ namespace CardGame.Unity
             NetworkGameController.ResetOpponentDisconnected();
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
             {
-                var relay = FindObjectOfType<RelayManager>();
+                var relay = FindFirstObjectByType<RelayManager>();
                 if (relay != null) relay.Shutdown();
                 else NetworkManager.Singleton.Shutdown();
             }

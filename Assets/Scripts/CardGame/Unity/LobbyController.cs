@@ -40,7 +40,7 @@ namespace CardGame.Unity
 
         private void Start()
         {
-            if (_relayManager == null) _relayManager = FindObjectOfType<RelayManager>();
+            if (_relayManager == null) _relayManager = FindFirstObjectByType<RelayManager>();
             if (_buttonCreate != null) _buttonCreate.onClick.AddListener(OnCreate);
             if (_buttonJoin != null) _buttonJoin.onClick.AddListener(OnJoin);
             if (_buttonBackToMenu != null) _buttonBackToMenu.onClick.AddListener(OnBackToMenu);
@@ -69,7 +69,7 @@ namespace CardGame.Unity
                 EnsureLobbyStateAndShowDeckPanel();
             else
             {
-                var state = FindObjectOfType<LobbyNetworkState>();
+                var state = FindFirstObjectByType<LobbyNetworkState>();
                 if (state != null) UpdateDeckStatus(state);
             }
         }
@@ -77,7 +77,7 @@ namespace CardGame.Unity
         private void SpawnLobbyStateIfHost()
         {
             if (!NetworkManager.Singleton.IsHost || _lobbyStatePrefab == null) return;
-            if (FindObjectOfType<LobbyNetworkState>() != null) return;
+            if (FindFirstObjectByType<LobbyNetworkState>() != null) return;
             var no = _lobbyStatePrefab.GetComponent<NetworkObject>();
             if (no != null)
             {
@@ -89,7 +89,7 @@ namespace CardGame.Unity
         private void EnsureLobbyStateAndShowDeckPanel()
         {
             if (NetworkManager.Singleton.IsHost) SpawnLobbyStateIfHost();
-            var state = FindObjectOfType<LobbyNetworkState>();
+            var state = FindFirstObjectByType<LobbyNetworkState>();
             if (state != null)
             {
                 _panelDeckSelection.SetActive(true);
@@ -140,7 +140,7 @@ namespace CardGame.Unity
         private void OnConfirmDeck()
         {
             if (_myDeckConfirmed) return;
-            var state = FindObjectOfType<LobbyNetworkState>();
+            var state = FindFirstObjectByType<LobbyNetworkState>();
             if (state == null) return;
             if (NetworkManager.Singleton.IsHost)
             {

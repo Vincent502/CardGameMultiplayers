@@ -127,7 +127,7 @@ namespace CardGame.Unity
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-            _textDetail.enableWordWrapping = true;
+            _textDetail.textWrappingMode = TMPro.TextWrappingModes.Normal;
             var textRT = _textDetail.rectTransform;
             textRT.anchorMin = new Vector2(0, 1);
             textRT.anchorMax = new Vector2(1, 1);

@@ -25,7 +25,7 @@ namespace CardGame.Unity
         }
 
         /// <summary>Appelé par le Client après avoir appliqué l'action localement : le Host applique aussi.</summary>
-        [ServerRpc(RequireOwnership = false)]
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void ReceiveFromClientServerRpc(NetworkActionMessage msg)
         {
             var ctrl = NetworkGameController.Instance;

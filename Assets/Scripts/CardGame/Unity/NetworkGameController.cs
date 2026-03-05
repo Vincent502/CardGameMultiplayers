@@ -104,7 +104,7 @@ namespace CardGame.Unity
         {
             // Client : récupérer la référence au GameNetworkBehaviour une fois répliqué par le Host
             if (_gameNetwork == null && NetworkManager.Singleton != null && !NetworkManager.Singleton.IsHost)
-                _gameNetwork = FindObjectOfType<GameNetworkBehaviour>();
+                _gameNetwork = FindFirstObjectByType<GameNetworkBehaviour>();
         }
 
         private IEnumerator RunGameLoop()
