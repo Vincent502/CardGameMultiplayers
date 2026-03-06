@@ -17,16 +17,16 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/WindowsScene/MultiplayeurBoard.unity
     guid: 5b296a2d610d8954aa3dda6d699d83ff
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/AndroideScene/Androide_Menu.unity
     guid: 3b09c16f86a56a240b6ccd1bd757bd53
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/AndroideScene/Androide_SoloBoard.unity
     guid: 29464dd691f44df4a9bc9db32804aaa4
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/AndroideScene/Androide_Lobby.unity
     guid: 68a7bf441615c3846ae3283f0aa4de65
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/AndroideScene/Androide_MultiplayeurBoard.unity
     guid: 9a053da90f3c7a745b712274509fd59a
   m_configObjects:
