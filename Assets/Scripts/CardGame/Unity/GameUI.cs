@@ -69,13 +69,13 @@ namespace CardGame.Unity
             {
                 var me = state.Players[localIdx];
                 _textJoueur1.text =
-                    $"Moi - Joueur {localIdx + 1} ({me.DeckKind})\nPV: {me.PV} Bouclier: {me.Shield}\nForce: {me.Force} Résistance: {me.Resistance}\nMana: {me.Mana} Main: {me.Hand.Count}";
+                    $"Moi - Joueur {localIdx + 1} ({me.DeckKind})\nPV: {me.PV} Bouclier: {me.Shield}\nForce: {me.Force} Résistance: {me.Resistance}\nMana: {me.Mana} Main: {me.Hand.Count} Cim: {me.Graveyard.Count} Éphém: {me.EphemeralConsumedThisGame}";
             }
             if (_textJoueur2 != null)
             {
                 var adv = state.Players[oppIdx];
                 _textJoueur2.text =
-                    $"Adversaire - Joueur {oppIdx + 1} ({adv.DeckKind})\nPV: {adv.PV} Bouclier: {adv.Shield}\nForce: {adv.Force} Résistance: {adv.Resistance}\nMana: {adv.Mana} Main: {adv.Hand.Count}";
+                    $"Adversaire - Joueur {oppIdx + 1} ({adv.DeckKind})\nPV: {adv.PV} Bouclier: {adv.Shield}\nForce: {adv.Force} Résistance: {adv.Resistance}\nMana: {adv.Mana} Main: {adv.Hand.Count} Cim: {adv.Graveyard.Count} Éphém: {adv.EphemeralConsumedThisGame}";
             }
 
             // Tour actuel = 1 quand le premier joueur joue, 2 quand le second, 3 au tour suivant, etc.
