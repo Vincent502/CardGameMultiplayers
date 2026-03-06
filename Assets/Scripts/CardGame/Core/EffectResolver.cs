@@ -24,7 +24,7 @@ namespace CardGame.Core
             (int)Math.Max(0, baseShield * (1 + targetResistance));
 
         /// <summary>Applique les dégâts (bouclier puis PV). Invincible = 0 dégât.</summary>
-        public void ApplyDamage(GameState state, int targetPlayerIndex, int baseDamage, int casterForce, string sourceName)
+        public void ApplyDamage(GameState state, int attackerPlayerIndex, int targetPlayerIndex, int baseDamage, int casterForce, string sourceName)
         {
             var target = state.Players[targetPlayerIndex];
             if (target.InvincibleUntilNextTurn)
@@ -60,6 +60,27 @@ namespace CardGame.Core
                 shieldApres = target.Shield,
                 turnNumber = state.GetCurrentTurnNumber()
             });
+            OnAttackSuccess(state, attackerPlayerIndex, targetPlayerIndex, damage, sourceName);
+        }
+
+        /// <summary>
+        /// Effets génériques déclenchés lorsqu'une attaque réussit (dégâts > 0 sur un adversaire).
+        /// Inclut notamment le Catalyseur arcanique restreint : +1 bouclier à chaque attaque réussie.
+        /// </summary>
+        private void OnAttackSuccess(GameState state, int attackerPlayerIndex, int targetPlayerIndex, int damage, string sourceName)
+        {
+            if (attackerPlayerIndex < 0) return;
+            if (attackerPlayerIndex == targetPlayerIndex) return;
+            if (damage <= 0) return;
+
+            var attacker = state.Players[attackerPlayerIndex];
+            foreach (var eq in attacker.Equipments.Where(e => e.IsActive))
+            {
+                if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint)
+                {
+                    ApplyShield(state, attackerPlayerIndex, 1, DeckDefinitions.GetCard(eq.Card.Id).Name);
+                }
+            }
         }
 
         /// <summary>Glace localisée : le gel ne se retire que par le passage des tours (2 tours du joueur propriétaire), pas par frappe ni carte dégâts.</summary>
@@ -148,7 +169,7 @@ namespace CardGame.Core
         /// <summary>Applique dégâts d'une carte + effet rune si équipée (2×(1+Force)).</summary>
         private void ApplyCardDamageWithRune(GameState state, int targetIndex, int casterIndex, int baseDamage, int casterForce, string sourceName)
         {
-            ApplyDamage(state, targetIndex, baseDamage, casterForce, sourceName);
+            ApplyDamage(state, casterIndex, targetIndex, baseDamage, casterForce, sourceName);
             ApplyRuneDamageIfEquipped(state, targetIndex, casterIndex, casterForce);
         }
 
@@ -157,7 +178,7 @@ namespace CardGame.Core
         {
             if (!HasRuneForceArcanique(state, casterIndex)) return;
             for (int i = 0; i < 2; i++)
-                ApplyDamage(state, targetIndex, 1, casterForce, "Rune de force arcanique");
+                ApplyDamage(state, casterIndex, targetIndex, 1, casterForce, "Rune de force arcanique");
         }
 
         /// <summary>True si la carte inflige des dégâts (susceptible d'être annulée par Parade/Contre-attaque).</summary>
@@ -234,15 +255,16 @@ namespace CardGame.Core
                     if (pendingDamage == null)
                     {
                         int ephemeralConsumed = caster.EphemeralConsumedThisGame;
-                        int dmg = ephemeralConsumed * 2;
-                        ApplyCardDamageWithRune(state, targetIndex, casterIndex, dmg, 0, data.Name);
+                        int x = ephemeralConsumed;
+                        for (int i = 0; i < 2; i++)
+                            ApplyCardDamageWithRune(state, targetIndex, casterIndex, x, 0, data.Name);
                     }
                     return true;
                 case CardId.Guillotine:
                     if (pendingDamage == null)
                     {
                         int weaponBase = GetWeaponOnlyBase(state, casterIndex);
-                        ApplyDamage(state, targetIndex, weaponBase, caster.Force * 2, data.Name);
+                        ApplyDamage(state, casterIndex, targetIndex, weaponBase, caster.Force * 2, data.Name);
                         ApplyRuneDamageIfEquipped(state, targetIndex, casterIndex, caster.Force);
                     }
                     return true;
@@ -431,24 +453,22 @@ namespace CardGame.Core
             if (pending.IsStrike)
             {
                 if (pending.HasWeaponAttack)
-                    ApplyDamage(state, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
+                    ApplyDamage(state, pending.AttackerIndex, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
                 for (int i = 0; i < pending.RuneStrikeCount; i++)
-                    ApplyDamage(state, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
+                    ApplyDamage(state, pending.AttackerIndex, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
             }
             else
             {
-                ApplyDamage(state, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
+                ApplyDamage(state, pending.AttackerIndex, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
                 if (pending.AttackerIndex >= 0 && HasRuneForceArcanique(state, pending.AttackerIndex))
                     for (int i = 0; i < 2; i++)
-                        ApplyDamage(state, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
+                        ApplyDamage(state, pending.AttackerIndex, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
             }
             if (pending.IsStrike)
             {
                 var striker = state.Players[pending.AttackerIndex];
                 foreach (var eq in striker.Equipments.Where(e => e.IsActive))
                 {
-                    if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint)
-                        ApplyShield(state, pending.AttackerIndex, 1, DeckDefinitions.GetCard(eq.Card.Id).Name);
                     if (eq.Card.Id == CardId.RuneAgressiviteOublie)
                     {
                         striker.Force += 1;
@@ -480,7 +500,7 @@ namespace CardGame.Core
             turnNumber = state.GetCurrentTurnNumber()
         });
             if (cardId == CardId.ContreAttaque)
-                ApplyDamage(state, attackerIndex, 2, 0, data.Name);
+                ApplyDamage(state, casterIndex, attackerIndex, 2, 0, data.Name);
         }
 
         /// <summary>True si le joueur peut frapper (arme ou rune seule).</summary>
@@ -523,14 +543,10 @@ namespace CardGame.Core
             var striker = state.Players[strikerIndex];
             int baseDmg = GetWeaponBaseDamage(state, strikerIndex);
             if (baseDmg <= 0) return;
-            ApplyDamage(state, targetIndex, baseDmg, striker.Force, "Frappe");
+            ApplyDamage(state, strikerIndex, targetIndex, baseDmg, striker.Force, "Frappe");
 
             foreach (var eq in striker.Equipments.Where(e => e.IsActive))
             {
-                if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint)
-                {
-                    ApplyShield(state, strikerIndex, 1, DeckDefinitions.GetCard(eq.Card.Id).Name);
-                }
                 if (eq.Card.Id == CardId.RuneAgressiviteOublie)
                 {
                     striker.Force += 1;
@@ -556,7 +572,7 @@ namespace CardGame.Core
             foreach (var effect in state.ActiveDurationEffects.ToList())
             {
                 if (effect.Kind == DurationEffectKind.DamageEachTurn && effect.TargetPlayerIndex == currentPlayerIndex)
-                    ApplyDamage(state, effect.TargetPlayerIndex, effect.Value, 0, DeckDefinitions.GetCard(effect.CardId).Name);
+                    ApplyDamage(state, effect.CasterPlayerIndex, effect.TargetPlayerIndex, effect.Value, 0, DeckDefinitions.GetCard(effect.CardId).Name);
             }
             for (int i = state.ActiveDurationEffects.Count - 1; i >= 0; i--)
             {

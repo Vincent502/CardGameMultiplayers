@@ -356,7 +356,7 @@ namespace CardGame.Core
             {
                 if (a.DivinationPutBackIndex.HasValue)
                 {
-                    int idx = p.Hand.Count - 2 + a.DivinationPutBackIndex.Value;
+                    int idx = a.DivinationPutBackIndex.Value;
                     if (idx >= 0 && idx < p.Hand.Count)
                     {
                         var putBack = p.Hand[idx];
@@ -448,7 +448,19 @@ namespace CardGame.Core
             p.Hand.RemoveAt(a.HandIndex);
             p.Graveyard.Add(card);
 
-            _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, State.PendingReaction.AttackerIndex);
+            var pending = State.PendingReaction;
+            _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, pending.AttackerIndex);
+
+            // Boule de feu : Parade/Esquive ne réduisent que 50 % des dégâts
+            if (card.Id == CardId.Parade &&
+                pending != null &&
+                pending.SourceName == DeckDefinitions.GetCard(CardId.BouleDeFeu).Name)
+            {
+                int total = _resolver.ComputeDamage(pending.BaseDamage, pending.CasterForce);
+                int half = (total + 1) / 2;
+                _resolver.ApplyDamage(State, pending.AttackerIndex, pending.TargetIndex, half, 0, pending.SourceName);
+            }
+
             State.PendingReaction = null;
             State.Phase = State.EndTurnAfterReaction ? TurnPhase.ResolveEndOfTurn : TurnPhase.Play;
             State.EndTurnAfterReaction = false;
@@ -487,9 +499,8 @@ namespace CardGame.Core
         {
             if (!_pendingDivinationChoice) return false;
             var p = State.CurrentPlayer;
-            if (a.PutBackIndex != 0 && a.PutBackIndex != 1) return false;
-            if (p.Hand.Count < 2) return false;
-            int idx = p.Hand.Count - 2 + a.PutBackIndex;
+            if (a.PutBackIndex < 0 || a.PutBackIndex >= p.Hand.Count) return false;
+            int idx = a.PutBackIndex;
             var putBack = p.Hand[idx];
             p.Hand.RemoveAt(idx);
             p.Deck.Add(putBack);
