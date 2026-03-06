@@ -23,7 +23,9 @@ namespace CardGame.Unity
         [SerializeField] [FormerlySerializedAs("_textPlayer1")] private TMP_Text _textJoueur2;
         [SerializeField] private TMP_Text _textTurn;
         [SerializeField] private Transform _handContainer;
+        [SerializeField] private Transform _opponentHandContainer;
         [SerializeField] private GameObject _cardButtonPrefab;
+        [SerializeField] private GameObject _cardBackPrefab;
         [SerializeField] private Button _buttonStrike;
         [SerializeField] private Button _buttonEndTurn;
         [Header("Fin de partie")]
@@ -40,6 +42,7 @@ namespace CardGame.Unity
         [SerializeField] private GameObject _effectLabelPrefab;
 
         private int _lastHandCount = -1;
+        private int _lastOpponentHandCount = -1;
         private int _lastMana = -1;
         private bool _lastNeedsDivinationChoice;
         private bool _lastNeedsReaction;
@@ -69,13 +72,13 @@ namespace CardGame.Unity
             {
                 var me = state.Players[localIdx];
                 _textJoueur1.text =
-                    $"Moi - Joueur {localIdx + 1} ({me.DeckKind})\nPV: {me.PV} Bouclier: {me.Shield}\nForce: {me.Force} Résistance: {me.Resistance}\nMana: {me.Mana} Main: {me.Hand.Count}";
+                    $"Moi - Joueur {localIdx + 1} ({me.DeckKind})\nPV: {me.PV} Bouclier: {me.Shield}\nForce: {me.Force} Résistance: {me.Resistance}\nMana: {me.Mana} Main: {me.Hand.Count} Cim: {me.Graveyard.Count} Éphém: {me.EphemeralConsumedThisGame}";
             }
             if (_textJoueur2 != null)
             {
                 var adv = state.Players[oppIdx];
                 _textJoueur2.text =
-                    $"Adversaire - Joueur {oppIdx + 1} ({adv.DeckKind})\nPV: {adv.PV} Bouclier: {adv.Shield}\nForce: {adv.Force} Résistance: {adv.Resistance}\nMana: {adv.Mana} Main: {adv.Hand.Count}";
+                    $"Adversaire - Joueur {oppIdx + 1} ({adv.DeckKind})\nPV: {adv.PV} Bouclier: {adv.Shield}\nForce: {adv.Force} Résistance: {adv.Resistance}\nMana: {adv.Mana} Main: {adv.Hand.Count} Cim: {adv.Graveyard.Count} Éphém: {adv.EphemeralConsumedThisGame}";
             }
 
             // Tour actuel = 1 quand le premier joueur joue, 2 quand le second, 3 au tour suivant, etc.
@@ -94,6 +97,7 @@ namespace CardGame.Unity
                 if (_textGameOver != null) _textGameOver.text = msg;
                 if (_panelGameOver != null) _panelGameOver.SetActive(true);
                 if (_handContainer != null) _handContainer.gameObject.SetActive(false);
+                if (_opponentHandContainer != null) _opponentHandContainer.gameObject.SetActive(false);
                 return;
             }
             if (NetworkGameController.OpponentDisconnected)
@@ -102,6 +106,7 @@ namespace CardGame.Unity
                 if (_textGameOver != null) _textGameOver.text = "Adversaire déconnecté.\nRetournez au menu.";
                 if (_panelGameOver != null) _panelGameOver.SetActive(true);
                 if (_handContainer != null) _handContainer.gameObject.SetActive(false);
+                if (_opponentHandContainer != null) _opponentHandContainer.gameObject.SetActive(false);
                 return;
             }
 
@@ -133,6 +138,7 @@ namespace CardGame.Unity
             }
 
             RefreshHand(state);
+            RefreshOpponentHand(state);
             UpdateRapidCardOutlines(state);
             RefreshEquipments(state);
             RefreshEffects(state);
@@ -216,6 +222,69 @@ namespace CardGame.Unity
 
             if (handRect != null)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(handRect);
+        }
+
+        /// <summary>Affiche les dos de cartes de l'adversaire. Mis à jour quand sa main change.</summary>
+        private void RefreshOpponentHand(GameState state)
+        {
+            if (_opponentHandContainer == null) return;
+
+            int oppIdx = 1 - _controller.LocalPlayerIndex;
+            var opp = state.Players[oppIdx];
+            int count = opp.Hand.Count;
+
+            if (count == _lastOpponentHandCount) return;
+            _lastOpponentHandCount = count;
+
+            foreach (Transform t in _opponentHandContainer)
+                Destroy(t.gameObject);
+
+            _opponentHandContainer.gameObject.SetActive(count > 0);
+            if (count == 0) return;
+
+            RectTransform containerRect = _opponentHandContainer as RectTransform ?? _opponentHandContainer.GetComponent<RectTransform>();
+            Transform parent = containerRect != null ? (Transform)containerRect : _opponentHandContainer;
+
+            GameObject prefab = _cardBackPrefab != null ? _cardBackPrefab : _cardButtonPrefab;
+            for (int i = 0; i < count; i++)
+            {
+                GameObject go = prefab != null
+                    ? Instantiate(prefab, parent, false)
+                    : CreateDefaultCardBack(parent);
+                var btn = go.GetComponent<Button>();
+                if (btn != null) btn.interactable = false;
+                if (prefab == _cardButtonPrefab)
+                    SetCardBackMode(go.transform);
+            }
+
+            if (containerRect != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
+        }
+
+        /// <summary>Cache les infos de carte et applique l'apparence dos de carte (quand on réutilise le prefab carte).</summary>
+        private void SetCardBackMode(Transform cardRoot)
+        {
+            foreach (var name in new[] { "CardName", "Description", "Mana", "Type" })
+            {
+                var child = cardRoot.Find(name);
+                if (child != null) child.gameObject.SetActive(false);
+            }
+            var img = cardRoot.GetComponent<UnityEngine.UI.Image>();
+            if (img != null) img.color = new Color(0.25f, 0.2f, 0.35f);
+        }
+
+        private GameObject CreateDefaultCardBack(Transform parent)
+        {
+            var go = new GameObject("CardBack", typeof(RectTransform));
+            var rt = go.GetComponent<RectTransform>();
+            rt.SetParent(parent, false);
+            rt.anchorMin = new Vector2(0f, 0.5f);
+            rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.sizeDelta = new Vector2(80f, 120f);
+            var img = go.AddComponent<UnityEngine.UI.Image>();
+            img.color = new Color(0.25f, 0.2f, 0.35f);
+            return go;
         }
 
         private Button CreateDefaultButton(Transform parent)
