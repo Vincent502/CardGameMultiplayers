@@ -270,7 +270,8 @@ namespace CardGame.Core
                     return true;
                 case CardId.Defense:
                     ApplyShield(state, casterIndex, 4, data.Name);
-                    // +4 si aucune attaque ce tour : vérifié en fin de tour
+                    if (!caster.AttackDoneThisTurn)
+                        ApplyShield(state, casterIndex, 4, data.Name);
                     return true;
                 case CardId.DefensePlus:
                     ApplyShield(state, casterIndex, 15, data.Name);

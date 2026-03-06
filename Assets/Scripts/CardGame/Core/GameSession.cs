@@ -195,6 +195,11 @@ namespace CardGame.Core
         private void DoResolveStartOfTurn()
         {
             var p = State.CurrentPlayer;
+            if (p.ResistanceBonusTurnsLeft == 2)
+            {
+                p.ResistanceBonusTurnsLeft = 1;
+                p.Resistance += p.ResistanceBonusValue;
+            }
             foreach (var eq in p.Equipments)
             {
                 if (eq.RoundsUntilActive > 0) eq.RoundsUntilActive--;
@@ -281,6 +286,13 @@ namespace CardGame.Core
                     turnNumber = State.GetCurrentTurnNumber()
                 });
                 }
+            }
+            if (p.ResistanceBonusTurnsLeft == 1)
+            {
+                int val = p.ResistanceBonusValue;
+                p.ResistanceBonusTurnsLeft = 0;
+                p.ResistanceBonusValue = 0;
+                p.Resistance = Math.Max(0, p.Resistance - val);
             }
             _resolver.ResolveEndOfTurnEffects(State, State.CurrentPlayerIndex);
             // Glace localisée : dégel uniquement après 2 tours du joueur propriétaire (pas par frappe ni carte dégâts).
