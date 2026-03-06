@@ -200,18 +200,15 @@ namespace CardGame.Unity
                     bool canPlay = needsReaction
                         ? (isRapide && manaOrReserved >= manaCost && outlineVisible)
                         : (!isRapide && p.Mana >= manaCost && (card.Id != CardId.Repositionnement || !p.HasPlayedRepositionnementThisTurn));
-                    // En mode Divination : seules les 2 cartes piochées sont cliquables pour choisir laquelle remettre sur le deck. Les autres sont désactivées.
-                    int handCount = p.Hand.Count;
-                    bool isLastTwo = index >= handCount - 2;
-                    int putBackIndex = index == handCount - 2 ? 0 : (index == handCount - 1 ? 1 : -1);
-                    bool isDivinationChoice = needsDiv && isLastTwo;
-                    btn.interactable = needsDiv ? isDivinationChoice : canPlay;
+                    // En mode Divination : n'importe quelle carte de la main peut être choisie pour être remise sur le deck.
+                    bool isDivinationChoice = needsDiv;
+                    btn.interactable = needsDiv ? true : canPlay;
                     ApplyRapidCardOutline(btn, isRapide && needsReaction, outlineVisible ? Mathf.Clamp01(_reactionTimeRemaining / ReactionWindowDuration) : 0f);
                     btn.onClick.AddListener(() =>
                     {
                         if (!_controller.WaitingForHumanAction) return;
-                        if (isDivinationChoice && putBackIndex >= 0)
-                            _controller.HumanDivinationPutBack(putBackIndex);
+                        if (isDivinationChoice)
+                            _controller.HumanDivinationPutBack(index);
                         else if (needsReaction && canPlay)
                             _controller.HumanPlayRapid(index);
                         else if (canPlay)
