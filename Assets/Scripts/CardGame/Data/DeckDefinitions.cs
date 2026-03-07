@@ -30,7 +30,7 @@ namespace CardGame.Data
                 (new CardData(CardId.Evaluation, "Evaluation", CardType.Ephemere, 1, "Pioche 3 cartes"), 2),
                 (new CardData(CardId.Attaque, "Attaque", CardType.Normal, 1, "5 dégâts"), 3),
                 (new CardData(CardId.OrageDePoche, "Orage de poche", CardType.Ephemere, 3, "1 dégât avant fin de chaque tour, 3 tours"), 2),
-                (new CardData(CardId.GlaceLocalisee, "Glace localisée", CardType.Ephemere, 1, "Gèle un équipement adverse pendant 2 tours du joueur (dégel uniquement par passage des tours)"), 2),
+                (new CardData(CardId.GlaceLocalisee, "Glace localisée", CardType.Ephemere, 1, "Gèle l'arme adverse jusqu'à ce qu'il l'utilise 1 fois"), 2),
             };
         }
 
@@ -43,10 +43,10 @@ namespace CardGame.Data
                 (new CardData(CardId.RuneProtectionOublie, "Rune de protection de l'oublié", CardType.Equipe, 2, "Si 2 frappes enchaînées : 2 bouclier"), 1),
                 (new CardData(CardId.RuneAgressiviteOublie, "Rune d'agressivité de l'oublié", CardType.Equipe, 5, "À chaque frappe : +1 Force jusqu'à fin du tour"), 1),
                 (new CardData(CardId.Repositionnement, "Repositionnement", CardType.Normal, 0, "2 bouclier et pioche 1 carte"), 2),
-                (new CardData(CardId.ContreAttaque, "Contre-attaque", CardType.Rapide, 0, "Annule une attaque adverse et inflige 2 dégâts"), 3),
+                (new CardData(CardId.ContreAttaque, "Contre-attaque", CardType.Rapide, 0, "Annule une attaque adverse et inflige 5 dégâts"), 3),
                 (new CardData(CardId.Parade, "Parade", CardType.Rapide, 1, "Annule une attaque adverse"), 3),
                 (new CardData(CardId.PositionOffensive, "Position offensive", CardType.Ephemere, 1, "Octroie 1 Force"), 2),
-                (new CardData(CardId.AppuisSolide, "Appuis solide", CardType.Ephemere, 1, "Votre arme fait 1 dégât supplémentaire"), 3),
+                (new CardData(CardId.AppuisSolide, "Appuis solide", CardType.Ephemere, 1, "Votre arme gagne +1 dégâts permanent"), 3),
                 (new CardData(CardId.DefenseLourde, "Défense lourde", CardType.Normal, 1, "10 bouclier"), 2),
                 (new CardData(CardId.PositionDefensive, "Position défensive", CardType.Ephemere, 1, "Donne 1 Résistance"), 2),
                 (new CardData(CardId.SouffleEternel, "Souffle éternel", CardType.Ephemere, 0, "Rend 15 PV ; va au cimetière si après Discipline éternel"), 1),

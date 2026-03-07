@@ -17,5 +17,7 @@ namespace CardGame.Core
         public int RuneStrikeCount { get; set; }
         /// <summary>True si la frappe inclut une attaque d'arme (Catalyseur/Hache). False = rune seule.</summary>
         public bool HasWeaponAttack { get; set; }
+        /// <summary>Arme gelée (Glace localisée) : la frappe dégèle mais inflige 0 dégâts d'arme.</summary>
+        public bool WeaponFrozenUntilUsed { get; set; }
     }
 }

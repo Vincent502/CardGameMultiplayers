@@ -83,6 +83,7 @@ namespace CardGame.Core
             player.EphemereUsed.Clear();
             player.InvincibleUntilNextTurn = false;
             player.HasPlayedDisciplineEternelThisGame = false;
+            player.WeaponDamageBonusPermanent = 0;
 
             foreach (var (card, count) in deckDef)
             {
@@ -91,7 +92,7 @@ namespace CardGame.Core
                     for (int i = 0; i < count; i++)
                     {
                         var inst = NewCard(card.Id);
-                        player.Equipments.Add(new EquipmentState { Card = inst, RoundsUntilActive = card.Cost, IsFrozen = false });
+                        player.Equipments.Add(new EquipmentState { Card = inst, RoundsUntilActive = card.Cost, IsFrozen = false, FrozenUntilUsed = false });
                     }
                 }
                 else
@@ -155,7 +156,7 @@ namespace CardGame.Core
         private void DoStartTurn()
         {
             var p = State.CurrentPlayer;
-            foreach (var eq in p.Equipments.Where(e => e.IsFrozen))
+            foreach (var eq in p.Equipments.Where(e => e.IsFrozen && !e.FrozenUntilUsed))
             {
                 eq.FrozenTurnsRemaining--;
                 if (eq.FrozenTurnsRemaining <= 0)
@@ -180,6 +181,7 @@ namespace CardGame.Core
             p.Shield = 0;
             p.AttackDoneThisTurn = false;
             p.ConsecutiveStrikesThisTurn = 0;
+            p.ConsecutiveAttacksThisTurn = 0;
             p.HasPlayedRepositionnementThisTurn = false;
             State.EndTurnAfterReaction = false;
             _log.Log("StartTurn", new {
@@ -295,7 +297,7 @@ namespace CardGame.Core
                 p.Resistance = Math.Max(0, p.Resistance - val);
             }
             _resolver.ResolveEndOfTurnEffects(State, State.CurrentPlayerIndex);
-            // Glace localisée : dégel uniquement après 2 tours du joueur propriétaire (pas par frappe ni carte dégâts).
+            // Glace localisée : dégel par première utilisation (gérée dans ApplyPendingReaction).
             State.Phase = TurnPhase.EndTurn;
         }
 
@@ -360,6 +362,11 @@ namespace CardGame.Core
 
             p.Mana -= cost;
             p.Hand.RemoveAt(a.HandIndex);
+
+            if (_resolver.CardDealsDamage(card.Id))
+                p.ConsecutiveAttacksThisTurn++;
+            else
+                p.ConsecutiveAttacksThisTurn = 0;
 
             int targetIndex = 1 - State.CurrentPlayerIndex;
             bool deferDamage = _resolver.CardDealsDamage(card.Id);
@@ -544,9 +551,10 @@ namespace CardGame.Core
 
             int weaponBase = _resolver.GetWeaponOnlyBase(State, State.CurrentPlayerIndex);
             bool hasRune = _resolver.HasRuneForceArcanique(State, State.CurrentPlayerIndex);
-            int baseDmg = weaponBase > 0 ? weaponBase + p.WeaponDamageBonusThisTurn : 1;
+            bool weaponFrozenUntilUsed = _resolver.HasFrozenWeaponUntilUsed(State, State.CurrentPlayerIndex);
+            int baseDmg = weaponFrozenUntilUsed ? 0 : (weaponBase > 0 ? weaponBase + p.WeaponDamageBonusThisTurn + p.WeaponDamageBonusPermanent : 1);
             int runeCount = hasRune ? 2 : 0;
-            bool hasWeaponAttack = weaponBase > 0;
+            bool hasWeaponAttack = weaponBase > 0 || weaponFrozenUntilUsed;
 
             int targetIndex = 1 - State.CurrentPlayerIndex;
             State.PendingReaction = new PendingReactionInfo
@@ -559,12 +567,14 @@ namespace CardGame.Core
                 UnfreezeAttacker = false,
                 IsStrike = true,
                 RuneStrikeCount = runeCount,
-                HasWeaponAttack = hasWeaponAttack
+                HasWeaponAttack = hasWeaponAttack,
+                WeaponFrozenUntilUsed = weaponFrozenUntilUsed
             };
             State.ReactionTargetPlayerIndex = targetIndex;
             State.Phase = TurnPhase.Reaction;
             p.AttackDoneThisTurn = true;
             p.ConsecutiveStrikesThisTurn++;
+            p.ConsecutiveAttacksThisTurn++;
             int dmgWeapon = hasWeaponAttack ? (baseDmg + p.Force) : 0;
             int dmgRune = runeCount * (1 + p.Force);
             _log.Log("StrikeReactionPhase", new {
