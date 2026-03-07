@@ -20,6 +20,7 @@ namespace CardGame.Unity
 
         private GameSession _session;
         private IGameLogger _logger;
+        private SessionStats _sessionStats;
         private SimpleBot _bot;
         private StepResult _lastStepResult;
         private bool _waitingForHumanAction;
@@ -36,7 +37,8 @@ namespace CardGame.Unity
 
         private void Start()
         {
-            _logger = new GameLogger(_writeLogToFile);
+            _sessionStats = new SessionStats();
+            _logger = new GameLogger(_writeLogToFile, _sessionStats);
             _session = new GameSession(_logger);
             _bot = new SimpleBot();
 
@@ -151,6 +153,16 @@ namespace CardGame.Unity
             if (!_waitingForHumanAction || !IsHumanTurn) return;
             if (_session.SubmitAction(new EndTurnAction { PlayerIndex = State.CurrentPlayerIndex }))
                 _waitingForHumanAction = false;
+        }
+
+        public void NotifyQuitToMenu()
+        {
+            if (!IsGameOver && _sessionStats != null && State != null)
+            {
+                if (string.IsNullOrEmpty(_sessionStats.DeckJoueur1) && State.Players.Length > 0)
+                    _sessionStats.SetDeckJoueur1(State.Players[0].DeckKind.ToString());
+                ProfileManager.OnGameAbandoned(_sessionStats);
+            }
         }
     }
 }

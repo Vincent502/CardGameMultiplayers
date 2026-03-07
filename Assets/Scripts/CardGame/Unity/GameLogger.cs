@@ -17,8 +17,9 @@ namespace CardGame.Unity
         private readonly string _reportId;
         private readonly DateTime _startedAt;
         private int _sequence;
+        private readonly SessionStats _sessionStats;
 
-        public GameLogger(bool writeToFile = true)
+        public GameLogger(bool writeToFile = true, SessionStats sessionStats = null)
         {
             _reportId = $"cardgame_{DateTime.Now:yyyyMMdd_HHmmss}";
             _startedAt = DateTime.UtcNow;
@@ -44,6 +45,7 @@ namespace CardGame.Unity
             {
                 _logPath = null;
             }
+            _sessionStats = sessionStats;
         }
 
         public void Log(string eventType, object data)
@@ -58,6 +60,8 @@ namespace CardGame.Unity
                 try { File.AppendAllText(_logPath, line + "\n"); }
                 catch { }
             }
+            if (_sessionStats != null)
+                ProfileManager.OnGameEvent(_sessionStats, eventType, payload);
         }
 
         /// <summary>Extrait turnNumber ou turnCount du payload JSON pour le modèle timeline.</summary>
@@ -94,16 +98,21 @@ namespace CardGame.Unity
 
         public void FinalizeReport(GameState state)
         {
-            if (_logPath == null || state == null) return;
-            try
+            if (state == null) return;
+            if (_logPath != null)
             {
-                string winner = state.WinnerIndex >= 0 ? $"Joueur {state.WinnerIndex + 1}" : "";
-                string deck1 = state.Players.Length > 0 ? state.Players[0].DeckKind.ToString() : "";
-                string deck2 = state.Players.Length > 1 ? state.Players[1].DeckKind.ToString() : "";
-                string summary = $"{{\"id\":\"{_reportId}\",\"startedAt\":\"{_startedAt:O}\",\"endedAt\":\"{DateTime.UtcNow:O}\",\"winner\":\"{winner}\",\"turnCount\":{state.TurnCount},\"deckJoueur1\":\"{deck1}\",\"deckJoueur2\":\"{deck2}\"}}";
-                File.AppendAllText(_logPath, $"#SUMMARY\t{summary}\n");
+                try
+                {
+                    string winner = state.WinnerIndex >= 0 ? $"Joueur {state.WinnerIndex + 1}" : "";
+                    string deck1 = state.Players.Length > 0 ? state.Players[0].DeckKind.ToString() : "";
+                    string deck2 = state.Players.Length > 1 ? state.Players[1].DeckKind.ToString() : "";
+                    string summary = $"{{\"id\":\"{_reportId}\",\"startedAt\":\"{_startedAt:O}\",\"endedAt\":\"{DateTime.UtcNow:O}\",\"winner\":\"{winner}\",\"turnCount\":{state.TurnCount},\"deckJoueur1\":\"{deck1}\",\"deckJoueur2\":\"{deck2}\"}}";
+                    File.AppendAllText(_logPath, $"#SUMMARY\t{summary}\n");
+                }
+                catch { }
             }
-            catch { }
+            if (_sessionStats != null)
+                ProfileManager.FinalizeGame(state, _sessionStats);
         }
     }
 }

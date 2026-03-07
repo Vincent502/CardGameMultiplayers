@@ -22,5 +22,7 @@ namespace CardGame.Unity
         void HumanNoReaction();
         void HumanStrike();
         void HumanEndTurn();
+        /// <summary>Appelé quand le joueur quitte vers le menu (abandon ou après fin de partie).</summary>
+        void NotifyQuitToMenu();
     }
 }

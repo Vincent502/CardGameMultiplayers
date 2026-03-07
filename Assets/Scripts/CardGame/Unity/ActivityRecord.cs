@@ -46,6 +46,8 @@ namespace CardGame.Unity
         // Dégâts / bouclier / PV
         public int baseDamage;
         public int baseShield;
+        public int amount;
+        public int damageTotal;
         public int pvAvant;
         public int pvApres;
         public int shieldAvant;

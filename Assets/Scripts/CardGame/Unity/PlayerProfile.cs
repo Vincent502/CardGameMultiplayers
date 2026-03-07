@@ -89,5 +89,7 @@ namespace CardGame.Unity
         public int degatsInfliges;
         public int bouclierGagne;
         public int cartesPiochees;
+        /// <summary>Victoires où le joueur a joué Contre-attaque (pour succès contre_maitre).</summary>
+        public int victoiresAvecContreAttaque;
     }
 }
