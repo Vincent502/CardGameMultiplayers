@@ -11,6 +11,8 @@ namespace CardGame.Core
         public bool IsFrozen { get; set; }
         /// <summary>Nombre de tours du joueur propriétaire restants avant dégel automatique. Décrémenté au début de chaque tour du propriétaire.</summary>
         public int FrozenTurnsRemaining { get; set; }
+        /// <summary>Gel jusqu'à première utilisation (Glace localisée). Le dégel se fait quand le propriétaire utilise l'arme (frappe ou Guillotine).</summary>
+        public bool FrozenUntilUsed { get; set; }
 
         public bool IsActive => RoundsUntilActive <= 0 && !IsFrozen;
     }

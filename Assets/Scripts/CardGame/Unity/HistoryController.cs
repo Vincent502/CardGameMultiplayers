@@ -8,9 +8,20 @@ namespace CardGame.Unity
     /// <summary>
     /// Contrôleur de la section Historique : liste les parties sauvegardées et affiche le détail.
     /// À brancher sur un panel avec : liste (ScrollView Content), détail (Text), bouton retour.
+    /// Utilise les balises riches TextMeshPro pour couleurs et mise en forme.
     /// </summary>
     public class HistoryController : MonoBehaviour
     {
+        // Palette de couleurs pour le journal (format hex sans # pour TMP)
+        private const string ColorTitle = "#FFD700";      // Or
+        private const string ColorSection = "#5DADE2";   // Bleu
+        private const string ColorDamage = "#E74C3C";     // Rouge
+        private const string ColorShield = "#2ECC71";   // Vert
+        private const string ColorBuff = "#9B59B6";      // Violet
+        private const string ColorVictory = "#F1C40F";  // Or clair
+        private const string ColorCard = "#ECF0F1";      // Gris clair
+        private const string ColorTime = "#7F8C8D";      // Gris
+        private const string ColorNeutral = "#BDC3C7";   // Argent
         [Header("UI Historique")]
         [SerializeField] private GameObject _panelHistorique;
         [SerializeField] private Transform _listContent;
@@ -63,10 +74,8 @@ namespace CardGame.Unity
                 var label = go.GetComponentInChildren<TMP_Text>();
                 if (label != null)
                 {
-                    string result = string.IsNullOrEmpty(s.Winner) || s.Winner == "Partie non terminée"
-                        ? s.Winner
-                        : $"{s.Winner} gagne";
-                    label.text = $"{s.DisplayDate}\n{s.DeckJoueur1} vs {s.DeckJoueur2} — {result} ({s.TurnCount} tours)";
+                    label.text = FormatHistoriqueItem(s);
+                    label.richText = true;
                 }
                 var btn = go.GetComponent<Button>();
                 if (btn != null)
@@ -77,6 +86,17 @@ namespace CardGame.Unity
             }
         }
 
+        /// <summary>Formate un item de la liste historique avec couleurs et mise en forme.</summary>
+        private static string FormatHistoriqueItem(GameReportManager.ReportSummary s)
+        {
+            bool hasWinner = !string.IsNullOrEmpty(s.Winner) && s.Winner != "Partie non terminée";
+            string color1 = hasWinner && s.Winner == "Joueur 1" ? ColorShield : (hasWinner ? ColorDamage : ColorSection);
+            string color2 = hasWinner && s.Winner == "Joueur 2" ? ColorShield : (hasWinner ? ColorDamage : ColorSection);
+            return $"<color={ColorTime}><size=85%>{s.DisplayDate}</size></color>\n" +
+                   $"<color={color1}><b>{s.DeckJoueur1}</b></color> vs <color={color2}><b>{s.DeckJoueur2}</b></color>\n" +
+                   $"<color={ColorTime}>{s.TurnCount} tours</color>";
+        }
+
         private void ShowDetail(GameReportManager.ReportSummary summary)
         {
             if (_panelDetail != null)
@@ -85,31 +105,58 @@ namespace CardGame.Unity
 
             var report = GameReportManager.LoadFullReport(summary.FilePath);
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"<b>{summary.DisplayTitle}</b>");
-            sb.AppendLine($"Date : {summary.DisplayDate}");
-            sb.AppendLine($"Tours : {summary.TurnCount}");
+
+            // En-tête
+            sb.AppendLine($"<size=120%><b><color={ColorTitle}>{summary.DisplayTitle}</color></b></size>");
+            sb.AppendLine($"<color={ColorNeutral}>Date : {summary.DisplayDate}  •  Tours : {summary.TurnCount}</color>");
             sb.AppendLine();
-            sb.AppendLine("--- Journal de la partie (timeline) ---");
+            // Rappel du code couleur
+            sb.AppendLine("<size=90%><b>Code couleur :</b></size>");
+            sb.AppendLine($"<color={ColorDamage}>● Rouge</color> Dégâts / Perdant  •  <color={ColorShield}>● Vert</color> Bouclier / Gagnant  •  <color={ColorBuff}>● Violet</color> Buffs  •  <color={ColorVictory}>● Or</color> Victoire");
+            sb.AppendLine($"<color={ColorCard}>● Gris clair</color> Cartes/Attaques  •  <color={ColorSection}>● Bleu</color> Tours  •  <color={ColorNeutral}>● Argent</color> Pioche/Infos");
+            sb.AppendLine();
+            sb.AppendLine($"<color={ColorSection}>——— Journal de la partie ———</color>");
+            sb.AppendLine();
+
             foreach (var turnGroup in report.TurnGroups)
             {
                 string header = turnGroup.TurnIndex == 0
                     ? "▶ Début"
                     : $"▶ Tour {turnGroup.TurnIndex} — {turnGroup.Joueur} (tour {turnGroup.TurnNumber})";
-                sb.AppendLine(header);
+                sb.AppendLine($"<size=105%><b><color={ColorSection}>{header}</color></b></size>");
                 foreach (var e in turnGroup.Entries)
                 {
                     var record = e.ToActivityRecord();
                     string display = record.Detail?.ToDisplayText(e.Event);
-                    string line = !string.IsNullOrEmpty(display)
-                        ? $"  [{record.TimeShort}] {e.Event}: {display}"
-                        : $"  [{record.TimeShort}] {e.Event}: {e.Data}";
-                    sb.AppendLine(line);
+                    string content = !string.IsNullOrEmpty(display) ? display : e.Data;
+                    string coloredLine = FormatEventLine(e.Event, record.TimeShort, content);
+                    sb.AppendLine($"  {coloredLine}");
                 }
                 sb.AppendLine();
             }
             _textDetail.text = sb.ToString();
             _textDetail.overflowMode = TextOverflowModes.Overflow;
+            _textDetail.richText = true;
             EnsureScrollContentExpands();
+        }
+
+        /// <summary>Applique une couleur selon le type d'événement.</summary>
+        private static string FormatEventLine(string eventType, string timeShort, string content)
+        {
+            string color = eventType switch
+            {
+                "DamageApplied" or "DamageBlocked" => ColorDamage,
+                "ShieldApplied" or "ShieldBuffExpired" or "ArmurePsychique" => ColorShield,
+                "RuneAgressivite" or "Galvanisation" or "PositionOffensive" or "PositionDefensive" or "Concentration" or "LienKarmique" or "AppuisSolide" or "ForceBonusExpired" or "ResistanceBuffExpired" => ColorBuff,
+                "Victory" => ColorVictory,
+                "PlayCard" or "PlayRapid" or "RapidPlayed" or "StrikeReactionPhase" or "ReactionPhase" or "NoReaction" => ColorCard,
+                "GameStart" or "StartTurn" or "EndTurn" or "EndTurnRequested" => ColorSection,
+                "Draw" or "DeckReshuffled" or "DivinationPutBack" => ColorNeutral,
+                "GlaceLocalisee" or "EquipmentUnfrozen" or "OrageDePoche" => ColorBuff,
+                "DisciplineEternel" or "SouffleEternel" or "RuneEndurance" or "PassifMagicien" => ColorBuff,
+                _ => ColorNeutral
+            };
+            return $"<color={ColorTime}>[{timeShort}]</color> <color={color}>{content}</color>";
         }
 
         private void EnsureScrollContentExpands()

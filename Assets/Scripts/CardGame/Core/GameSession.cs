@@ -83,6 +83,7 @@ namespace CardGame.Core
             player.EphemereUsed.Clear();
             player.InvincibleUntilNextTurn = false;
             player.HasPlayedDisciplineEternelThisGame = false;
+            player.WeaponDamageBonusPermanent = 0;
 
             foreach (var (card, count) in deckDef)
             {
@@ -91,7 +92,7 @@ namespace CardGame.Core
                     for (int i = 0; i < count; i++)
                     {
                         var inst = NewCard(card.Id);
-                        player.Equipments.Add(new EquipmentState { Card = inst, RoundsUntilActive = card.Cost, IsFrozen = false });
+                        player.Equipments.Add(new EquipmentState { Card = inst, RoundsUntilActive = card.Cost, IsFrozen = false, FrozenUntilUsed = false });
                     }
                 }
                 else
@@ -155,7 +156,7 @@ namespace CardGame.Core
         private void DoStartTurn()
         {
             var p = State.CurrentPlayer;
-            foreach (var eq in p.Equipments.Where(e => e.IsFrozen))
+            foreach (var eq in p.Equipments.Where(e => e.IsFrozen && !e.FrozenUntilUsed))
             {
                 eq.FrozenTurnsRemaining--;
                 if (eq.FrozenTurnsRemaining <= 0)
@@ -180,6 +181,7 @@ namespace CardGame.Core
             p.Shield = 0;
             p.AttackDoneThisTurn = false;
             p.ConsecutiveStrikesThisTurn = 0;
+            p.ConsecutiveAttacksThisTurn = 0;
             p.HasPlayedRepositionnementThisTurn = false;
             State.EndTurnAfterReaction = false;
             _log.Log("StartTurn", new {
@@ -195,6 +197,11 @@ namespace CardGame.Core
         private void DoResolveStartOfTurn()
         {
             var p = State.CurrentPlayer;
+            if (p.ResistanceBonusTurnsLeft == 2)
+            {
+                p.ResistanceBonusTurnsLeft = 1;
+                p.Resistance += p.ResistanceBonusValue;
+            }
             foreach (var eq in p.Equipments)
             {
                 if (eq.RoundsUntilActive > 0) eq.RoundsUntilActive--;
@@ -282,8 +289,15 @@ namespace CardGame.Core
                 });
                 }
             }
+            if (p.ResistanceBonusTurnsLeft == 1)
+            {
+                int val = p.ResistanceBonusValue;
+                p.ResistanceBonusTurnsLeft = 0;
+                p.ResistanceBonusValue = 0;
+                p.Resistance = Math.Max(0, p.Resistance - val);
+            }
             _resolver.ResolveEndOfTurnEffects(State, State.CurrentPlayerIndex);
-            // Glace localisée : dégel uniquement après 2 tours du joueur propriétaire (pas par frappe ni carte dégâts).
+            // Glace localisée : dégel par première utilisation (gérée dans ApplyPendingReaction).
             State.Phase = TurnPhase.EndTurn;
         }
 
@@ -349,6 +363,11 @@ namespace CardGame.Core
             p.Mana -= cost;
             p.Hand.RemoveAt(a.HandIndex);
 
+            if (_resolver.CardDealsDamage(card.Id))
+                p.ConsecutiveAttacksThisTurn++;
+            else
+                p.ConsecutiveAttacksThisTurn = 0;
+
             int targetIndex = 1 - State.CurrentPlayerIndex;
             bool deferDamage = _resolver.CardDealsDamage(card.Id);
             bool toGraveyard = _resolver.ResolveCardEffect(State, card.Id, State.CurrentPlayerIndex, targetIndex, _rng, a.DivinationPutBackIndex, out var pendingDamage, deferDamage);
@@ -356,7 +375,7 @@ namespace CardGame.Core
             {
                 if (a.DivinationPutBackIndex.HasValue)
                 {
-                    int idx = p.Hand.Count - 2 + a.DivinationPutBackIndex.Value;
+                    int idx = a.DivinationPutBackIndex.Value;
                     if (idx >= 0 && idx < p.Hand.Count)
                     {
                         var putBack = p.Hand[idx];
@@ -448,7 +467,19 @@ namespace CardGame.Core
             p.Hand.RemoveAt(a.HandIndex);
             p.Graveyard.Add(card);
 
-            _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, State.PendingReaction.AttackerIndex);
+            var pending = State.PendingReaction;
+            _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, pending.AttackerIndex);
+
+            // Boule de feu : Parade/Esquive ne réduisent que 50 % des dégâts
+            if (card.Id == CardId.Parade &&
+                pending != null &&
+                pending.SourceName == DeckDefinitions.GetCard(CardId.BouleDeFeu).Name)
+            {
+                int total = _resolver.ComputeDamage(pending.BaseDamage, pending.CasterForce);
+                int half = (total + 1) / 2;
+                _resolver.ApplyDamage(State, pending.AttackerIndex, pending.TargetIndex, half, 0, pending.SourceName);
+            }
+
             State.PendingReaction = null;
             State.Phase = State.EndTurnAfterReaction ? TurnPhase.ResolveEndOfTurn : TurnPhase.Play;
             State.EndTurnAfterReaction = false;
@@ -487,9 +518,8 @@ namespace CardGame.Core
         {
             if (!_pendingDivinationChoice) return false;
             var p = State.CurrentPlayer;
-            if (a.PutBackIndex != 0 && a.PutBackIndex != 1) return false;
-            if (p.Hand.Count < 2) return false;
-            int idx = p.Hand.Count - 2 + a.PutBackIndex;
+            if (a.PutBackIndex < 0 || a.PutBackIndex >= p.Hand.Count) return false;
+            int idx = a.PutBackIndex;
             var putBack = p.Hand[idx];
             p.Hand.RemoveAt(idx);
             p.Deck.Add(putBack);
@@ -521,9 +551,10 @@ namespace CardGame.Core
 
             int weaponBase = _resolver.GetWeaponOnlyBase(State, State.CurrentPlayerIndex);
             bool hasRune = _resolver.HasRuneForceArcanique(State, State.CurrentPlayerIndex);
-            int baseDmg = weaponBase > 0 ? weaponBase + p.WeaponDamageBonusThisTurn : 1;
+            bool weaponFrozenUntilUsed = _resolver.HasFrozenWeaponUntilUsed(State, State.CurrentPlayerIndex);
+            int baseDmg = weaponFrozenUntilUsed ? 0 : (weaponBase > 0 ? weaponBase + p.WeaponDamageBonusThisTurn + p.WeaponDamageBonusPermanent : 1);
             int runeCount = hasRune ? 2 : 0;
-            bool hasWeaponAttack = weaponBase > 0;
+            bool hasWeaponAttack = weaponBase > 0 || weaponFrozenUntilUsed;
 
             int targetIndex = 1 - State.CurrentPlayerIndex;
             State.PendingReaction = new PendingReactionInfo
@@ -536,12 +567,14 @@ namespace CardGame.Core
                 UnfreezeAttacker = false,
                 IsStrike = true,
                 RuneStrikeCount = runeCount,
-                HasWeaponAttack = hasWeaponAttack
+                HasWeaponAttack = hasWeaponAttack,
+                WeaponFrozenUntilUsed = weaponFrozenUntilUsed
             };
             State.ReactionTargetPlayerIndex = targetIndex;
             State.Phase = TurnPhase.Reaction;
             p.AttackDoneThisTurn = true;
             p.ConsecutiveStrikesThisTurn++;
+            p.ConsecutiveAttacksThisTurn++;
             int dmgWeapon = hasWeaponAttack ? (baseDmg + p.Force) : 0;
             int dmgRune = runeCount * (1 + p.Force);
             _log.Log("StrikeReactionPhase", new {

@@ -24,7 +24,7 @@ namespace CardGame.Core
             (int)Math.Max(0, baseShield * (1 + targetResistance));
 
         /// <summary>Applique les dégâts (bouclier puis PV). Invincible = 0 dégât.</summary>
-        public void ApplyDamage(GameState state, int targetPlayerIndex, int baseDamage, int casterForce, string sourceName)
+        public void ApplyDamage(GameState state, int attackerPlayerIndex, int targetPlayerIndex, int baseDamage, int casterForce, string sourceName)
         {
             var target = state.Players[targetPlayerIndex];
             if (target.InvincibleUntilNextTurn)
@@ -60,9 +60,28 @@ namespace CardGame.Core
                 shieldApres = target.Shield,
                 turnNumber = state.GetCurrentTurnNumber()
             });
+            OnAttackSuccess(state, attackerPlayerIndex, targetPlayerIndex, damage, sourceName);
         }
 
-        /// <summary>Glace localisée : le gel ne se retire que par le passage des tours (2 tours du joueur propriétaire), pas par frappe ni carte dégâts.</summary>
+        /// <summary>
+        /// Effets génériques déclenchés lorsqu'une attaque réussit (dégâts > 0 sur un adversaire).
+        /// Inclut notamment le Catalyseur arcanique restreint : +1 bouclier à chaque attaque réussie.
+        /// </summary>
+        private void OnAttackSuccess(GameState state, int attackerPlayerIndex, int targetPlayerIndex, int damage, string sourceName)
+        {
+            if (attackerPlayerIndex < 0) return;
+            if (attackerPlayerIndex == targetPlayerIndex) return;
+            if (damage <= 0) return;
+
+            var attacker = state.Players[attackerPlayerIndex];
+            foreach (var eq in attacker.Equipments.Where(e => e.IsActive))
+            {
+                if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint)
+                {
+                    ApplyShield(state, attackerPlayerIndex, 1, DeckDefinitions.GetCard(eq.Card.Id).Name);
+                }
+            }
+        }
 
         /// <summary>Ajoute du bouclier (formule Résistance).</summary>
         public void ApplyShield(GameState state, int targetPlayerIndex, int baseShield, string sourceName)
@@ -148,7 +167,7 @@ namespace CardGame.Core
         /// <summary>Applique dégâts d'une carte + effet rune si équipée (2×(1+Force)).</summary>
         private void ApplyCardDamageWithRune(GameState state, int targetIndex, int casterIndex, int baseDamage, int casterForce, string sourceName)
         {
-            ApplyDamage(state, targetIndex, baseDamage, casterForce, sourceName);
+            ApplyDamage(state, casterIndex, targetIndex, baseDamage, casterForce, sourceName);
             ApplyRuneDamageIfEquipped(state, targetIndex, casterIndex, casterForce);
         }
 
@@ -157,7 +176,7 @@ namespace CardGame.Core
         {
             if (!HasRuneForceArcanique(state, casterIndex)) return;
             for (int i = 0; i < 2; i++)
-                ApplyDamage(state, targetIndex, 1, casterForce, "Rune de force arcanique");
+                ApplyDamage(state, casterIndex, targetIndex, 1, casterForce, "Rune de force arcanique");
         }
 
         /// <summary>True si la carte inflige des dégâts (susceptible d'être annulée par Parade/Contre-attaque).</summary>
@@ -234,21 +253,29 @@ namespace CardGame.Core
                     if (pendingDamage == null)
                     {
                         int ephemeralConsumed = caster.EphemeralConsumedThisGame;
-                        int dmg = ephemeralConsumed * 2;
-                        ApplyCardDamageWithRune(state, targetIndex, casterIndex, dmg, 0, data.Name);
+                        int x = ephemeralConsumed;
+                        for (int i = 0; i < 2; i++)
+                            ApplyCardDamageWithRune(state, targetIndex, casterIndex, x, 0, data.Name);
                     }
                     return true;
                 case CardId.Guillotine:
                     if (pendingDamage == null)
                     {
-                        int weaponBase = GetWeaponOnlyBase(state, casterIndex);
-                        ApplyDamage(state, targetIndex, weaponBase, caster.Force * 2, data.Name);
-                        ApplyRuneDamageIfEquipped(state, targetIndex, casterIndex, caster.Force);
+                        bool weaponFrozen = HasFrozenWeaponUntilUsed(state, casterIndex);
+                        if (weaponFrozen)
+                            UnfreezeWeaponUntilUsed(state, casterIndex);
+                        else
+                        {
+                            int weaponBase = GetWeaponOnlyBase(state, casterIndex) + caster.WeaponDamageBonusPermanent;
+                            ApplyDamage(state, casterIndex, targetIndex, weaponBase, caster.Force * 2, data.Name);
+                            ApplyRuneDamageIfEquipped(state, targetIndex, casterIndex, caster.Force);
+                        }
                     }
                     return true;
                 case CardId.Defense:
                     ApplyShield(state, casterIndex, 4, data.Name);
-                    // +4 si aucune attaque ce tour : vérifié en fin de tour
+                    if (!caster.AttackDoneThisTurn)
+                        ApplyShield(state, casterIndex, 4, data.Name);
                     return true;
                 case CardId.DefensePlus:
                     ApplyShield(state, casterIndex, 15, data.Name);
@@ -375,11 +402,11 @@ namespace CardGame.Core
                 });
                     return true;
                 case CardId.AppuisSolide:
-                    caster.WeaponDamageBonusThisTurn += 1;
+                    caster.WeaponDamageBonusPermanent += 1;
                     _log.Log("AppuisSolide", new {
                     joueur = $"Joueur {casterIndex + 1}",
                     bonusDegatsArme = 1,
-                    duree = "ce tour",
+                    duree = "permanent",
                     turnNumber = state.GetCurrentTurnNumber()
                 });
                     return false;
@@ -403,17 +430,17 @@ namespace CardGame.Core
                     return false;
                 case CardId.GlaceLocalisee:
                     var targetEquipments = state.Players[targetIndex].Equipments;
-                    var toFreeze = targetEquipments.FirstOrDefault(e => e.IsActive);
-                    if (toFreeze != null)
+                    var weapon = targetEquipments.FirstOrDefault(e => e.Card.Id == CardId.CatalyseurArcanaiqueRestraint || e.Card.Id == CardId.HacheOublie);
+                    if (weapon != null) // Glace localisée : gel jusqu'à ce que l'adversaire utilise l'arme 1 fois
                     {
-                        toFreeze.IsFrozen = true;
-                        toFreeze.FrozenTurnsRemaining = 2;
+                        weapon.IsFrozen = true;
+                        weapon.FrozenUntilUsed = true;
                         _log.Log("GlaceLocalisee", new {
                         lanceur = $"Joueur {casterIndex + 1}",
                         cible = $"Joueur {targetIndex + 1}",
-                        equipementGele = DeckDefinitions.GetCard(toFreeze.Card.Id).Name,
-                        cardId = toFreeze.Card.Id.ToString(),
-                        duree = "2 tours du joueur propriétaire",
+                        equipementGele = DeckDefinitions.GetCard(weapon.Card.Id).Name,
+                        cardId = weapon.Card.Id.ToString(),
+                        duree = "jusqu'à première utilisation",
                         turnNumber = state.GetCurrentTurnNumber()
                     });
                     }
@@ -430,44 +457,68 @@ namespace CardGame.Core
             if (pending == null) return;
             if (pending.IsStrike)
             {
-                if (pending.HasWeaponAttack)
-                    ApplyDamage(state, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
+                if (pending.WeaponFrozenUntilUsed)
+                    UnfreezeWeaponUntilUsed(state, pending.AttackerIndex);
+                if (pending.HasWeaponAttack && !pending.WeaponFrozenUntilUsed)
+                    ApplyDamage(state, pending.AttackerIndex, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
                 for (int i = 0; i < pending.RuneStrikeCount; i++)
-                    ApplyDamage(state, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
+                    ApplyDamage(state, pending.AttackerIndex, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
             }
             else
             {
-                ApplyDamage(state, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
+                ApplyDamage(state, pending.AttackerIndex, pending.TargetIndex, pending.BaseDamage, pending.CasterForce, pending.SourceName);
                 if (pending.AttackerIndex >= 0 && HasRuneForceArcanique(state, pending.AttackerIndex))
                     for (int i = 0; i < 2; i++)
-                        ApplyDamage(state, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
+                        ApplyDamage(state, pending.AttackerIndex, pending.TargetIndex, 1, pending.CasterForce, "Rune de force arcanique");
+                var attacker = state.Players[pending.AttackerIndex];
+                if (attacker.ConsecutiveAttacksThisTurn >= 2)
+                {
+                    foreach (var eq in attacker.Equipments.Where(e => e.IsActive))
+                    {
+                        if (eq.Card.Id == CardId.RuneAgressiviteOublie)
+                        {
+                            attacker.Force += 1;
+                            attacker.ForceBonusValue += 1;
+                            attacker.ForceBonusTurnsLeft = Math.Max(attacker.ForceBonusTurnsLeft, 1);
+                            _log.Log("RuneAgressivite", new {
+                            joueur = $"Joueur {pending.AttackerIndex + 1}",
+                            forceBonus = 1,
+                            duree = "jusqu'à fin du tour",
+                            turnNumber = state.GetCurrentTurnNumber()
+                        });
+                        }
+                    }
+                    if (attacker.Equipments.Any(e => e.IsActive && e.Card.Id == CardId.RuneProtectionOublie))
+                        ApplyShield(state, pending.AttackerIndex, 2, "Rune de protection de l'oublié");
+                }
             }
             if (pending.IsStrike)
             {
                 var striker = state.Players[pending.AttackerIndex];
-                foreach (var eq in striker.Equipments.Where(e => e.IsActive))
+                if (striker.ConsecutiveAttacksThisTurn >= 2)
                 {
-                    if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint)
-                        ApplyShield(state, pending.AttackerIndex, 1, DeckDefinitions.GetCard(eq.Card.Id).Name);
-                    if (eq.Card.Id == CardId.RuneAgressiviteOublie)
+                    foreach (var eq in striker.Equipments.Where(e => e.IsActive))
                     {
-                        striker.Force += 1;
-                        striker.ForceBonusValue += 1;
-                        striker.ForceBonusTurnsLeft = Math.Max(striker.ForceBonusTurnsLeft, 1);
-                        _log.Log("RuneAgressivite", new {
-                        joueur = $"Joueur {pending.AttackerIndex + 1}",
-                        forceBonus = 1,
-                        duree = "jusqu'à fin du tour",
-                        turnNumber = state.GetCurrentTurnNumber()
-                    });
+                        if (eq.Card.Id == CardId.RuneAgressiviteOublie)
+                        {
+                            striker.Force += 1;
+                            striker.ForceBonusValue += 1;
+                            striker.ForceBonusTurnsLeft = Math.Max(striker.ForceBonusTurnsLeft, 1);
+                            _log.Log("RuneAgressivite", new {
+                            joueur = $"Joueur {pending.AttackerIndex + 1}",
+                            forceBonus = 1,
+                            duree = "jusqu'à fin du tour",
+                            turnNumber = state.GetCurrentTurnNumber()
+                        });
+                        }
                     }
+                    if (striker.Equipments.Any(e => e.IsActive && e.Card.Id == CardId.RuneProtectionOublie))
+                        ApplyShield(state, pending.AttackerIndex, 2, "Rune de protection de l'oublié");
                 }
-                if (striker.ConsecutiveStrikesThisTurn == 2 && striker.Equipments.Any(e => e.IsActive && e.Card.Id == CardId.RuneProtectionOublie))
-                    ApplyShield(state, pending.AttackerIndex, 2, "Rune de protection de l'oublié");
             }
         }
 
-        /// <summary>Résout l'effet d'une carte Rapide (Contre-attaque, Parade). Annule l'attaque en attente. Contre-attaque inflige aussi 2 dégâts à l'attaquant.</summary>
+        /// <summary>Résout l'effet d'une carte Rapide (Contre-attaque, Parade). Annule l'attaque en attente. Contre-attaque inflige 5 dégâts à l'attaquant.</summary>
         public void ResolveRapidCardEffect(GameState state, CardId cardId, int casterIndex, int attackerIndex)
         {
             var data = DeckDefinitions.GetCard(cardId);
@@ -480,13 +531,37 @@ namespace CardGame.Core
             turnNumber = state.GetCurrentTurnNumber()
         });
             if (cardId == CardId.ContreAttaque)
-                ApplyDamage(state, attackerIndex, 2, 0, data.Name);
+                ApplyDamage(state, casterIndex, attackerIndex, 5, 0, data.Name);
         }
 
-        /// <summary>True si le joueur peut frapper (arme ou rune seule).</summary>
+        /// <summary>True si le joueur peut frapper (arme, rune, ou arme gelée jusqu'à utilisation).</summary>
         public bool CanStrike(GameState state, int playerIndex)
         {
-            return GetWeaponOnlyBase(state, playerIndex) > 0 || HasRuneForceArcanique(state, playerIndex);
+            return GetWeaponOnlyBase(state, playerIndex) > 0 || HasRuneForceArcanique(state, playerIndex) || HasFrozenWeaponUntilUsed(state, playerIndex);
+        }
+
+        /// <summary>True si le joueur a une arme gelée (Glace localisée) jusqu'à première utilisation.</summary>
+        public bool HasFrozenWeaponUntilUsed(GameState state, int playerIndex)
+        {
+            return state.Players[playerIndex].Equipments.Any(e =>
+                (e.Card.Id == CardId.CatalyseurArcanaiqueRestraint || e.Card.Id == CardId.HacheOublie) && e.FrozenUntilUsed);
+        }
+
+        /// <summary>Dégèle l'arme du joueur (Glace localisée : première utilisation).</summary>
+        private void UnfreezeWeaponUntilUsed(GameState state, int playerIndex)
+        {
+            foreach (var eq in state.Players[playerIndex].Equipments.Where(e => e.FrozenUntilUsed))
+            {
+                eq.IsFrozen = false;
+                eq.FrozenUntilUsed = false;
+                _log.Log("EquipmentUnfrozen", new {
+                    joueur = $"Joueur {playerIndex + 1}",
+                    equipement = DeckDefinitions.GetCard(eq.Card.Id).Name,
+                    cardId = eq.Card.Id.ToString(),
+                    reason = "première utilisation",
+                    turnNumber = state.GetCurrentTurnNumber()
+                });
+            }
         }
 
         /// <summary>Dégâts de base pour CanStrike : >0 si arme ou rune. Rune seule = 2 attaques de 1+Force.</summary>
@@ -496,7 +571,7 @@ namespace CardGame.Core
             bool hasRune = HasRuneForceArcanique(state, playerIndex);
             if (hasRune && weaponBase == 0) return 2;
             if (hasRune) return weaponBase + 2;
-            return weaponBase + state.Players[playerIndex].WeaponDamageBonusThisTurn;
+            return weaponBase + state.Players[playerIndex].WeaponDamageBonusThisTurn + state.Players[playerIndex].WeaponDamageBonusPermanent;
         }
 
         /// <summary>True si le joueur a la Rune de force arcanique active (2 attaques de 1+Force).</summary>
@@ -516,32 +591,31 @@ namespace CardGame.Core
         }
 
         /// <summary>
-        /// Frappe : dégâts (arme + Force) + effets « à la frappe ». Le gel ne se retire que par le passage des tours.
+        /// Frappe : dégâts (arme + Force) + effets « à la frappe ». Glace localisée : gel jusqu'à première utilisation.
         /// </summary>
         public void ResolveStrike(GameState state, int strikerIndex, int targetIndex)
         {
             var striker = state.Players[strikerIndex];
             int baseDmg = GetWeaponBaseDamage(state, strikerIndex);
             if (baseDmg <= 0) return;
-            ApplyDamage(state, targetIndex, baseDmg, striker.Force, "Frappe");
+            ApplyDamage(state, strikerIndex, targetIndex, baseDmg, striker.Force, "Frappe");
 
-            foreach (var eq in striker.Equipments.Where(e => e.IsActive))
+            if (striker.ConsecutiveAttacksThisTurn >= 2)
             {
-                if (eq.Card.Id == CardId.CatalyseurArcanaiqueRestraint)
+                foreach (var eq in striker.Equipments.Where(e => e.IsActive))
                 {
-                    ApplyShield(state, strikerIndex, 1, DeckDefinitions.GetCard(eq.Card.Id).Name);
-                }
-                if (eq.Card.Id == CardId.RuneAgressiviteOublie)
-                {
-                    striker.Force += 1;
-                    striker.ForceBonusValue += 1;
-                    striker.ForceBonusTurnsLeft = Math.Max(striker.ForceBonusTurnsLeft, 1);
-                    _log.Log("RuneAgressivite", new {
-                    joueur = $"Joueur {strikerIndex + 1}",
-                    forceBonus = 1,
-                    duree = "jusqu'à fin du tour",
-                    turnNumber = state.GetCurrentTurnNumber()
-                });
+                    if (eq.Card.Id == CardId.RuneAgressiviteOublie)
+                    {
+                        striker.Force += 1;
+                        striker.ForceBonusValue += 1;
+                        striker.ForceBonusTurnsLeft = Math.Max(striker.ForceBonusTurnsLeft, 1);
+                        _log.Log("RuneAgressivite", new {
+                        joueur = $"Joueur {strikerIndex + 1}",
+                        forceBonus = 1,
+                        duree = "jusqu'à fin du tour",
+                        turnNumber = state.GetCurrentTurnNumber()
+                    });
+                    }
                 }
             }
         }
@@ -556,7 +630,7 @@ namespace CardGame.Core
             foreach (var effect in state.ActiveDurationEffects.ToList())
             {
                 if (effect.Kind == DurationEffectKind.DamageEachTurn && effect.TargetPlayerIndex == currentPlayerIndex)
-                    ApplyDamage(state, effect.TargetPlayerIndex, effect.Value, 0, DeckDefinitions.GetCard(effect.CardId).Name);
+                    ApplyDamage(state, effect.CasterPlayerIndex, effect.TargetPlayerIndex, effect.Value, 0, DeckDefinitions.GetCard(effect.CardId).Name);
             }
             for (int i = state.ActiveDurationEffects.Count - 1; i >= 0; i--)
             {
