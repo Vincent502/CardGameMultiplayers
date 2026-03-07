@@ -39,6 +39,8 @@ namespace CardGame.Core
         public bool InvincibleUntilNextTurn { get; set; }
         /// <summary>Frappes consécutives ce tour (Rune protection Guerrier).</summary>
         public int ConsecutiveStrikesThisTurn { get; set; }
+        /// <summary>Attaques consécutives ce tour (cartes dégâts ou frappes). Pour Rune agressivité/protection : +1 Force / +2 bouclier si >= 2.</summary>
+        public int ConsecutiveAttacksThisTurn { get; set; }
         /// <summary>Une attaque (frappe ou dégâts) a été faite ce tour (Défense Magicien).</summary>
         public bool AttackDoneThisTurn { get; set; }
         /// <summary>Repositionnement joué ce tour (1 seule fois par tour).</summary>
@@ -51,5 +53,7 @@ namespace CardGame.Core
         public int ResistanceBonusValue { get; set; }
         /// <summary>Bonus de dégâts d'arme ce tour (ex. Appuis solide +1). Remis à 0 en fin de tour.</summary>
         public int WeaponDamageBonusThisTurn { get; set; }
+        /// <summary>Bonus permanent de dégâts d'arme (ex. Appuis solide).</summary>
+        public int WeaponDamageBonusPermanent { get; set; }
     }
 }
