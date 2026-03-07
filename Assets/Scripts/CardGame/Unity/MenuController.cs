@@ -16,6 +16,7 @@ namespace CardGame.Unity
             public static bool IsAndroid { get; private set; }
             public static void SetAndroidMode(bool value) => IsAndroid = value;
 
+            public static string CreateProfile => IsAndroid ? "Androide_CreateProfile" : "CreateProfile";
             public static string Menu => IsAndroid ? "Androide_Menu" : "Menu";
             public static string SoloBoard => IsAndroid ? "Androide_SoloBoard" : "SoloBoard";
             public static string Lobby => IsAndroid ? "Androide_Lobby" : "Lobby";
