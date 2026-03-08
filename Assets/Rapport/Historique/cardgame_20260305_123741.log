@@ -1,5 +1,0 @@
-#META	{"id":"cardgame_20260305_123741","startedAt":"2026-03-05T11:37:41.3449272Z"}
-1	2026-03-05T11:37:41.3498484Z	GameStart	{ firstPlayer = Joueur 1, deckJoueur1 = Guerrier, deckJoueur2 = Guerrier, seed = 963993625, pvInitial = 100 }
-2	2026-03-05T11:37:41.3514722Z	StartTurn	{ joueur = Joueur 1, turnNumber = 1, turnCount = 0, discarded = 0, deckKind = Guerrier }
-3	2026-03-05T11:37:41.3795444Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 1 }
-4	2026-03-05T11:37:41.3911692Z	Draw	{ joueur = Joueur 1, requested = 3, drawn = 3, deckRemaining = 27, handCount = 3, mana = 1, turnNumber = 1 }

@@ -1,5 +1,6 @@
 using System;
 using CardGame.Core;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,6 +18,8 @@ namespace CardGame.Unity
 
         private NetworkVariable<int> _hostDeckChoice = new NetworkVariable<int>(DeckNotSet);
         private NetworkVariable<int> _clientDeckChoice = new NetworkVariable<int>(DeckNotSet);
+        private NetworkVariable<FixedString64Bytes> _hostPseudo = new NetworkVariable<FixedString64Bytes>();
+        private NetworkVariable<FixedString64Bytes> _clientPseudo = new NetworkVariable<FixedString64Bytes>();
         private bool _launchSent;
 
         public override void OnNetworkSpawn()
@@ -35,10 +38,11 @@ namespace CardGame.Unity
         {
             if (!IsServer || _launchSent) return;
             if (_hostDeckChoice.Value == DeckNotSet || _clientDeckChoice.Value == DeckNotSet) return;
+            if (_hostPseudo.Value.Length == 0 || _clientPseudo.Value.Length == 0) return;
             _launchSent = true;
             var first = UnityEngine.Random.Range(0, 2);
             int seed = Environment.TickCount;
-            var p = StartGameParams.Create(first, (DeckKind)_hostDeckChoice.Value, (DeckKind)_clientDeckChoice.Value, seed);
+            var p = StartGameParams.Create(first, (DeckKind)_hostDeckChoice.Value, (DeckKind)_clientDeckChoice.Value, seed, _hostPseudo.Value.ToString(), _clientPseudo.Value.ToString());
             LaunchGameClientRpc(p);
         }
 
@@ -58,21 +62,27 @@ namespace CardGame.Unity
         }
 
         /// <summary>Appelé par le Host quand il confirme son deck (Joueur 1).</summary>
-        public void SetHostDeck(DeckKind deck)
+        public void SetHostDeck(DeckKind deck, string pseudo)
         {
             if (!IsServer) return;
-            _hostDeckChoice.Value = (int)deck;
+            _hostPseudo.Value = new FixedString64Bytes(!string.IsNullOrWhiteSpace(pseudo) ? pseudo.Trim() : "Joueur 1");
+            _hostDeckChoice.Value = (int)deck; // Déclenche CheckLaunch après que le pseudo soit défini
         }
 
         /// <summary>Appelé par le Client via RPC quand il confirme son deck (Joueur 2).</summary>
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-        public void SetClientDeckServerRpc(int deck)
+        public void SetClientDeckServerRpc(int deck, FixedString64Bytes pseudo)
         {
             if (deck < 0 || deck > 1) return; // DeckKind: 0 = Magicien, 1 = Guerrier
-            _clientDeckChoice.Value = deck;
+            _clientPseudo.Value = pseudo.Length > 0 ? pseudo : new FixedString64Bytes("Joueur 2");
+            _clientDeckChoice.Value = deck; // Déclenche CheckLaunch après que le pseudo soit défini
         }
 
         public int HostDeckChoice => _hostDeckChoice.Value;
         public int ClientDeckChoice => _clientDeckChoice.Value;
+        /// <summary>Pseudo du Host (Joueur 1), vide tant qu'il n'a pas confirmé.</summary>
+        public string HostPseudo => _hostPseudo.Value.Length > 0 ? _hostPseudo.Value.ToString() : null;
+        /// <summary>Pseudo du Client (Joueur 2), vide tant qu'il n'a pas confirmé.</summary>
+        public string ClientPseudo => _clientPseudo.Value.Length > 0 ? _clientPseudo.Value.ToString() : null;
     }
 }

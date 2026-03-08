@@ -20,9 +20,12 @@ namespace CardGame.Unity
         public const int MaxConnections = 2;
 
         private bool _servicesInitialized;
+        private string _lastError;
 
         /// <summary>True une fois Unity Services et Auth initialisés.</summary>
         public bool IsReady => _servicesInitialized;
+        /// <summary>Dernier message d'erreur (format code invalide, connexion échouée, etc.).</summary>
+        public string LastError => _lastError ?? "";
 
         /// <summary>Initialise Unity Services et l'authentification anonyme. À appeler avant CreateOrJoin.</summary>
         public async Task InitializeAsync()
@@ -61,25 +64,48 @@ namespace CardGame.Unity
             return null;
         }
 
+        /// <summary>Caractères autorisés pour le code Relay (6-12 caractères).</summary>
+        private static readonly System.Text.RegularExpressions.Regex JoinCodeRegex = new System.Text.RegularExpressions.Regex("^[6789BCDFGHJKLMNPQRTWbcdfghjklmnpqrtw]{6,12}$");
+
         /// <summary>Rejoint une partie avec le code ami et démarre le Client.</summary>
         public async Task<bool> StartClientWithRelayAsync(string joinCode)
         {
+            _lastError = null;
             if (string.IsNullOrWhiteSpace(joinCode))
             {
-                Debug.LogWarning("[RelayManager] Join code is empty.");
+                _lastError = "Code vide.";
                 return false;
             }
             joinCode = joinCode.Trim();
-            await InitializeAsync();
-            var joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-            var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-            if (transport == null)
+            if (!JoinCodeRegex.IsMatch(joinCode))
             {
-                Debug.LogError("[RelayManager] UnityTransport not found on NetworkManager.");
+                _lastError = joinCode.Length < 6
+                    ? $"Code trop court : {joinCode.Length} caractères (minimum 6). Vérifie que tu as bien copié tout le code."
+                    : $"Code invalide : 6 à 12 caractères (chiffres 6-9, lettres sans A,E,I,O,S,V,X,Y,Z).";
                 return false;
             }
-            transport.SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, ConnectionType));
-            return NetworkManager.Singleton.StartClient();
+            try
+            {
+                await InitializeAsync();
+                var joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
+                var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+                if (transport == null)
+                {
+                    _lastError = "Erreur configuration réseau.";
+                    return false;
+                }
+                transport.SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, ConnectionType));
+                var ok = NetworkManager.Singleton.StartClient();
+                if (!ok) _lastError = "Connexion échouée.";
+                return ok;
+            }
+            catch (Exception e)
+            {
+                _lastError = e.Message.Contains("400") || e.Message.Contains("Bad Request")
+                    ? "Code invalide ou expiré. Demande un nouveau code au créateur de la partie."
+                    : e.Message;
+                return false;
+            }
         }
 
         public void Shutdown()

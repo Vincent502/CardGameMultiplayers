@@ -57,6 +57,9 @@ namespace CardGame.Unity
             public string StartedAt;
             public string EndedAt;
             public string Winner;
+            public int WinnerIndex;
+            public string NamePlayer1;
+            public string NamePlayer2;
             public int TurnCount;
             public string DeckJoueur1;
             public string DeckJoueur2;
@@ -66,9 +69,18 @@ namespace CardGame.Unity
                 ? dt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                 : StartedAt;
 
-            public string DisplayTitle => string.IsNullOrEmpty(Winner) || Winner == "Partie non terminée"
-                ? $"{DeckJoueur1} vs {DeckJoueur2} - {Winner}"
-                : $"{DeckJoueur1} vs {DeckJoueur2} - {Winner} gagne";
+            public string DisplayTitle
+            {
+                get
+                {
+                    string n1 = !string.IsNullOrEmpty(NamePlayer1) ? NamePlayer1 : DeckJoueur1;
+                    string n2 = !string.IsNullOrEmpty(NamePlayer2) ? NamePlayer2 : DeckJoueur2;
+                    string winnerName = !string.IsNullOrEmpty(Winner) && Winner != "Partie non terminée" ? Winner : "";
+                    if (string.IsNullOrEmpty(winnerName))
+                        return $"{n1} vs {n2} - {Winner}";
+                    return $"{n1} vs {n2} - {winnerName} gagne";
+                }
+            }
         }
 
         /// <summary>Rapport complet avec toutes les entrées de log.</summary>
@@ -278,11 +290,13 @@ namespace CardGame.Unity
             string deck2 = ExtractFromData(data, "deckJoueur2");
             if (string.IsNullOrEmpty(gagnant)) return null;
 
+            int winnerIdx = gagnant == "Joueur 1" ? 0 : (gagnant == "Joueur 2" ? 1 : -1);
             string endedAt = parts.Length >= 2 ? parts[1] : "";
             var summary = new ReportSummary
             {
                 FilePath = filePath,
                 Winner = gagnant,
+                WinnerIndex = winnerIdx,
                 TurnCount = turnCount,
                 EndedAt = endedAt,
                 DeckJoueur1 = deck1 ?? "?",
@@ -370,12 +384,18 @@ namespace CardGame.Unity
             try
             {
                 var s = JsonUtility.FromJson<ReportSummaryJson>(json);
+                int winnerIdx = s.winnerIndex;
+                if (s.winner == "Joueur 1") winnerIdx = 0;
+                else if (s.winner == "Joueur 2") winnerIdx = 1;
                 return new ReportSummary
                 {
                     Id = s.id,
                     StartedAt = s.startedAt,
                     EndedAt = s.endedAt,
                     Winner = s.winner,
+                    WinnerIndex = winnerIdx,
+                    NamePlayer1 = s.namePlayer1,
+                    NamePlayer2 = s.namePlayer2,
                     TurnCount = s.turnCount,
                     DeckJoueur1 = s.deckJoueur1 ?? "",
                     DeckJoueur2 = s.deckJoueur2 ?? ""
@@ -394,6 +414,9 @@ namespace CardGame.Unity
             public string startedAt;
             public string endedAt;
             public string winner;
+            public int winnerIndex;
+            public string namePlayer1;
+            public string namePlayer2;
             public int turnCount;
             public string deckJoueur1;
             public string deckJoueur2;

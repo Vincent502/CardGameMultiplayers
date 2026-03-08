@@ -3527,10 +3527,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardGame.Unity.ProfileController
   _panelProfil: {fileID: 672478188}
-  _textStats: {fileID: 726757896}
+  _statsScrollContent: {fileID: 0}
+  _statsItemPrefab: {fileID: 0}
   _succesListContent: {fileID: 2130336105}
   _succesItemPrefab: {fileID: 2309263813312908046, guid: 689a91cf5eedf5149b37cf43a1628061, type: 3}
   _buttonBackFromProfil: {fileID: 486454993}
+  _buttonStatsGlobal: {fileID: 0}
+  _buttonStatsSolo: {fileID: 0}
+  _buttonStatsMulti: {fileID: 0}
+  _buttonStatsGhost: {fileID: 0}
 --- !u!4 &1348925169
 Transform:
   m_ObjectHideFlags: 0
