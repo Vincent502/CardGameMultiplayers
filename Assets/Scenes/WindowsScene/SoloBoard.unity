@@ -2242,6 +2242,8 @@ MonoBehaviour:
   _equipmentsJoueur1Container: {fileID: 1324514819}
   _equipmentsJoueur2Container: {fileID: 1461625323}
   _equipmentLabelPrefab: {fileID: 2940249844995941936, guid: b85ac4b6f30d92e45a80a6f9569b3723, type: 3}
+  _tooltipSize: {x: 320, y: 150}
+  _tooltipOffset: {x: 1, y: 1}
   _effectsJoueur1Container: {fileID: 1643392409}
   _effectsJoueur2Container: {fileID: 1185512041}
   _effectLabelPrefab: {fileID: 6950824854011511212, guid: ac3d5c401768df74b96662d92be2ec12, type: 3}

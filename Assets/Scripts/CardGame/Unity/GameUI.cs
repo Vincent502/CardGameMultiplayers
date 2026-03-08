@@ -36,6 +36,9 @@ namespace CardGame.Unity
         [SerializeField] [FormerlySerializedAs("_equipmentsPlayer0Container")] private Transform _equipmentsJoueur1Container;
         [SerializeField] [FormerlySerializedAs("_equipmentsPlayer1Container")] private Transform _equipmentsJoueur2Container;
         [SerializeField] private GameObject _equipmentLabelPrefab;
+        [Header("Tooltip équipement")]
+        [SerializeField] private Vector2 _tooltipSize = new Vector2(320f, 120f);
+        [SerializeField] private Vector2 _tooltipOffset = new Vector2(12f, 12f);
         [Header("Effets à durée")]
         [SerializeField] [FormerlySerializedAs("_effectsPlayer0Container")] private Transform _effectsJoueur1Container;
         [SerializeField] [FormerlySerializedAs("_effectsPlayer1Container")] private Transform _effectsJoueur2Container;
@@ -47,6 +50,7 @@ namespace CardGame.Unity
         private bool _lastNeedsDivinationChoice;
         private bool _lastNeedsReaction;
         private string _lastHandKey;
+        private string _lastEquipmentsKey;
         private float _reactionTimeRemaining = -1f;
         private const float ReactionWindowDuration = 2f;
 
@@ -58,6 +62,9 @@ namespace CardGame.Unity
             if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller?.HumanEndTurn());
             if (_buttonBackToMenu != null) _buttonBackToMenu.onClick.AddListener(OnBackToMenu);
             if (_panelGameOver != null) _panelGameOver.SetActive(false);
+            var tooltipPanel = CreateEquipmentTooltipPanel();
+            if (tooltipPanel != null)
+                EquipmentDescriptionTooltip.SetTooltipPanel(tooltipPanel);
         }
 
         private void Update()
@@ -312,6 +319,10 @@ namespace CardGame.Unity
         {
             int localIdx = _controller.LocalPlayerIndex;
             int oppIdx = 1 - localIdx;
+            var key = string.Join("|", state.Players[localIdx].Equipments.Select(e => $"{e.Card.Id}_{e.IsActive}_{e.IsFrozen}"))
+                + "||" + string.Join("|", state.Players[oppIdx].Equipments.Select(e => $"{e.Card.Id}_{e.IsActive}_{e.IsFrozen}"));
+            if (key == _lastEquipmentsKey) return;
+            _lastEquipmentsKey = key;
             RefreshEquipmentsForPlayer(state, localIdx, _equipmentsJoueur1Container);
             RefreshEquipmentsForPlayer(state, oppIdx, _equipmentsJoueur2Container);
         }
@@ -320,6 +331,7 @@ namespace CardGame.Unity
         {
             if (container == null) return;
 
+            EquipmentDescriptionTooltip.HideTooltip();
             foreach (Transform t in container)
                 Destroy(t.gameObject);
 
@@ -341,7 +353,71 @@ namespace CardGame.Unity
                     label.color = Color.green;
                 else
                     label.color = Color.gray;
+
+                label.raycastTarget = true;
+                var tooltipTarget = label.gameObject;
+                var tooltip = tooltipTarget.GetComponent<EquipmentDescriptionTooltip>();
+                if (tooltip == null) tooltip = tooltipTarget.AddComponent<EquipmentDescriptionTooltip>();
+                tooltip.SetCardData(data);
             }
+        }
+
+        private EquipmentTooltipPanel CreateEquipmentTooltipPanel()
+        {
+            var canvas = GetComponentInParent<Canvas>() ?? FindFirstObjectByType<Canvas>();
+            if (canvas == null) return null;
+            var tooltipGO = new GameObject("EquipmentTooltipPanel");
+            tooltipGO.transform.SetParent(canvas.transform, false);
+            var rt = tooltipGO.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = _tooltipSize;
+            var img = tooltipGO.AddComponent<Image>();
+            img.color = new Color(0.1f, 0.1f, 0.12f, 0.95f);
+            img.raycastTarget = false;
+            var textGO = new GameObject("Text");
+            textGO.transform.SetParent(tooltipGO.transform, false);
+            var textRT = textGO.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.offsetMin = new Vector2(12, 12);
+            textRT.offsetMax = new Vector2(-12, -12);
+            var txt = textGO.AddComponent<TextMeshProUGUI>();
+            txt.fontSize = 16;
+            txt.enableAutoSizing = true;
+            txt.fontSizeMin = 20;
+            txt.fontSizeMax = 30;
+            txt.richText = true;
+            txt.alignment = TextAlignmentOptions.TopLeft;
+            txt.enableWordWrapping = true;
+            GameObject overlay = null;
+            if (Application.isMobilePlatform)
+            {
+                overlay = new GameObject("TooltipOverlay");
+                overlay.transform.SetParent(canvas.transform, false);
+                overlay.transform.SetAsLastSibling();
+                var overlayRt = overlay.AddComponent<RectTransform>();
+                overlayRt.anchorMin = Vector2.zero;
+                overlayRt.anchorMax = Vector2.one;
+                overlayRt.offsetMin = Vector2.zero;
+                overlayRt.offsetMax = Vector2.zero;
+                var overlayImg = overlay.AddComponent<Image>();
+                overlayImg.color = new Color(0, 0, 0, 0.01f);
+                overlayImg.raycastTarget = true;
+                var overlayBtn = overlay.AddComponent<Button>();
+                overlayBtn.transition = Selectable.Transition.None;
+                overlay.SetActive(false);
+            }
+            var panel = tooltipGO.AddComponent<EquipmentTooltipPanel>();
+            var canvasComponent = canvas.GetComponent<Canvas>();
+            var canvasRect = canvas.transform as RectTransform;
+            var cam = canvasComponent != null && canvasComponent.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvasComponent.worldCamera : null;
+            panel.Init(txt, tooltipGO, overlay, canvasRect, cam, _tooltipSize, _tooltipOffset);
+            tooltipGO.SetActive(false);
+            return panel;
         }
 
         /// <summary>Remplit les champs CardName, Description, Mana, Type du prefab carte (recherche par nom d'enfant).</summary>
