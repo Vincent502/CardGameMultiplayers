@@ -1,0 +1,16 @@
+#META	{"id":"cardgame_20260305_121613","startedAt":"2026-03-05T11:16:13.6890724Z"}
+1	2026-03-05T11:16:13.6944601Z	GameStart	{ firstPlayer = Joueur 2, deckJoueur1 = Guerrier, deckJoueur2 = Magicien, seed = 962705968, pvInitial = 100 }
+2	2026-03-05T11:16:13.6980858Z	StartTurn	{ joueur = Joueur 2, turnNumber = 1, turnCount = 0, discarded = 0, deckKind = Magicien }
+3	2026-03-05T11:16:13.7560771Z	Draw	{ joueur = Joueur 2, requested = 3, drawn = 3, deckRemaining = 27, handCount = 3, mana = 1, turnNumber = 1 }
+4	2026-03-05T11:16:13.7705702Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 25, handCount = 4 }
+5	2026-03-05T11:16:13.7721541Z	PlayCard	{ joueur = Joueur 2, carte = Divination, cardId = Divination, handIndex = 2, manaApres = 0, handCount = 3, cible = Joueur 1, toGraveyard = True, turnNumber = 1 }
+6	2026-03-05T11:16:14.0695742Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 0, damageTotal = 1, turnNumber = 1 }
+7	2026-03-05T11:16:17.0705493Z	DamageApplied	{ cible = Joueur 1, source = Frappe, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 0, toPV = 1, pvAvant = 100, pvApres = 99, shieldAvant = 0, shieldApres = 0 }
+8	2026-03-05T11:16:17.0720836Z	ShieldApplied	{ cible = Joueur 2, source = Catalyseur arcanique restreint, baseShield = 1, resistance = 0, amount = 1, shieldAvant = 0, shieldApres = 1 }
+9	2026-03-05T11:16:17.0720836Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Frappe, baseDamage = 1, casterForce = 0, turnNumber = 1 }
+10	2026-03-05T11:16:17.0746169Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 1 }
+11	2026-03-05T11:16:17.3795333Z	ShieldApplied	{ cible = Joueur 2, source = Rune essence arcanique, baseShield = 5, resistance = 0, amount = 5, shieldAvant = 1, shieldApres = 6 }
+12	2026-03-05T11:16:17.4848663Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 100, shield = 6, handCount = 3, turnNumber = 1 }
+13	2026-03-05T11:16:17.5882360Z	StartTurn	{ joueur = Joueur 1, turnNumber = 1, turnCount = 1, discarded = 0, deckKind = Guerrier }
+14	2026-03-05T11:16:17.6975103Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 1 }
+15	2026-03-05T11:16:17.7967947Z	Draw	{ joueur = Joueur 1, requested = 3, drawn = 3, deckRemaining = 27, handCount = 3, mana = 1, turnNumber = 1 }

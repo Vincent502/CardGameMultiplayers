@@ -74,6 +74,7 @@ namespace CardGame.Unity
                     _degatsInfligesTotal += dmg;
                     break;
                 case "ShieldApplied":
+                case "ShieldBuffReapplied":
                     int shield = d.amount > 0 ? d.amount : (d.baseShield > 0 ? d.baseShield : ExtractShieldFromPayload(payloadJson));
                     _bouclierCeTour += shield;
                     _bouclierGagneTotal += shield;

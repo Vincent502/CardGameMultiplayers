@@ -27,5 +27,7 @@ namespace CardGame.Core
         public int TurnsRemaining { get; set; }
         /// <summary>Valeur selon le type (dégât par tour, ou montant de bouclier/résistance à retirer à l'expiration).</summary>
         public int Value { get; set; }
+        /// <summary>Si true : chaque tour de jeu compte (spec "chaque tour de jeu compte pour 1"). Si false : seuls les tours du joueur cible comptent (ex. "2 de vos tours").</summary>
+        public bool CountPerGameTurn { get; set; }
     }
 }

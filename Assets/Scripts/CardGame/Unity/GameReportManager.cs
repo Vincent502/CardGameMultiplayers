@@ -7,11 +7,47 @@ using UnityEngine;
 namespace CardGame.Unity
 {
     /// <summary>
-    /// Gère les rapports de parties dans persistentDataPath/Rapport (compatible Windows et mobile).
+    /// Gère les rapports de parties dans persistentDataPath/Rapport/Historique (compatible Windows et mobile).
     /// </summary>
     public static class GameReportManager
     {
-        private static string RapportPath => Path.Combine(Application.persistentDataPath, "Rapport");
+        private static string RapportPath => Path.Combine(Application.persistentDataPath, "Rapport", "Historique");
+
+        private const int MaxLogsToKeep = 10;
+
+        /// <summary>Supprime les anciens logs pour ne garder que les 10 plus récents (appelé avant création d'un nouveau log).</summary>
+        public static void PruneOldLogs()
+        {
+            if (!Directory.Exists(RapportPath)) return;
+            var files = Directory.GetFiles(RapportPath, "*.log");
+            int toKeep = MaxLogsToKeep - 1;
+            if (files.Length <= toKeep) return;
+
+            var sorted = new List<(string path, DateTime time)>();
+            foreach (string path in files)
+            {
+                try
+                {
+                    var info = new FileInfo(path);
+                    sorted.Add((path, info.LastWriteTimeUtc));
+                }
+                catch { }
+            }
+            sorted.Sort((a, b) => b.time.CompareTo(a.time));
+
+            for (int i = toKeep; i < sorted.Count; i++)
+            {
+                try
+                {
+                    File.Delete(sorted[i].path);
+                    Debug.Log($"[GameReportManager] Ancien log supprimé : {Path.GetFileName(sorted[i].path)}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[GameReportManager] Impossible de supprimer {sorted[i].path}: {ex.Message}");
+                }
+            }
+        }
 
         /// <summary>Résumé d'une partie pour l'affichage dans la liste historique.</summary>
         [Serializable]

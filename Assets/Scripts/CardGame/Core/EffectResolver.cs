@@ -83,6 +83,26 @@ namespace CardGame.Core
             }
         }
 
+        /// <summary>Réapplique le bouclier des effets ShieldBuff actifs après le reset début de tour (ex. Armure psychique).</summary>
+        public void ReapplyShieldBuffs(GameState state, int playerIndex)
+        {
+            var target = state.Players[playerIndex];
+            foreach (var effect in state.ActiveDurationEffects)
+            {
+                if (effect.Kind == DurationEffectKind.ShieldBuff && effect.TargetPlayerIndex == playerIndex)
+                {
+                    target.Shield += effect.Value;
+                    _log.Log("ShieldBuffReapplied", new {
+                        cible = $"Joueur {playerIndex + 1}",
+                        carte = DeckDefinitions.GetCard(effect.CardId).Name,
+                        amount = effect.Value,
+                        shieldApres = target.Shield,
+                        turnNumber = state.GetCurrentTurnNumber()
+                    });
+                }
+            }
+        }
+
         /// <summary>Ajoute du bouclier (formule Résistance).</summary>
         public void ApplyShield(GameState state, int targetPlayerIndex, int baseShield, string sourceName)
         {
@@ -350,6 +370,7 @@ namespace CardGame.Core
                 });
                     return caster.HasPlayedDisciplineEternelThisGame; // cimetière si Discipline jouée
                 case CardId.ArmurePsychique:
+                    int armureAmount = ComputeShield(23, caster.Resistance);
                     ApplyShield(state, casterIndex, 23, data.Name);
                     state.ActiveDurationEffects.Add(new ActiveDurationEffect
                     {
@@ -358,13 +379,13 @@ namespace CardGame.Core
                         CasterPlayerIndex = casterIndex,
                         TargetPlayerIndex = casterIndex,
                         TurnsRemaining = 2,
-                        Value = 23
+                        Value = armureAmount
                     });
                     _log.Log("ArmurePsychique", new {
                     joueur = $"Joueur {casterIndex + 1}",
-                    shieldAvant = caster.Shield - 23,
+                    shieldAvant = caster.Shield - armureAmount,
                     shieldApres = caster.Shield,
-                    amount = 23,
+                    amount = armureAmount,
                     dureeTours = 2,
                     turnNumber = state.GetCurrentTurnNumber()
                 });
@@ -392,7 +413,8 @@ namespace CardGame.Core
                         CasterPlayerIndex = casterIndex,
                         TargetPlayerIndex = casterIndex,
                         TurnsRemaining = 3,
-                        Value = 3
+                        Value = 3,
+                        CountPerGameTurn = true // Spec : "chaque tour de jeu compte pour 1"
                     });
                     _log.Log("LienKarmique", new {
                     joueur = $"Joueur {casterIndex + 1}",
@@ -622,8 +644,8 @@ namespace CardGame.Core
 
         /// <summary>
         /// Résout les effets "avant fin de tour" (ex. Orage de poche) puis décrémente la durée des effets.
-        /// Les effets à durée (cartes) sont en "tours du joueur cible" : on ne décrémente que quand le joueur cible termine son tour.
-        /// Les équipements restent en "tours de partie" (chaque tour de jeu compte).
+        /// CountPerGameTurn=true : chaque tour de jeu compte (spec "chaque tour de jeu compte pour 1", ex. Lien karmique).
+        /// CountPerGameTurn=false : seuls les tours du joueur cible comptent (ex. "2 de vos tours" Armure psychique).
         /// </summary>
         public void ResolveEndOfTurnEffects(GameState state, int currentPlayerIndex)
         {
@@ -635,7 +657,8 @@ namespace CardGame.Core
             for (int i = state.ActiveDurationEffects.Count - 1; i >= 0; i--)
             {
                 var effect = state.ActiveDurationEffects[i];
-                if (effect.TargetPlayerIndex != currentPlayerIndex) continue;
+                bool shouldDecrement = effect.CountPerGameTurn || effect.TargetPlayerIndex == currentPlayerIndex;
+                if (!shouldDecrement) continue;
                 effect.TurnsRemaining--;
                 if (effect.TurnsRemaining <= 0)
                 {

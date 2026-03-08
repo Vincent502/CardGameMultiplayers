@@ -8,7 +8,7 @@ using UnityEngine;
 namespace CardGame.Unity
 {
     /// <summary>
-    /// Implémentation du logger : Debug.Log + fichier dans persistentDataPath/Rapport (compatible Windows et mobile).
+    /// Implémentation du logger : Debug.Log + fichier dans persistentDataPath/Rapport/Historique (compatible Windows et mobile).
     /// Format lisible : une entrée par ligne, payload en JSON.
     /// </summary>
     public class GameLogger : IGameLogger
@@ -18,26 +18,28 @@ namespace CardGame.Unity
         private readonly DateTime _startedAt;
         private int _sequence;
         private readonly SessionStats _sessionStats;
+        private ProfileManager.GameMode _gameMode;
 
-        public GameLogger(bool writeToFile = true, SessionStats sessionStats = null)
+        public GameLogger(bool writeToFile = true, SessionStats sessionStats = null, ProfileManager.GameMode gameMode = ProfileManager.GameMode.Solo)
         {
             _reportId = $"cardgame_{DateTime.Now:yyyyMMdd_HHmmss}";
             _startedAt = DateTime.UtcNow;
 
             if (writeToFile)
             {
-                string rapportDir = Path.Combine(Application.persistentDataPath, "Rapport");
+                string rapportDir = Path.Combine(Application.persistentDataPath, "Rapport", "Historique");
                 try
                 {
                     if (!Directory.Exists(rapportDir))
                         Directory.CreateDirectory(rapportDir);
+                    GameReportManager.PruneOldLogs();
                     _logPath = Path.Combine(rapportDir, $"{_reportId}.log");
                     string header = $"#META\t{{\"id\":\"{_reportId}\",\"startedAt\":\"{_startedAt:O}\"}}\n";
                     File.WriteAllText(_logPath, header);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[CardGame] Impossible de créer le dossier Rapport: {ex.Message}");
+                    Debug.LogWarning($"[CardGame] Impossible de créer le dossier Rapport/Historique: {ex.Message}");
                     _logPath = null;
                 }
             }
@@ -46,6 +48,7 @@ namespace CardGame.Unity
                 _logPath = null;
             }
             _sessionStats = sessionStats;
+            _gameMode = gameMode;
         }
 
         public void Log(string eventType, object data)
@@ -112,7 +115,10 @@ namespace CardGame.Unity
                 catch { }
             }
             if (_sessionStats != null)
-                ProfileManager.FinalizeGame(state, _sessionStats);
+            {
+                Debug.Log("[CardGame] Finalisation du rapport — mise à jour du profil.");
+                ProfileManager.FinalizeGame(state, _sessionStats, _gameMode);
+            }
         }
     }
 }

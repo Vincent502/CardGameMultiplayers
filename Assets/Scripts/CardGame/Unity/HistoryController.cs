@@ -146,7 +146,7 @@ namespace CardGame.Unity
             string color = eventType switch
             {
                 "DamageApplied" or "DamageBlocked" => ColorDamage,
-                "ShieldApplied" or "ShieldBuffExpired" or "ArmurePsychique" => ColorShield,
+                "ShieldApplied" or "ShieldBuffExpired" or "ShieldBuffReapplied" or "ArmurePsychique" => ColorShield,
                 "RuneAgressivite" or "Galvanisation" or "PositionOffensive" or "PositionDefensive" or "Concentration" or "LienKarmique" or "AppuisSolide" or "ForceBonusExpired" or "ResistanceBuffExpired" => ColorBuff,
                 "Victory" => ColorVictory,
                 "PlayCard" or "PlayRapid" or "RapidPlayed" or "StrikeReactionPhase" or "ReactionPhase" or "NoReaction" => ColorCard,

@@ -66,6 +66,18 @@ namespace CardGame.Editor
                 succesPrefab = CreateItemSuccesPrefab(succesPrefabPath);
             }
 
+            // Créer le prefab ItemStatsPrefab s'il n'existe pas
+            var statsPrefabPath = "Assets/Prefab/ItemStatsPrefab.prefab";
+            GameObject statsPrefab = null;
+            if (System.IO.File.Exists(statsPrefabPath))
+            {
+                statsPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(statsPrefabPath);
+            }
+            else
+            {
+                statsPrefab = CreateItemStatsPrefab(statsPrefabPath);
+            }
+
             // Créer le bouton Profil (copier Historique)
             var historiqueBtn = panelMenu.transform.Find("Historique");
             GameObject buttonProfilGO = null;
@@ -179,20 +191,21 @@ namespace CardGame.Editor
             scrollRect.horizontal = false;
             scrollRect.vertical = true;
 
-            // TextStats
-            var textStatsGO = new GameObject("TextStats");
-            textStatsGO.transform.SetParent(contentGO.transform, false);
-            var textStatsRT = textStatsGO.AddComponent<RectTransform>();
-            textStatsRT.sizeDelta = new Vector2(0, 400);
-            var textStatsLE = textStatsGO.AddComponent<LayoutElement>();
-            textStatsLE.preferredHeight = 400;
-            textStatsLE.flexibleWidth = 1;
-            var textStats = textStatsGO.AddComponent<TextMeshProUGUI>();
-            textStats.text = "Chargement...";
-            textStats.fontSize = 18;
-            textStats.richText = true;
-            textStats.alignment = TextAlignmentOptions.TopLeft;
-            textStats.enableWordWrapping = true;
+            // ContentStats (conteneur pour les items de stats, préfab instanciés)
+            var contentStatsGO = new GameObject("ContentStats");
+            contentStatsGO.transform.SetParent(contentGO.transform, false);
+            var contentStatsRT = contentStatsGO.AddComponent<RectTransform>();
+            var contentStatsLE = contentStatsGO.AddComponent<LayoutElement>();
+            contentStatsLE.flexibleWidth = 1;
+            contentStatsLE.minHeight = 100;
+            var contentStatsVlg = contentStatsGO.AddComponent<VerticalLayoutGroup>();
+            contentStatsVlg.spacing = 12;
+            contentStatsVlg.padding = new RectOffset(0, 0, 0, 10);
+            contentStatsVlg.childAlignment = TextAnchor.UpperLeft;
+            contentStatsVlg.childControlHeight = true;
+            contentStatsVlg.childControlWidth = true;
+            contentStatsVlg.childForceExpandHeight = false;
+            contentStatsVlg.childForceExpandWidth = true;
 
             // Succès Content (sous les stats)
             var succesContentGO = new GameObject("ContentSucces");
@@ -215,7 +228,8 @@ namespace CardGame.Editor
 
             var so = new SerializedObject(profileController);
             so.FindProperty("_panelProfil").objectReferenceValue = panelProfilGO;
-            so.FindProperty("_textStats").objectReferenceValue = textStats;
+            so.FindProperty("_statsScrollContent").objectReferenceValue = contentStatsGO.transform;
+            so.FindProperty("_statsItemPrefab").objectReferenceValue = statsPrefab;
             so.FindProperty("_succesListContent").objectReferenceValue = succesContentGO.transform;
             so.FindProperty("_succesItemPrefab").objectReferenceValue = succesPrefab;
             so.FindProperty("_buttonBackFromProfil").objectReferenceValue = btnBack;
@@ -294,6 +308,39 @@ namespace CardGame.Editor
             var text = textGO.AddComponent<TextMeshProUGUI>();
             text.text = "Succès";
             text.fontSize = 18;
+            text.richText = true;
+            text.alignment = TextAlignmentOptions.TopLeft;
+            text.enableWordWrapping = true;
+
+            if (!System.IO.Directory.Exists("Assets/Prefab"))
+                System.IO.Directory.CreateDirectory("Assets/Prefab");
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, path);
+            Object.DestroyImmediate(go);
+            return prefab;
+        }
+
+        private static GameObject CreateItemStatsPrefab(string path)
+        {
+            var go = new GameObject("ItemStatsPrefab");
+            var rt = go.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(400, 60);
+            var le = go.AddComponent<LayoutElement>();
+            le.minHeight = 40;
+            le.flexibleWidth = 1;
+            var csf = go.AddComponent<ContentSizeFitter>();
+            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            go.AddComponent<Image>().color = new Color(0.18f, 0.18f, 0.2f, 0.95f);
+            var textGO = new GameObject("Text");
+            textGO.transform.SetParent(go.transform, false);
+            var textRT = textGO.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.offsetMin = new Vector2(12, 8);
+            textRT.offsetMax = new Vector2(-12, -8);
+            var text = textGO.AddComponent<TextMeshProUGUI>();
+            text.text = "Stats";
+            text.fontSize = 16;
             text.richText = true;
             text.alignment = TextAlignmentOptions.TopLeft;
             text.enableWordWrapping = true;

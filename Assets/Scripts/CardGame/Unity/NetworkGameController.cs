@@ -71,7 +71,7 @@ namespace CardGame.Unity
             NetworkGameParamsHolder.Clear();
 
             _sessionStats = new SessionStats();
-            _logger = new GameLogger(_writeLogToFile, _sessionStats);
+            _logger = new GameLogger(_writeLogToFile, _sessionStats, ProfileManager.GameMode.Multi);
             _session = new GameSession(_logger);
             _session.StartGame(_humanIsJoueur1, pr.FirstPlayerIndex, pr.GetDeckJoueur1(), pr.GetDeckJoueur2(), pr.Seed);
 
