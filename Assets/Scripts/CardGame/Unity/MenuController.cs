@@ -16,6 +16,7 @@ namespace CardGame.Unity
             public static bool IsAndroid { get; private set; }
             public static void SetAndroidMode(bool value) => IsAndroid = value;
 
+            public static string CreateProfile => IsAndroid ? "Androide_CreateProfile" : "CreateProfile";
             public static string Menu => IsAndroid ? "Androide_Menu" : "Menu";
             public static string SoloBoard => IsAndroid ? "Androide_SoloBoard" : "SoloBoard";
             public static string Lobby => IsAndroid ? "Androide_Lobby" : "Lobby";
@@ -32,9 +33,12 @@ namespace CardGame.Unity
         [SerializeField] private Button _buttonSolo;
         [SerializeField] private Button _buttonMultiplayer;
         [SerializeField] private Button _buttonHistorique;
+        [SerializeField] private Button _buttonProfil;
         [SerializeField] private Button _buttonQuit;
         [Header("Historique")]
         [SerializeField] private HistoryController _historyController;
+        [Header("Profil")]
+        [SerializeField] private ProfileController _profileController;
         [Header("Solo - Choix deck")]
         [SerializeField] private GameObject _panelSoloDeckSelection;
         [SerializeField] private Button _buttonDeckMagicien;
@@ -55,6 +59,7 @@ namespace CardGame.Unity
             if (_buttonSolo != null) _buttonSolo.onClick.AddListener(OnSolo);
             if (_buttonMultiplayer != null) _buttonMultiplayer.onClick.AddListener(OnMultiplayer);
             if (_buttonHistorique != null) _buttonHistorique.onClick.AddListener(OnHistorique);
+            if (_buttonProfil != null) _buttonProfil.onClick.AddListener(OnProfil);
             if (_buttonQuit != null) _buttonQuit.onClick.AddListener(OnQuit);
             if (_buttonDeckMagicien != null) _buttonDeckMagicien.onClick.AddListener(() => { _selectedDeck = DeckKind.Magicien; UpdateSoloDeckUI(); });
             if (_buttonDeckGuerrier != null) _buttonDeckGuerrier.onClick.AddListener(() => { _selectedDeck = DeckKind.Guerrier; UpdateSoloDeckUI(); });
@@ -108,6 +113,12 @@ namespace CardGame.Unity
         {
             if (_historyController != null)
                 _historyController.ShowHistorique();
+        }
+
+        private void OnProfil()
+        {
+            if (_profileController != null)
+                _profileController.ShowProfil();
         }
 
         private void OnMultiplayer()

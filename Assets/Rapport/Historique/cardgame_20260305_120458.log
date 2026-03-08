@@ -1,0 +1,488 @@
+#META	{"id":"cardgame_20260305_120458","startedAt":"2026-03-05T11:04:58.6608192Z"}
+1	2026-03-05T11:04:58.6659298Z	GameStart	{ firstPlayer = Joueur 2, deckJoueur1 = Guerrier, deckJoueur2 = Magicien, seed = 962030953, pvInitial = 100 }
+2	2026-03-05T11:04:58.6706927Z	StartTurn	{ joueur = Joueur 2, turnNumber = 1, turnCount = 0, discarded = 0, deckKind = Magicien }
+3	2026-03-05T11:04:58.7719745Z	Draw	{ joueur = Joueur 2, requested = 3, drawn = 3, deckRemaining = 27, handCount = 3, mana = 1, turnNumber = 1 }
+4	2026-03-05T11:04:58.7849011Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 0, damageTotal = 1, turnNumber = 1 }
+5	2026-03-05T11:05:01.7881430Z	DamageApplied	{ cible = Joueur 1, source = Frappe, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 0, toPV = 1, pvAvant = 100, pvApres = 99, shieldAvant = 0, shieldApres = 0 }
+6	2026-03-05T11:05:01.7891499Z	ShieldApplied	{ cible = Joueur 2, source = Catalyseur arcanique restreint, baseShield = 1, resistance = 0, amount = 1, shieldAvant = 0, shieldApres = 1 }
+7	2026-03-05T11:05:01.7901484Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Frappe, baseDamage = 1, casterForce = 0, turnNumber = 1 }
+8	2026-03-05T11:05:01.7952450Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Attaque, cardId = Attaque, turnNumber = 1 }
+9	2026-03-05T11:05:01.7962434Z	PlayCard	{ joueur = Joueur 2, carte = Attaque, cardId = Attaque, handIndex = 1, manaApres = 0, handCount = 2, cible = Joueur 1, toGraveyard = True, turnNumber = 1 }
+10	2026-03-05T11:05:04.7913470Z	DamageApplied	{ cible = Joueur 1, source = Attaque, baseDamage = 5, casterForce = 0, damageTotal = 5, toShield = 0, toPV = 5, pvAvant = 99, pvApres = 94, shieldAvant = 0, shieldApres = 0 }
+11	2026-03-05T11:05:04.7913470Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Attaque, baseDamage = 5, casterForce = 0, turnNumber = 1 }
+12	2026-03-05T11:05:04.7940850Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 1 }
+13	2026-03-05T11:05:05.0987095Z	ShieldApplied	{ cible = Joueur 2, source = Rune essence arcanique, baseShield = 5, resistance = 0, amount = 5, shieldAvant = 1, shieldApres = 6 }
+14	2026-03-05T11:05:05.2065017Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 100, shield = 6, handCount = 2, turnNumber = 1 }
+15	2026-03-05T11:05:05.3118848Z	StartTurn	{ joueur = Joueur 1, turnNumber = 1, turnCount = 1, discarded = 0, deckKind = Guerrier }
+16	2026-03-05T11:05:05.4161214Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 94, pvApres = 97, heal = 3, turnNumber = 1 }
+17	2026-03-05T11:05:05.5227985Z	Draw	{ joueur = Joueur 1, requested = 3, drawn = 3, deckRemaining = 27, handCount = 3, mana = 1, turnNumber = 1 }
+18	2026-03-05T11:05:09.8162095Z	AppuisSolide	{ joueur = Joueur 1, bonusDegatsArme = 1, duree = ce tour }
+19	2026-03-05T11:05:09.8172114Z	PlayCard	{ joueur = Joueur 1, carte = Appuis solide, cardId = AppuisSolide, handIndex = 2, manaApres = 0, handCount = 2, cible = Joueur 2, toGraveyard = False, turnNumber = 1 }
+20	2026-03-05T11:05:11.4925360Z	StrikeReactionPhase	{ frappeur = Joueur 1, cible = Joueur 2, baseDamage = 6, casterForce = 1, runeStrikes = 0, damageTotal = 7, turnNumber = 1 }
+21	2026-03-05T11:05:11.4961008Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 6, casterForce = 1, damageTotal = 7, toShield = 6, toPV = 1, pvAvant = 100, pvApres = 99, shieldAvant = 6, shieldApres = 0 }
+22	2026-03-05T11:05:11.4971076Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Frappe, baseDamage = 6, casterForce = 1, turnNumber = 1 }
+23	2026-03-05T11:05:18.7672832Z	EndTurnRequested	{ joueur = Joueur 1, turnNumber = 1 }
+24	2026-03-05T11:05:18.7775030Z	EndTurn	{ joueur = Joueur 1, manaReserved = 0, pv = 97, shield = 0, handCount = 2, turnNumber = 1 }
+25	2026-03-05T11:05:18.7866446Z	StartTurn	{ joueur = Joueur 2, turnNumber = 2, turnCount = 2, discarded = 2, deckKind = Magicien }
+26	2026-03-05T11:05:18.8062156Z	Draw	{ joueur = Joueur 2, requested = 4, drawn = 4, deckRemaining = 23, handCount = 4, mana = 2, turnNumber = 2 }
+27	2026-03-05T11:05:18.8159165Z	Draw	{ joueur = Joueur 2, requested = 3, drawn = 3, deckRemaining = 20, handCount = 6 }
+28	2026-03-05T11:05:18.8168766Z	PassifMagicien	{ joueur = Joueur 2, ephemeralConsumedThisRound = 1, manaRecovered = 1, manaAvant = 1, manaApres = 2, turnNumber = 2 }
+29	2026-03-05T11:05:18.8168766Z	PlayCard	{ joueur = Joueur 2, carte = Evaluation, cardId = Evaluation, handIndex = 1, manaApres = 2, handCount = 6, cible = Joueur 1, toGraveyard = False, turnNumber = 2 }
+30	2026-03-05T11:05:19.1221037Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 0, damageTotal = 1, turnNumber = 2 }
+31	2026-03-05T11:05:22.1258703Z	DamageApplied	{ cible = Joueur 1, source = Frappe, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 0, toPV = 1, pvAvant = 97, pvApres = 96, shieldAvant = 0, shieldApres = 0 }
+32	2026-03-05T11:05:22.1274016Z	ShieldApplied	{ cible = Joueur 2, source = Catalyseur arcanique restreint, baseShield = 1, resistance = 0, amount = 1, shieldAvant = 0, shieldApres = 1 }
+33	2026-03-05T11:05:22.1274016Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Frappe, baseDamage = 1, casterForce = 0, turnNumber = 2 }
+34	2026-03-05T11:05:22.1295829Z	LienKarmique	{ joueur = Joueur 2, resistanceBonus = 3, dureeTours = 3 }
+35	2026-03-05T11:05:22.1305914Z	PlayCard	{ joueur = Joueur 2, carte = Lien karmique, cardId = LienKarmique, handIndex = 1, manaApres = 0, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 2 }
+36	2026-03-05T11:05:22.4282968Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 2 }
+37	2026-03-05T11:05:22.8425771Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 99, shield = 1, handCount = 5, turnNumber = 2 }
+38	2026-03-05T11:05:22.9450934Z	StartTurn	{ joueur = Joueur 1, turnNumber = 2, turnCount = 3, discarded = 2, deckKind = Guerrier }
+39	2026-03-05T11:05:23.0553492Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 96, pvApres = 99, heal = 3, turnNumber = 2 }
+40	2026-03-05T11:05:23.1560090Z	Draw	{ joueur = Joueur 1, requested = 4, drawn = 4, deckRemaining = 23, handCount = 4, mana = 2, turnNumber = 2 }
+41	2026-03-05T11:05:33.8933942Z	PositionDefensive	{ joueur = Joueur 1, resistanceAvant = 1, resistanceApres = 2, bonus = 1 }
+42	2026-03-05T11:05:33.8933942Z	PlayCard	{ joueur = Joueur 1, carte = Position défensive, cardId = PositionDefensive, handIndex = 3, manaApres = 1, handCount = 3, cible = Joueur 2, toGraveyard = False, turnNumber = 2 }
+43	2026-03-05T11:05:47.4386483Z	PositionOffensive	{ joueur = Joueur 1, forceAvant = 1, forceApres = 2, bonus = 1 }
+44	2026-03-05T11:05:47.4396527Z	PlayCard	{ joueur = Joueur 1, carte = Position offensive, cardId = PositionOffensive, handIndex = 2, manaApres = 0, handCount = 2, cible = Joueur 2, toGraveyard = False, turnNumber = 2 }
+45	2026-03-05T11:05:49.4449833Z	ShieldApplied	{ cible = Joueur 1, source = Attaque tactique, baseShield = 1, resistance = 2, amount = 3, shieldAvant = 0, shieldApres = 3 }
+46	2026-03-05T11:05:49.4454882Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque tactique, cardId = AttaqueTactique, turnNumber = 2 }
+47	2026-03-05T11:05:49.4464942Z	PlayCard	{ joueur = Joueur 1, carte = Attaque tactique, cardId = AttaqueTactique, handIndex = 1, manaApres = 0, handCount = 1, cible = Joueur 2, toGraveyard = True, turnNumber = 2 }
+48	2026-03-05T11:05:49.4485117Z	DamageApplied	{ cible = Joueur 2, source = Attaque tactique, baseDamage = 2, casterForce = 2, damageTotal = 4, toShield = 1, toPV = 3, pvAvant = 99, pvApres = 96, shieldAvant = 1, shieldApres = 0 }
+49	2026-03-05T11:05:49.4490178Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque tactique, baseDamage = 2, casterForce = 2, turnNumber = 2 }
+50	2026-03-05T11:05:50.7940149Z	StrikeReactionPhase	{ frappeur = Joueur 1, cible = Joueur 2, baseDamage = 5, casterForce = 2, runeStrikes = 0, damageTotal = 7, turnNumber = 2 }
+51	2026-03-05T11:05:50.7955279Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 5, casterForce = 2, damageTotal = 7, toShield = 0, toPV = 7, pvAvant = 96, pvApres = 89, shieldAvant = 0, shieldApres = 0 }
+52	2026-03-05T11:05:50.7965261Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Frappe, baseDamage = 5, casterForce = 2, turnNumber = 2 }
+53	2026-03-05T11:05:53.4957674Z	EndTurnRequested	{ joueur = Joueur 1, turnNumber = 2 }
+54	2026-03-05T11:05:53.5063841Z	EndTurn	{ joueur = Joueur 1, manaReserved = 0, pv = 99, shield = 3, handCount = 1, turnNumber = 2 }
+55	2026-03-05T11:05:53.5163069Z	StartTurn	{ joueur = Joueur 2, turnNumber = 3, turnCount = 4, discarded = 5, deckKind = Magicien }
+56	2026-03-05T11:05:53.5359310Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 15, handCount = 5, mana = 3, turnNumber = 3 }
+57	2026-03-05T11:05:53.5469707Z	Concentration	{ joueur = Joueur 2, forceBonus = 3, resistanceBonus = 3, duree = prochain tour }
+58	2026-03-05T11:05:53.5469707Z	PassifMagicien	{ joueur = Joueur 2, ephemeralConsumedThisRound = 1, manaRecovered = 1, manaAvant = 1, manaApres = 2, turnNumber = 3 }
+59	2026-03-05T11:05:53.5484755Z	PlayCard	{ joueur = Joueur 2, carte = Concentration, cardId = Concentration, handIndex = 3, manaApres = 2, handCount = 4, cible = Joueur 1, toGraveyard = False, turnNumber = 3 }
+60	2026-03-05T11:05:53.8542889Z	ShieldApplied	{ cible = Joueur 2, source = Défense, baseShield = 4, resistance = 3, amount = 16, shieldAvant = 0, shieldApres = 16 }
+61	2026-03-05T11:05:53.8552906Z	PlayCard	{ joueur = Joueur 2, carte = Défense, cardId = Defense, handIndex = 2, manaApres = 1, handCount = 3, cible = Joueur 1, toGraveyard = True, turnNumber = 3 }
+62	2026-03-05T11:05:54.1596546Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 3, runeStrikes = 0, damageTotal = 4, turnNumber = 3 }
+63	2026-03-05T11:05:57.1656485Z	DamageApplied	{ cible = Joueur 1, source = Frappe, baseDamage = 1, casterForce = 3, damageTotal = 4, toShield = 3, toPV = 1, pvAvant = 99, pvApres = 98, shieldAvant = 3, shieldApres = 0 }
+64	2026-03-05T11:05:57.1666789Z	ShieldApplied	{ cible = Joueur 2, source = Catalyseur arcanique restreint, baseShield = 1, resistance = 3, amount = 4, shieldAvant = 16, shieldApres = 20 }
+65	2026-03-05T11:05:57.1666789Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Frappe, baseDamage = 1, casterForce = 3, turnNumber = 3 }
+66	2026-03-05T11:05:57.1681917Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 3 }
+67	2026-03-05T11:05:57.4938290Z	ForceBonusExpired	{ joueur = Joueur 2, forceRetiree = 0, forceApres = 0, turnNumber = 3 }
+68	2026-03-05T11:05:57.5966609Z	EndTurn	{ joueur = Joueur 2, manaReserved = 1, pv = 89, shield = 20, handCount = 3, turnNumber = 3 }
+69	2026-03-05T11:05:57.7016742Z	StartTurn	{ joueur = Joueur 1, turnNumber = 3, turnCount = 5, discarded = 1, deckKind = Guerrier }
+70	2026-03-05T11:05:57.8055361Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 3 }
+71	2026-03-05T11:05:57.9149376Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 18, handCount = 5, mana = 3, turnNumber = 3 }
+72	2026-03-05T11:06:14.3116437Z	DamageApplied	{ cible = Joueur 2, source = Guillotine, baseDamage = 5, casterForce = 4, damageTotal = 9, toShield = 9, toPV = 0, pvAvant = 89, pvApres = 89, shieldAvant = 20, shieldApres = 11 }
+73	2026-03-05T11:06:14.3126659Z	PlayCard	{ joueur = Joueur 1, carte = Guillotine, cardId = Guillotine, handIndex = 3, manaApres = 2, handCount = 4, cible = Joueur 2, toGraveyard = True, turnNumber = 3 }
+74	2026-03-05T11:06:14.3318540Z	EndTurn	{ joueur = Joueur 1, manaReserved = 2, pv = 100, shield = 0, handCount = 4, turnNumber = 3 }
+75	2026-03-05T11:06:14.3414914Z	StartTurn	{ joueur = Joueur 2, turnNumber = 4, turnCount = 6, discarded = 3, deckKind = Magicien }
+76	2026-03-05T11:06:14.3610594Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 10, handCount = 5, mana = 3, turnNumber = 4 }
+77	2026-03-05T11:06:14.3731835Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 8, handCount = 6 }
+78	2026-03-05T11:06:14.3736987Z	PlayCard	{ joueur = Joueur 2, carte = Divination, cardId = Divination, handIndex = 4, manaApres = 2, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 4 }
+79	2026-03-05T11:06:14.6754076Z	ShieldApplied	{ cible = Joueur 2, source = Défense +, baseShield = 15, resistance = 3, amount = 60, shieldAvant = 0, shieldApres = 60 }
+80	2026-03-05T11:06:14.6759595Z	PlayCard	{ joueur = Joueur 2, carte = Défense +, cardId = DefensePlus, handIndex = 0, manaApres = 0, handCount = 4, cible = Joueur 1, toGraveyard = True, turnNumber = 4 }
+81	2026-03-05T11:06:14.9930660Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 4 }
+82	2026-03-05T11:06:15.3009142Z	ResistanceBuffExpired	{ carte = Lien karmique, cardId = LienKarmique, joueur = Joueur 2, resistanceRetiree = 3 }
+83	2026-03-05T11:06:15.4057425Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 89, shield = 60, handCount = 4, turnNumber = 4 }
+84	2026-03-05T11:06:15.5087006Z	StartTurn	{ joueur = Joueur 1, turnNumber = 4, turnCount = 7, discarded = 4, deckKind = Guerrier }
+85	2026-03-05T11:06:15.6124407Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 4 }
+86	2026-03-05T11:06:15.7173248Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 13, handCount = 5, mana = 3, turnNumber = 4 }
+87	2026-03-05T11:06:30.1428933Z	ShieldApplied	{ cible = Joueur 1, source = Repositionnement, baseShield = 2, resistance = 2, amount = 6, shieldAvant = 0, shieldApres = 6 }
+88	2026-03-05T11:06:30.1440361Z	Draw	{ joueur = Joueur 1, requested = 1, drawn = 1, deckRemaining = 12, handCount = 5 }
+89	2026-03-05T11:06:30.1440361Z	PlayCard	{ joueur = Joueur 1, carte = Repositionnement, cardId = Repositionnement, handIndex = 2, manaApres = 3, handCount = 5, cible = Joueur 2, toGraveyard = True, turnNumber = 4 }
+90	2026-03-05T11:06:35.0837007Z	ShieldApplied	{ cible = Joueur 1, source = Attaque lourde, baseShield = 4, resistance = 2, amount = 12, shieldAvant = 6, shieldApres = 18 }
+91	2026-03-05T11:06:35.0847235Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque lourde, cardId = AttaqueLourde, turnNumber = 4 }
+92	2026-03-05T11:06:35.0856996Z	PlayCard	{ joueur = Joueur 1, carte = Attaque lourde, cardId = AttaqueLourde, handIndex = 0, manaApres = 1, handCount = 4, cible = Joueur 2, toGraveyard = True, turnNumber = 4 }
+93	2026-03-05T11:06:35.0882051Z	DamageApplied	{ cible = Joueur 2, source = Attaque lourde, baseDamage = 7, casterForce = 2, damageTotal = 9, toShield = 9, toPV = 0, pvAvant = 89, pvApres = 89, shieldAvant = 60, shieldApres = 51 }
+94	2026-03-05T11:06:35.0882051Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque lourde, baseDamage = 7, casterForce = 2, turnNumber = 4 }
+95	2026-03-05T11:06:37.0019750Z	StrikeReactionPhase	{ frappeur = Joueur 1, cible = Joueur 2, baseDamage = 5, casterForce = 2, runeStrikes = 0, damageTotal = 7, turnNumber = 4 }
+96	2026-03-05T11:06:37.0040142Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 5, casterForce = 2, damageTotal = 7, toShield = 7, toPV = 0, pvAvant = 89, pvApres = 89, shieldAvant = 51, shieldApres = 44 }
+97	2026-03-05T11:06:37.0040142Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Frappe, baseDamage = 5, casterForce = 2, turnNumber = 4 }
+98	2026-03-05T11:06:40.1332773Z	EndTurnRequested	{ joueur = Joueur 1, turnNumber = 4 }
+99	2026-03-05T11:06:40.1443552Z	EndTurn	{ joueur = Joueur 1, manaReserved = 1, pv = 100, shield = 18, handCount = 4, turnNumber = 4 }
+100	2026-03-05T11:06:40.1524705Z	StartTurn	{ joueur = Joueur 2, turnNumber = 5, turnCount = 8, discarded = 4, deckKind = Magicien }
+101	2026-03-05T11:06:40.1736680Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 4, handCount = 5, mana = 3, turnNumber = 5 }
+102	2026-03-05T11:06:40.1817597Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 2, damageTotal = 3, turnNumber = 5 }
+103	2026-03-05T11:06:41.7082971Z	RapidPlayed	{ carte = Parade, cardId = Parade, joueur = Joueur 1, attaquant = Joueur 2, type = Parade }
+104	2026-03-05T11:06:41.7098188Z	PlayRapid	{ joueur = Joueur 1, carte = Parade, cardId = Parade, type = Parade ou Contre-attaque, turnNumber = 5 }
+105	2026-03-05T11:06:41.7118771Z	GlaceLocalisee	{ lanceur = Joueur 2, cible = Joueur 1, equipementGele = Hache de l'oublié, cardId = HacheOublie, duree = 2 tours du joueur propriétaire }
+106	2026-03-05T11:06:41.7129087Z	PassifMagicien	{ joueur = Joueur 2, ephemeralConsumedThisRound = 1, manaRecovered = 1, manaAvant = 2, manaApres = 3, turnNumber = 5 }
+107	2026-03-05T11:06:41.7129087Z	PlayCard	{ joueur = Joueur 2, carte = Glace localisée, cardId = GlaceLocalisee, handIndex = 3, manaApres = 3, handCount = 4, cible = Joueur 1, toGraveyard = False, turnNumber = 5 }
+108	2026-03-05T11:06:42.0102292Z	ShieldApplied	{ cible = Joueur 2, source = Armure psychique, baseShield = 23, resistance = 0, amount = 23, shieldAvant = 0, shieldApres = 23 }
+109	2026-03-05T11:06:42.0123597Z	ArmurePsychique	{ joueur = Joueur 2, shieldAvant = 0, shieldApres = 23, amount = 23, dureeTours = 2 }
+110	2026-03-05T11:06:42.0128782Z	PassifMagicien	{ joueur = Joueur 2, ephemeralConsumedThisRound = 2, manaRecovered = 1, manaAvant = 0, manaApres = 1, turnNumber = 5 }
+111	2026-03-05T11:06:42.0128782Z	PlayCard	{ joueur = Joueur 2, carte = Armure psychique, cardId = ArmurePsychique, handIndex = 3, manaApres = 1, handCount = 3, cible = Joueur 1, toGraveyard = False, turnNumber = 5 }
+112	2026-03-05T11:06:42.3165571Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Attaque, cardId = Attaque, turnNumber = 5 }
+113	2026-03-05T11:06:42.3170679Z	PlayCard	{ joueur = Joueur 2, carte = Attaque, cardId = Attaque, handIndex = 0, manaApres = 0, handCount = 2, cible = Joueur 1, toGraveyard = True, turnNumber = 5 }
+114	2026-03-05T11:06:45.3227078Z	DamageApplied	{ cible = Joueur 1, source = Attaque, baseDamage = 5, casterForce = 0, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 18, shieldApres = 13 }
+115	2026-03-05T11:06:45.3227078Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 13, shieldApres = 12 }
+116	2026-03-05T11:06:45.3242301Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 12, shieldApres = 11 }
+117	2026-03-05T11:06:45.3242301Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Attaque, baseDamage = 5, casterForce = 0, turnNumber = 5 }
+118	2026-03-05T11:06:45.3262391Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 5 }
+119	2026-03-05T11:06:45.6254862Z	ShieldApplied	{ cible = Joueur 2, source = Rune essence arcanique, baseShield = 5, resistance = 0, amount = 5, shieldAvant = 23, shieldApres = 28 }
+120	2026-03-05T11:06:45.7282217Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 89, shield = 28, handCount = 2, turnNumber = 5 }
+121	2026-03-05T11:06:45.8310308Z	StartTurn	{ joueur = Joueur 1, turnNumber = 5, turnCount = 9, discarded = 3, deckKind = Guerrier }
+122	2026-03-05T11:06:45.9320560Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 5 }
+123	2026-03-05T11:06:46.0379458Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 7, handCount = 5, mana = 3, turnNumber = 5 }
+124	2026-03-05T11:06:56.3632944Z	ShieldApplied	{ cible = Joueur 1, source = Attaque tactique, baseShield = 1, resistance = 2, amount = 3, shieldAvant = 0, shieldApres = 3 }
+125	2026-03-05T11:06:56.3642638Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque tactique, cardId = AttaqueTactique, turnNumber = 5 }
+126	2026-03-05T11:06:56.3642638Z	PlayCard	{ joueur = Joueur 1, carte = Attaque tactique, cardId = AttaqueTactique, handIndex = 2, manaApres = 3, handCount = 4, cible = Joueur 2, toGraveyard = True, turnNumber = 5 }
+127	2026-03-05T11:06:56.3672634Z	DamageApplied	{ cible = Joueur 2, source = Attaque tactique, baseDamage = 2, casterForce = 2, damageTotal = 4, toShield = 4, toPV = 0, pvAvant = 89, pvApres = 89, shieldAvant = 28, shieldApres = 24 }
+128	2026-03-05T11:06:56.3684624Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque tactique, baseDamage = 2, casterForce = 2, turnNumber = 5 }
+129	2026-03-05T11:06:57.7018937Z	ShieldApplied	{ cible = Joueur 1, source = Attaque légère, baseShield = 2, resistance = 2, amount = 6, shieldAvant = 3, shieldApres = 9 }
+130	2026-03-05T11:06:57.7018937Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque légère, cardId = AttaqueLegere, turnNumber = 5 }
+131	2026-03-05T11:06:57.7028933Z	PlayCard	{ joueur = Joueur 1, carte = Attaque légère, cardId = AttaqueLegere, handIndex = 0, manaApres = 2, handCount = 3, cible = Joueur 2, toGraveyard = True, turnNumber = 5 }
+132	2026-03-05T11:06:57.7057732Z	DamageApplied	{ cible = Joueur 2, source = Attaque légère, baseDamage = 3, casterForce = 2, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 89, pvApres = 89, shieldAvant = 24, shieldApres = 19 }
+133	2026-03-05T11:06:57.7057732Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque légère, baseDamage = 3, casterForce = 2, turnNumber = 5 }
+134	2026-03-05T11:07:04.8031343Z	ShieldApplied	{ cible = Joueur 1, source = Repositionnement, baseShield = 2, resistance = 2, amount = 6, shieldAvant = 9, shieldApres = 15 }
+135	2026-03-05T11:07:04.8042088Z	Draw	{ joueur = Joueur 1, requested = 1, drawn = 1, deckRemaining = 6, handCount = 3 }
+136	2026-03-05T11:07:04.8052124Z	PlayCard	{ joueur = Joueur 1, carte = Repositionnement, cardId = Repositionnement, handIndex = 2, manaApres = 2, handCount = 3, cible = Joueur 2, toGraveyard = True, turnNumber = 5 }
+137	2026-03-05T11:07:08.0628542Z	ShieldApplied	{ cible = Joueur 1, source = Attaque légère, baseShield = 2, resistance = 2, amount = 6, shieldAvant = 15, shieldApres = 21 }
+138	2026-03-05T11:07:08.0628542Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque légère, cardId = AttaqueLegere, turnNumber = 5 }
+139	2026-03-05T11:07:08.0638536Z	PlayCard	{ joueur = Joueur 1, carte = Attaque légère, cardId = AttaqueLegere, handIndex = 2, manaApres = 1, handCount = 2, cible = Joueur 2, toGraveyard = True, turnNumber = 5 }
+140	2026-03-05T11:07:08.0698894Z	DamageApplied	{ cible = Joueur 2, source = Attaque légère, baseDamage = 3, casterForce = 2, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 89, pvApres = 89, shieldAvant = 19, shieldApres = 14 }
+141	2026-03-05T11:07:08.0698894Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque légère, baseDamage = 3, casterForce = 2, turnNumber = 5 }
+142	2026-03-05T11:07:11.2905604Z	EndTurnRequested	{ joueur = Joueur 1, turnNumber = 5 }
+143	2026-03-05T11:07:11.3024940Z	EndTurn	{ joueur = Joueur 1, manaReserved = 1, pv = 100, shield = 21, handCount = 2, turnNumber = 5 }
+144	2026-03-05T11:07:11.3127009Z	StartTurn	{ joueur = Joueur 2, turnNumber = 6, turnCount = 10, discarded = 2, deckKind = Magicien }
+145	2026-03-05T11:07:11.3238395Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 2, handCount = 2 }
+146	2026-03-05T11:07:11.3359855Z	DeckReshuffled	{ joueur = Joueur 2, cardsFromGraveyard = 22, deckSize = 22, turnNumber = 6 }
+147	2026-03-05T11:07:11.3365218Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 19, handCount = 7, mana = 3, turnNumber = 6 }
+148	2026-03-05T11:07:11.3470978Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Explosion de magie éphémère, cardId = ExplosionMagieEphemere, turnNumber = 6 }
+149	2026-03-05T11:07:11.3486041Z	PlayCard	{ joueur = Joueur 2, carte = Explosion de magie éphémère, cardId = ExplosionMagieEphemere, handIndex = 2, manaApres = 2, handCount = 6, cible = Joueur 1, toGraveyard = True, turnNumber = 6 }
+150	2026-03-05T11:07:12.0792704Z	RapidPlayed	{ carte = Parade, cardId = Parade, joueur = Joueur 1, attaquant = Joueur 2, type = Parade }
+151	2026-03-05T11:07:12.0808708Z	PlayRapid	{ joueur = Joueur 1, carte = Parade, cardId = Parade, type = Parade ou Contre-attaque, turnNumber = 6 }
+152	2026-03-05T11:07:12.0823861Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 17, handCount = 7 }
+153	2026-03-05T11:07:12.0823861Z	PlayCard	{ joueur = Joueur 2, carte = Divination, cardId = Divination, handIndex = 4, manaApres = 1, handCount = 6, cible = Joueur 1, toGraveyard = True, turnNumber = 6 }
+154	2026-03-05T11:07:12.3856551Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 2, damageTotal = 3, turnNumber = 6 }
+155	2026-03-05T11:07:15.3924168Z	DamageApplied	{ cible = Joueur 1, source = Frappe, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 21, shieldApres = 20 }
+156	2026-03-05T11:07:15.3930506Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 20, shieldApres = 19 }
+157	2026-03-05T11:07:15.3930506Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 19, shieldApres = 18 }
+158	2026-03-05T11:07:15.3930506Z	ShieldApplied	{ cible = Joueur 2, source = Catalyseur arcanique restreint, baseShield = 1, resistance = 0, amount = 1, shieldAvant = 0, shieldApres = 1 }
+159	2026-03-05T11:07:15.3940893Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Frappe, baseDamage = 1, casterForce = 0, turnNumber = 6 }
+160	2026-03-05T11:07:15.3960586Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Attaque, cardId = Attaque, turnNumber = 6 }
+161	2026-03-05T11:07:15.3960586Z	PlayCard	{ joueur = Joueur 2, carte = Attaque, cardId = Attaque, handIndex = 5, manaApres = 0, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 6 }
+162	2026-03-05T11:07:18.3974653Z	DamageApplied	{ cible = Joueur 1, source = Attaque, baseDamage = 5, casterForce = 0, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 18, shieldApres = 13 }
+163	2026-03-05T11:07:18.3984664Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 13, shieldApres = 12 }
+164	2026-03-05T11:07:18.3984664Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 12, shieldApres = 11 }
+165	2026-03-05T11:07:18.3989727Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Attaque, baseDamage = 5, casterForce = 0, turnNumber = 6 }
+166	2026-03-05T11:07:18.4004892Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 6 }
+167	2026-03-05T11:07:18.7021963Z	ShieldApplied	{ cible = Joueur 2, source = Rune essence arcanique, baseShield = 5, resistance = 0, amount = 5, shieldAvant = 1, shieldApres = 6 }
+168	2026-03-05T11:07:18.7037439Z	ShieldBuffExpired	{ carte = Armure psychique, cardId = ArmurePsychique, joueur = Joueur 2, bouclierRetire = 23 }
+169	2026-03-05T11:07:18.8038556Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 89, shield = 0, handCount = 5, turnNumber = 6 }
+170	2026-03-05T11:07:18.9121139Z	EquipmentUnfrozen	{ joueur = Joueur 1, equipement = Hache de l'oublié, cardId = HacheOublie, reason = 2 tours du joueur écoulés, turnNumber = 6 }
+171	2026-03-05T11:07:18.9138007Z	StartTurn	{ joueur = Joueur 1, turnNumber = 6, turnCount = 11, discarded = 1, deckKind = Guerrier }
+172	2026-03-05T11:07:19.0187940Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 6 }
+173	2026-03-05T11:07:19.1245930Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 1, handCount = 5, mana = 3, turnNumber = 6 }
+174	2026-03-05T11:07:28.9498142Z	ShieldApplied	{ cible = Joueur 1, source = Attaque lourde, baseShield = 4, resistance = 2, amount = 12, shieldAvant = 0, shieldApres = 12 }
+175	2026-03-05T11:07:28.9503544Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque lourde, cardId = AttaqueLourde, turnNumber = 6 }
+176	2026-03-05T11:07:28.9513601Z	PlayCard	{ joueur = Joueur 1, carte = Attaque lourde, cardId = AttaqueLourde, handIndex = 0, manaApres = 1, handCount = 4, cible = Joueur 2, toGraveyard = True, turnNumber = 6 }
+177	2026-03-05T11:07:28.9543607Z	DamageApplied	{ cible = Joueur 2, source = Attaque lourde, baseDamage = 7, casterForce = 2, damageTotal = 9, toShield = 0, toPV = 9, pvAvant = 89, pvApres = 80, shieldAvant = 0, shieldApres = 0 }
+178	2026-03-05T11:07:28.9543607Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque lourde, baseDamage = 7, casterForce = 2, turnNumber = 6 }
+179	2026-03-05T11:07:29.5602364Z	ShieldApplied	{ cible = Joueur 1, source = Attaque légère, baseShield = 2, resistance = 2, amount = 6, shieldAvant = 12, shieldApres = 18 }
+180	2026-03-05T11:07:29.5602364Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque légère, cardId = AttaqueLegere, turnNumber = 6 }
+181	2026-03-05T11:07:29.5602364Z	PlayCard	{ joueur = Joueur 1, carte = Attaque légère, cardId = AttaqueLegere, handIndex = 2, manaApres = 0, handCount = 3, cible = Joueur 2, toGraveyard = True, turnNumber = 6 }
+182	2026-03-05T11:07:29.5637617Z	DamageApplied	{ cible = Joueur 2, source = Attaque légère, baseDamage = 3, casterForce = 2, damageTotal = 5, toShield = 0, toPV = 5, pvAvant = 80, pvApres = 75, shieldAvant = 0, shieldApres = 0 }
+183	2026-03-05T11:07:29.5648008Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque légère, baseDamage = 3, casterForce = 2, turnNumber = 6 }
+184	2026-03-05T11:07:30.8334131Z	StrikeReactionPhase	{ frappeur = Joueur 1, cible = Joueur 2, baseDamage = 5, casterForce = 2, runeStrikes = 0, damageTotal = 7, turnNumber = 6 }
+185	2026-03-05T11:07:30.8364344Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 5, casterForce = 2, damageTotal = 7, toShield = 0, toPV = 7, pvAvant = 75, pvApres = 68, shieldAvant = 0, shieldApres = 0 }
+186	2026-03-05T11:07:30.8374402Z	RuneAgressivite	{ joueur = Joueur 1, forceBonus = 1, duree = jusqu'à fin du tour }
+187	2026-03-05T11:07:30.8384491Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Frappe, baseDamage = 5, casterForce = 2, turnNumber = 6 }
+188	2026-03-05T11:07:31.4809120Z	EndTurnRequested	{ joueur = Joueur 1, turnNumber = 6 }
+189	2026-03-05T11:07:31.4849975Z	ForceBonusExpired	{ joueur = Joueur 1, forceRetiree = 0, forceApres = 2, turnNumber = 6 }
+190	2026-03-05T11:07:31.5007574Z	EndTurn	{ joueur = Joueur 1, manaReserved = 0, pv = 100, shield = 18, handCount = 3, turnNumber = 6 }
+191	2026-03-05T11:07:31.5184521Z	StartTurn	{ joueur = Joueur 2, turnNumber = 7, turnCount = 12, discarded = 5, deckKind = Magicien }
+192	2026-03-05T11:07:31.5361802Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 16, handCount = 2 }
+193	2026-03-05T11:07:31.5529657Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 11, handCount = 7, mana = 3, turnNumber = 7 }
+194	2026-03-05T11:07:31.5700145Z	LienKarmique	{ joueur = Joueur 2, resistanceBonus = 3, dureeTours = 3 }
+195	2026-03-05T11:07:31.5710151Z	PlayCard	{ joueur = Joueur 2, carte = Lien karmique, cardId = LienKarmique, handIndex = 4, manaApres = 1, handCount = 6, cible = Joueur 1, toGraveyard = True, turnNumber = 7 }
+196	2026-03-05T11:07:31.8819801Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 2, damageTotal = 3, turnNumber = 7 }
+197	2026-03-05T11:07:32.2917429Z	RapidPlayed	{ carte = Contre-attaque, cardId = ContreAttaque, joueur = Joueur 1, attaquant = Joueur 2, type = Contre-attaque }
+198	2026-03-05T11:07:32.2922746Z	DamageApplied	{ cible = Joueur 2, source = Contre-attaque, baseDamage = 2, casterForce = 0, damageTotal = 2, toShield = 0, toPV = 2, pvAvant = 68, pvApres = 66, shieldAvant = 0, shieldApres = 0 }
+199	2026-03-05T11:07:32.2922746Z	PlayRapid	{ joueur = Joueur 1, carte = Contre-attaque, cardId = ContreAttaque, type = Parade ou Contre-attaque, turnNumber = 7 }
+200	2026-03-05T11:07:32.2932870Z	ShieldApplied	{ cible = Joueur 2, source = Défense, baseShield = 4, resistance = 3, amount = 16, shieldAvant = 0, shieldApres = 16 }
+201	2026-03-05T11:07:32.2947912Z	PlayCard	{ joueur = Joueur 2, carte = Défense, cardId = Defense, handIndex = 4, manaApres = 0, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 7 }
+202	2026-03-05T11:07:32.5924529Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 7 }
+203	2026-03-05T11:07:33.0044739Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 66, shield = 16, handCount = 5, turnNumber = 7 }
+204	2026-03-05T11:07:33.1101238Z	StartTurn	{ joueur = Joueur 1, turnNumber = 7, turnCount = 13, discarded = 2, deckKind = Guerrier }
+205	2026-03-05T11:07:33.2160693Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 7 }
+206	2026-03-05T11:07:33.3282225Z	DeckReshuffled	{ joueur = Joueur 1, cardsFromGraveyard = 26, deckSize = 26, turnNumber = 7 }
+207	2026-03-05T11:07:33.3297574Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 22, handCount = 5, mana = 3, turnNumber = 7 }
+208	2026-03-05T11:07:39.0367988Z	AppuisSolide	{ joueur = Joueur 1, bonusDegatsArme = 1, duree = ce tour }
+209	2026-03-05T11:07:39.0383455Z	PlayCard	{ joueur = Joueur 1, carte = Appuis solide, cardId = AppuisSolide, handIndex = 2, manaApres = 2, handCount = 4, cible = Joueur 2, toGraveyard = False, turnNumber = 7 }
+210	2026-03-05T11:07:43.5416805Z	ShieldApplied	{ cible = Joueur 1, source = Attaque légère, baseShield = 2, resistance = 2, amount = 6, shieldAvant = 0, shieldApres = 6 }
+211	2026-03-05T11:07:43.5426785Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque légère, cardId = AttaqueLegere, turnNumber = 7 }
+212	2026-03-05T11:07:43.5437271Z	PlayCard	{ joueur = Joueur 1, carte = Attaque légère, cardId = AttaqueLegere, handIndex = 1, manaApres = 1, handCount = 3, cible = Joueur 2, toGraveyard = True, turnNumber = 7 }
+213	2026-03-05T11:07:43.5458033Z	DamageApplied	{ cible = Joueur 2, source = Attaque légère, baseDamage = 3, casterForce = 2, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 66, pvApres = 66, shieldAvant = 16, shieldApres = 11 }
+214	2026-03-05T11:07:43.5468010Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque légère, baseDamage = 3, casterForce = 2, turnNumber = 7 }
+215	2026-03-05T11:07:43.9499352Z	DamageApplied	{ cible = Joueur 2, source = Guillotine, baseDamage = 5, casterForce = 4, damageTotal = 9, toShield = 9, toPV = 0, pvAvant = 66, pvApres = 66, shieldAvant = 11, shieldApres = 2 }
+216	2026-03-05T11:07:43.9514514Z	PlayCard	{ joueur = Joueur 1, carte = Guillotine, cardId = Guillotine, handIndex = 1, manaApres = 0, handCount = 2, cible = Joueur 2, toGraveyard = True, turnNumber = 7 }
+217	2026-03-05T11:07:43.9681493Z	EndTurn	{ joueur = Joueur 1, manaReserved = 0, pv = 100, shield = 6, handCount = 2, turnNumber = 7 }
+218	2026-03-05T11:07:43.9793500Z	StartTurn	{ joueur = Joueur 2, turnNumber = 8, turnCount = 14, discarded = 5, deckKind = Magicien }
+219	2026-03-05T11:07:43.9894011Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 9, handCount = 2 }
+220	2026-03-05T11:07:44.0015214Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 4, handCount = 7, mana = 3, turnNumber = 8 }
+221	2026-03-05T11:07:44.0129371Z	ShieldApplied	{ cible = Joueur 2, source = Défense, baseShield = 4, resistance = 3, amount = 16, shieldAvant = 0, shieldApres = 16 }
+222	2026-03-05T11:07:44.0139414Z	PlayCard	{ joueur = Joueur 2, carte = Défense, cardId = Defense, handIndex = 1, manaApres = 2, handCount = 6, cible = Joueur 1, toGraveyard = True, turnNumber = 8 }
+223	2026-03-05T11:07:44.3157517Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 2, damageTotal = 3, turnNumber = 8 }
+224	2026-03-05T11:07:44.9683312Z	RapidPlayed	{ carte = Contre-attaque, cardId = ContreAttaque, joueur = Joueur 1, attaquant = Joueur 2, type = Contre-attaque }
+225	2026-03-05T11:07:44.9688505Z	DamageApplied	{ cible = Joueur 2, source = Contre-attaque, baseDamage = 2, casterForce = 0, damageTotal = 2, toShield = 2, toPV = 0, pvAvant = 66, pvApres = 66, shieldAvant = 16, shieldApres = 14 }
+226	2026-03-05T11:07:44.9698571Z	PlayRapid	{ joueur = Joueur 1, carte = Contre-attaque, cardId = ContreAttaque, type = Parade ou Contre-attaque, turnNumber = 8 }
+227	2026-03-05T11:07:44.9708940Z	ShieldApplied	{ cible = Joueur 2, source = Défense +, baseShield = 15, resistance = 3, amount = 60, shieldAvant = 14, shieldApres = 74 }
+228	2026-03-05T11:07:44.9718803Z	PlayCard	{ joueur = Joueur 2, carte = Défense +, cardId = DefensePlus, handIndex = 0, manaApres = 0, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 8 }
+229	2026-03-05T11:07:45.2756374Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 8 }
+230	2026-03-05T11:07:45.6805634Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 66, shield = 74, handCount = 5, turnNumber = 8 }
+231	2026-03-05T11:07:45.7836213Z	StartTurn	{ joueur = Joueur 1, turnNumber = 8, turnCount = 15, discarded = 1, deckKind = Guerrier }
+232	2026-03-05T11:07:45.8862392Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 8 }
+233	2026-03-05T11:07:45.9864309Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 17, handCount = 5, mana = 3, turnNumber = 8 }
+234	2026-03-05T11:07:58.4670981Z	ShieldApplied	{ cible = Joueur 1, source = Attaque tactique, baseShield = 1, resistance = 2, amount = 3, shieldAvant = 0, shieldApres = 3 }
+235	2026-03-05T11:07:58.4688404Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque tactique, cardId = AttaqueTactique, turnNumber = 8 }
+236	2026-03-05T11:07:58.4688404Z	PlayCard	{ joueur = Joueur 1, carte = Attaque tactique, cardId = AttaqueTactique, handIndex = 0, manaApres = 3, handCount = 4, cible = Joueur 2, toGraveyard = True, turnNumber = 8 }
+237	2026-03-05T11:07:58.4728833Z	DamageApplied	{ cible = Joueur 2, source = Attaque tactique, baseDamage = 2, casterForce = 2, damageTotal = 4, toShield = 4, toPV = 0, pvAvant = 66, pvApres = 66, shieldAvant = 74, shieldApres = 70 }
+238	2026-03-05T11:07:58.4738885Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque tactique, baseDamage = 2, casterForce = 2, turnNumber = 8 }
+239	2026-03-05T11:08:04.5062202Z	ShieldApplied	{ cible = Joueur 1, source = Attaque lourde, baseShield = 4, resistance = 2, amount = 12, shieldAvant = 3, shieldApres = 15 }
+240	2026-03-05T11:08:04.5062202Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque lourde, cardId = AttaqueLourde, turnNumber = 8 }
+241	2026-03-05T11:08:04.5072194Z	PlayCard	{ joueur = Joueur 1, carte = Attaque lourde, cardId = AttaqueLourde, handIndex = 3, manaApres = 1, handCount = 3, cible = Joueur 2, toGraveyard = True, turnNumber = 8 }
+242	2026-03-05T11:08:04.5107431Z	DamageApplied	{ cible = Joueur 2, source = Attaque lourde, baseDamage = 7, casterForce = 2, damageTotal = 9, toShield = 9, toPV = 0, pvAvant = 66, pvApres = 66, shieldAvant = 70, shieldApres = 61 }
+243	2026-03-05T11:08:04.5107431Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque lourde, baseDamage = 7, casterForce = 2, turnNumber = 8 }
+244	2026-03-05T11:08:05.4750847Z	DamageApplied	{ cible = Joueur 2, source = Guillotine, baseDamage = 5, casterForce = 4, damageTotal = 9, toShield = 9, toPV = 0, pvAvant = 66, pvApres = 66, shieldAvant = 61, shieldApres = 52 }
+245	2026-03-05T11:08:05.4760839Z	PlayCard	{ joueur = Joueur 1, carte = Guillotine, cardId = Guillotine, handIndex = 0, manaApres = 0, handCount = 2, cible = Joueur 2, toGraveyard = True, turnNumber = 8 }
+246	2026-03-05T11:08:05.4936884Z	EndTurn	{ joueur = Joueur 1, manaReserved = 0, pv = 100, shield = 15, handCount = 2, turnNumber = 8 }
+247	2026-03-05T11:08:05.5032210Z	StartTurn	{ joueur = Joueur 2, turnNumber = 9, turnCount = 16, discarded = 5, deckKind = Magicien }
+248	2026-03-05T11:08:05.5140929Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 2, handCount = 2 }
+249	2026-03-05T11:08:05.5270953Z	DeckReshuffled	{ joueur = Joueur 2, cardsFromGraveyard = 22, deckSize = 22, turnNumber = 9 }
+250	2026-03-05T11:08:05.5280967Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 19, handCount = 7, mana = 3, turnNumber = 9 }
+251	2026-03-05T11:08:05.5393048Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 2, damageTotal = 3, turnNumber = 9 }
+252	2026-03-05T11:08:06.9549999Z	RapidPlayed	{ carte = Contre-attaque, cardId = ContreAttaque, joueur = Joueur 1, attaquant = Joueur 2, type = Contre-attaque }
+253	2026-03-05T11:08:06.9561524Z	DamageApplied	{ cible = Joueur 2, source = Contre-attaque, baseDamage = 2, casterForce = 0, damageTotal = 2, toShield = 0, toPV = 2, pvAvant = 66, pvApres = 64, shieldAvant = 0, shieldApres = 0 }
+254	2026-03-05T11:08:06.9561524Z	PlayRapid	{ joueur = Joueur 1, carte = Contre-attaque, cardId = ContreAttaque, type = Parade ou Contre-attaque, turnNumber = 9 }
+255	2026-03-05T11:08:06.9586423Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 17, handCount = 8 }
+256	2026-03-05T11:08:06.9586423Z	PlayCard	{ joueur = Joueur 2, carte = Divination, cardId = Divination, handIndex = 6, manaApres = 2, handCount = 7, cible = Joueur 1, toGraveyard = True, turnNumber = 9 }
+257	2026-03-05T11:08:07.2645315Z	Draw	{ joueur = Joueur 2, requested = 3, drawn = 3, deckRemaining = 15, handCount = 9 }
+258	2026-03-05T11:08:07.2654980Z	PassifMagicien	{ joueur = Joueur 2, ephemeralConsumedThisRound = 1, manaRecovered = 1, manaAvant = 1, manaApres = 2, turnNumber = 9 }
+259	2026-03-05T11:08:07.2654980Z	PlayCard	{ joueur = Joueur 2, carte = Evaluation, cardId = Evaluation, handIndex = 2, manaApres = 2, handCount = 9, cible = Joueur 1, toGraveyard = False, turnNumber = 9 }
+260	2026-03-05T11:08:07.5660991Z	GlaceLocalisee	{ lanceur = Joueur 2, cible = Joueur 1, equipementGele = Hache de l'oublié, cardId = HacheOublie, duree = 2 tours du joueur propriétaire }
+261	2026-03-05T11:08:07.5666044Z	PassifMagicien	{ joueur = Joueur 2, ephemeralConsumedThisRound = 2, manaRecovered = 1, manaAvant = 1, manaApres = 2, turnNumber = 9 }
+262	2026-03-05T11:08:07.5671202Z	PlayCard	{ joueur = Joueur 2, carte = Glace localisée, cardId = GlaceLocalisee, handIndex = 3, manaApres = 2, handCount = 8, cible = Joueur 1, toGraveyard = False, turnNumber = 9 }
+263	2026-03-05T11:08:07.9014916Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 13, handCount = 9 }
+264	2026-03-05T11:08:07.9014916Z	PlayCard	{ joueur = Joueur 2, carte = Divination, cardId = Divination, handIndex = 4, manaApres = 1, handCount = 8, cible = Joueur 1, toGraveyard = True, turnNumber = 9 }
+265	2026-03-05T11:08:08.2070549Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Attaque, cardId = Attaque, turnNumber = 9 }
+266	2026-03-05T11:08:08.2085719Z	PlayCard	{ joueur = Joueur 2, carte = Attaque, cardId = Attaque, handIndex = 7, manaApres = 0, handCount = 7, cible = Joueur 1, toGraveyard = True, turnNumber = 9 }
+267	2026-03-05T11:08:11.2104603Z	DamageApplied	{ cible = Joueur 1, source = Attaque, baseDamage = 5, casterForce = 0, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 15, shieldApres = 10 }
+268	2026-03-05T11:08:11.2109683Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 10, shieldApres = 9 }
+269	2026-03-05T11:08:11.2109683Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 9, shieldApres = 8 }
+270	2026-03-05T11:08:11.2109683Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Attaque, baseDamage = 5, casterForce = 0, turnNumber = 9 }
+271	2026-03-05T11:08:11.2134819Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 9 }
+272	2026-03-05T11:08:11.5175539Z	ResistanceBuffExpired	{ carte = Lien karmique, cardId = LienKarmique, joueur = Joueur 2, resistanceRetiree = 3 }
+273	2026-03-05T11:08:11.6226653Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 64, shield = 0, handCount = 7, turnNumber = 9 }
+274	2026-03-05T11:08:11.7324002Z	StartTurn	{ joueur = Joueur 1, turnNumber = 9, turnCount = 17, discarded = 1, deckKind = Guerrier }
+275	2026-03-05T11:08:11.8350831Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 9 }
+276	2026-03-05T11:08:11.9393768Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 12, handCount = 5, mana = 3, turnNumber = 9 }
+277	2026-03-05T11:08:27.4254948Z	PositionDefensive	{ joueur = Joueur 1, resistanceAvant = 2, resistanceApres = 3, bonus = 1 }
+278	2026-03-05T11:08:27.4264940Z	PlayCard	{ joueur = Joueur 1, carte = Position défensive, cardId = PositionDefensive, handIndex = 1, manaApres = 2, handCount = 4, cible = Joueur 2, toGraveyard = False, turnNumber = 9 }
+279	2026-03-05T11:08:28.7483252Z	ShieldApplied	{ cible = Joueur 1, source = Défense lourde, baseShield = 10, resistance = 3, amount = 40, shieldAvant = 0, shieldApres = 40 }
+280	2026-03-05T11:08:28.7497859Z	PlayCard	{ joueur = Joueur 1, carte = Défense lourde, cardId = DefenseLourde, handIndex = 1, manaApres = 1, handCount = 3, cible = Joueur 2, toGraveyard = True, turnNumber = 9 }
+281	2026-03-05T11:08:32.7955388Z	EndTurnRequested	{ joueur = Joueur 1, turnNumber = 9 }
+282	2026-03-05T11:08:32.8070354Z	EndTurn	{ joueur = Joueur 1, manaReserved = 1, pv = 100, shield = 40, handCount = 3, turnNumber = 9 }
+283	2026-03-05T11:08:32.8161216Z	StartTurn	{ joueur = Joueur 2, turnNumber = 10, turnCount = 18, discarded = 7, deckKind = Magicien }
+284	2026-03-05T11:08:32.8252497Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 12, handCount = 2 }
+285	2026-03-05T11:08:32.8354702Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 7, handCount = 7, mana = 3, turnNumber = 10 }
+286	2026-03-05T11:08:32.8465956Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 5, handCount = 8 }
+287	2026-03-05T11:08:32.8465956Z	PlayCard	{ joueur = Joueur 2, carte = Divination, cardId = Divination, handIndex = 3, manaApres = 2, handCount = 7, cible = Joueur 1, toGraveyard = True, turnNumber = 10 }
+288	2026-03-05T11:08:33.1530062Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Attaque, cardId = Attaque, turnNumber = 10 }
+289	2026-03-05T11:08:33.1540135Z	PlayCard	{ joueur = Joueur 2, carte = Attaque, cardId = Attaque, handIndex = 1, manaApres = 1, handCount = 6, cible = Joueur 1, toGraveyard = True, turnNumber = 10 }
+290	2026-03-05T11:08:34.8048014Z	RapidPlayed	{ carte = Contre-attaque, cardId = ContreAttaque, joueur = Joueur 1, attaquant = Joueur 2, type = Contre-attaque }
+291	2026-03-05T11:08:34.8058066Z	DamageApplied	{ cible = Joueur 2, source = Contre-attaque, baseDamage = 2, casterForce = 0, damageTotal = 2, toShield = 0, toPV = 2, pvAvant = 64, pvApres = 62, shieldAvant = 0, shieldApres = 0 }
+292	2026-03-05T11:08:34.8058066Z	PlayRapid	{ joueur = Joueur 1, carte = Contre-attaque, cardId = ContreAttaque, type = Parade ou Contre-attaque, turnNumber = 10 }
+293	2026-03-05T11:08:34.8083099Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 2, damageTotal = 3, turnNumber = 10 }
+294	2026-03-05T11:08:36.0691818Z	RapidPlayed	{ carte = Parade, cardId = Parade, joueur = Joueur 1, attaquant = Joueur 2, type = Parade }
+295	2026-03-05T11:08:36.0701839Z	PlayRapid	{ joueur = Joueur 1, carte = Parade, cardId = Parade, type = Parade ou Contre-attaque, turnNumber = 10 }
+296	2026-03-05T11:08:36.0726899Z	ShieldApplied	{ cible = Joueur 2, source = Défense, baseShield = 4, resistance = 0, amount = 4, shieldAvant = 0, shieldApres = 4 }
+297	2026-03-05T11:08:36.0742291Z	PlayCard	{ joueur = Joueur 2, carte = Défense, cardId = Defense, handIndex = 4, manaApres = 0, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 10 }
+298	2026-03-05T11:08:36.3784607Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 10 }
+299	2026-03-05T11:08:36.6800806Z	ShieldApplied	{ cible = Joueur 2, source = Rune essence arcanique, baseShield = 5, resistance = 0, amount = 5, shieldAvant = 4, shieldApres = 9 }
+300	2026-03-05T11:08:36.7836446Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 62, shield = 9, handCount = 5, turnNumber = 10 }
+301	2026-03-05T11:08:36.8884229Z	EquipmentUnfrozen	{ joueur = Joueur 1, equipement = Hache de l'oublié, cardId = HacheOublie, reason = 2 tours du joueur écoulés, turnNumber = 10 }
+302	2026-03-05T11:08:36.8889295Z	StartTurn	{ joueur = Joueur 1, turnNumber = 10, turnCount = 19, discarded = 1, deckKind = Guerrier }
+303	2026-03-05T11:08:36.9933900Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 10 }
+304	2026-03-05T11:08:37.0993007Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 7, handCount = 5, mana = 3, turnNumber = 10 }
+305	2026-03-05T11:08:40.3595554Z	ShieldApplied	{ cible = Joueur 1, source = Repositionnement, baseShield = 2, resistance = 3, amount = 8, shieldAvant = 0, shieldApres = 8 }
+306	2026-03-05T11:08:40.3600690Z	Draw	{ joueur = Joueur 1, requested = 1, drawn = 1, deckRemaining = 6, handCount = 5 }
+307	2026-03-05T11:08:40.3610738Z	PlayCard	{ joueur = Joueur 1, carte = Repositionnement, cardId = Repositionnement, handIndex = 1, manaApres = 3, handCount = 5, cible = Joueur 2, toGraveyard = True, turnNumber = 10 }
+308	2026-03-05T11:08:46.5165739Z	ShieldApplied	{ cible = Joueur 1, source = Attaque légère, baseShield = 2, resistance = 3, amount = 8, shieldAvant = 8, shieldApres = 16 }
+309	2026-03-05T11:08:46.5175746Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque légère, cardId = AttaqueLegere, turnNumber = 10 }
+310	2026-03-05T11:08:46.5175746Z	PlayCard	{ joueur = Joueur 1, carte = Attaque légère, cardId = AttaqueLegere, handIndex = 1, manaApres = 2, handCount = 4, cible = Joueur 2, toGraveyard = True, turnNumber = 10 }
+311	2026-03-05T11:08:46.5200893Z	DamageApplied	{ cible = Joueur 2, source = Attaque légère, baseDamage = 3, casterForce = 2, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 62, pvApres = 62, shieldAvant = 9, shieldApres = 4 }
+312	2026-03-05T11:08:46.5216159Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque légère, baseDamage = 3, casterForce = 2, turnNumber = 10 }
+313	2026-03-05T11:08:47.7482817Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Fendoire mortel, cardId = FendoireMortel, turnNumber = 10 }
+314	2026-03-05T11:08:47.7497974Z	PlayCard	{ joueur = Joueur 1, carte = Fendoire mortel, cardId = FendoireMortel, handIndex = 3, manaApres = 1, handCount = 3, cible = Joueur 2, toGraveyard = False, turnNumber = 10 }
+315	2026-03-05T11:08:47.7528475Z	DamageApplied	{ cible = Joueur 2, source = Fendoire mortel, baseDamage = 20, casterForce = 0, damageTotal = 20, toShield = 4, toPV = 16, pvAvant = 62, pvApres = 46, shieldAvant = 4, shieldApres = 0 }
+316	2026-03-05T11:08:47.7528475Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Fendoire mortel, baseDamage = 20, casterForce = 0, turnNumber = 10 }
+317	2026-03-05T11:08:48.6430528Z	StrikeReactionPhase	{ frappeur = Joueur 1, cible = Joueur 2, baseDamage = 5, casterForce = 2, runeStrikes = 0, damageTotal = 7, turnNumber = 10 }
+318	2026-03-05T11:08:48.6451101Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 5, casterForce = 2, damageTotal = 7, toShield = 0, toPV = 7, pvAvant = 46, pvApres = 39, shieldAvant = 0, shieldApres = 0 }
+319	2026-03-05T11:08:48.6456696Z	RuneAgressivite	{ joueur = Joueur 1, forceBonus = 1, duree = jusqu'à fin du tour }
+320	2026-03-05T11:08:48.6456696Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Frappe, baseDamage = 5, casterForce = 2, turnNumber = 10 }
+321	2026-03-05T11:08:50.9954185Z	EndTurnRequested	{ joueur = Joueur 1, turnNumber = 10 }
+322	2026-03-05T11:08:50.9969263Z	ForceBonusExpired	{ joueur = Joueur 1, forceRetiree = 0, forceApres = 2, turnNumber = 10 }
+323	2026-03-05T11:08:51.0059999Z	EndTurn	{ joueur = Joueur 1, manaReserved = 1, pv = 100, shield = 16, handCount = 3, turnNumber = 10 }
+324	2026-03-05T11:08:51.0172688Z	StartTurn	{ joueur = Joueur 2, turnNumber = 11, turnCount = 20, discarded = 5, deckKind = Magicien }
+325	2026-03-05T11:08:51.0269747Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 4, handCount = 2 }
+326	2026-03-05T11:08:51.0370591Z	DeckReshuffled	{ joueur = Joueur 2, cardsFromGraveyard = 18, deckSize = 18, turnNumber = 11 }
+327	2026-03-05T11:08:51.0370591Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 17, handCount = 7, mana = 3, turnNumber = 11 }
+328	2026-03-05T11:08:51.0486588Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 2, damageTotal = 3, turnNumber = 11 }
+329	2026-03-05T11:08:52.5126028Z	RapidPlayed	{ carte = Parade, cardId = Parade, joueur = Joueur 1, attaquant = Joueur 2, type = Parade }
+330	2026-03-05T11:08:52.5136005Z	PlayRapid	{ joueur = Joueur 1, carte = Parade, cardId = Parade, type = Parade ou Contre-attaque, turnNumber = 11 }
+331	2026-03-05T11:08:52.5151093Z	ShieldApplied	{ cible = Joueur 2, source = Défense, baseShield = 4, resistance = 0, amount = 4, shieldAvant = 0, shieldApres = 4 }
+332	2026-03-05T11:08:52.5161166Z	PlayCard	{ joueur = Joueur 2, carte = Défense, cardId = Defense, handIndex = 2, manaApres = 2, handCount = 6, cible = Joueur 1, toGraveyard = True, turnNumber = 11 }
+333	2026-03-05T11:08:52.8221301Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Attaque, cardId = Attaque, turnNumber = 11 }
+334	2026-03-05T11:08:52.8221301Z	PlayCard	{ joueur = Joueur 2, carte = Attaque, cardId = Attaque, handIndex = 3, manaApres = 1, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 11 }
+335	2026-03-05T11:08:55.8235651Z	DamageApplied	{ cible = Joueur 1, source = Attaque, baseDamage = 5, casterForce = 0, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 16, shieldApres = 11 }
+336	2026-03-05T11:08:55.8246996Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 11, shieldApres = 10 }
+337	2026-03-05T11:08:55.8246996Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 10, shieldApres = 9 }
+338	2026-03-05T11:08:55.8246996Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Attaque, baseDamage = 5, casterForce = 0, turnNumber = 11 }
+339	2026-03-05T11:08:55.8266834Z	ShieldApplied	{ cible = Joueur 2, source = Défense, baseShield = 4, resistance = 0, amount = 4, shieldAvant = 4, shieldApres = 8 }
+340	2026-03-05T11:08:55.8266834Z	PlayCard	{ joueur = Joueur 2, carte = Défense, cardId = Defense, handIndex = 2, manaApres = 0, handCount = 4, cible = Joueur 1, toGraveyard = True, turnNumber = 11 }
+341	2026-03-05T11:08:56.1286167Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 11 }
+342	2026-03-05T11:08:56.4319432Z	ShieldApplied	{ cible = Joueur 2, source = Rune essence arcanique, baseShield = 5, resistance = 0, amount = 5, shieldAvant = 8, shieldApres = 13 }
+343	2026-03-05T11:08:56.5358036Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 39, shield = 13, handCount = 4, turnNumber = 11 }
+344	2026-03-05T11:08:56.6386179Z	StartTurn	{ joueur = Joueur 1, turnNumber = 11, turnCount = 21, discarded = 2, deckKind = Guerrier }
+345	2026-03-05T11:08:56.7450919Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 11 }
+346	2026-03-05T11:08:56.8479164Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 1, handCount = 5, mana = 3, turnNumber = 11 }
+347	2026-03-05T11:09:06.2421459Z	AppuisSolide	{ joueur = Joueur 1, bonusDegatsArme = 1, duree = ce tour }
+348	2026-03-05T11:09:06.2431496Z	PlayCard	{ joueur = Joueur 1, carte = Appuis solide, cardId = AppuisSolide, handIndex = 3, manaApres = 2, handCount = 4, cible = Joueur 2, toGraveyard = False, turnNumber = 11 }
+349	2026-03-05T11:09:10.6970149Z	PositionOffensive	{ joueur = Joueur 1, forceAvant = 2, forceApres = 3, bonus = 1 }
+350	2026-03-05T11:09:10.6985322Z	PlayCard	{ joueur = Joueur 1, carte = Position offensive, cardId = PositionOffensive, handIndex = 1, manaApres = 1, handCount = 3, cible = Joueur 2, toGraveyard = False, turnNumber = 11 }
+351	2026-03-05T11:09:21.1633429Z	ShieldApplied	{ cible = Joueur 1, source = Attaque tactique, baseShield = 1, resistance = 3, amount = 4, shieldAvant = 0, shieldApres = 4 }
+352	2026-03-05T11:09:21.1643492Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque tactique, cardId = AttaqueTactique, turnNumber = 11 }
+353	2026-03-05T11:09:21.1643492Z	PlayCard	{ joueur = Joueur 1, carte = Attaque tactique, cardId = AttaqueTactique, handIndex = 1, manaApres = 1, handCount = 2, cible = Joueur 2, toGraveyard = True, turnNumber = 11 }
+354	2026-03-05T11:09:21.1668634Z	DamageApplied	{ cible = Joueur 2, source = Attaque tactique, baseDamage = 2, casterForce = 3, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 39, pvApres = 39, shieldAvant = 13, shieldApres = 8 }
+355	2026-03-05T11:09:21.1668634Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque tactique, baseDamage = 2, casterForce = 3, turnNumber = 11 }
+356	2026-03-05T11:09:23.1182294Z	ShieldApplied	{ cible = Joueur 1, source = Défense lourde, baseShield = 10, resistance = 3, amount = 40, shieldAvant = 4, shieldApres = 44 }
+357	2026-03-05T11:09:23.1192327Z	PlayCard	{ joueur = Joueur 1, carte = Défense lourde, cardId = DefenseLourde, handIndex = 1, manaApres = 0, handCount = 1, cible = Joueur 2, toGraveyard = True, turnNumber = 11 }
+358	2026-03-05T11:09:24.5350421Z	StrikeReactionPhase	{ frappeur = Joueur 1, cible = Joueur 2, baseDamage = 6, casterForce = 3, runeStrikes = 0, damageTotal = 9, turnNumber = 11 }
+359	2026-03-05T11:09:24.5375481Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 6, casterForce = 3, damageTotal = 9, toShield = 8, toPV = 1, pvAvant = 39, pvApres = 38, shieldAvant = 8, shieldApres = 0 }
+360	2026-03-05T11:09:24.5375481Z	RuneAgressivite	{ joueur = Joueur 1, forceBonus = 1, duree = jusqu'à fin du tour }
+361	2026-03-05T11:09:24.5375481Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Frappe, baseDamage = 6, casterForce = 3, turnNumber = 11 }
+362	2026-03-05T11:09:27.1316685Z	EndTurnRequested	{ joueur = Joueur 1, turnNumber = 11 }
+363	2026-03-05T11:09:27.1336700Z	ForceBonusExpired	{ joueur = Joueur 1, forceRetiree = 0, forceApres = 3, turnNumber = 11 }
+364	2026-03-05T11:09:27.1427248Z	EndTurn	{ joueur = Joueur 1, manaReserved = 0, pv = 100, shield = 44, handCount = 1, turnNumber = 11 }
+365	2026-03-05T11:09:27.1541832Z	StartTurn	{ joueur = Joueur 2, turnNumber = 12, turnCount = 22, discarded = 4, deckKind = Magicien }
+366	2026-03-05T11:09:27.1642757Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 15, handCount = 2 }
+367	2026-03-05T11:09:27.1755353Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 10, handCount = 7, mana = 3, turnNumber = 12 }
+368	2026-03-05T11:09:27.1867058Z	Galvanisation	{ joueur = Joueur 2, handCount = 6, forceBonus = 6, forceAvant = 0, forceApres = 6, duree = jusqu'à fin du tour }
+369	2026-03-05T11:09:27.1872224Z	PlayCard	{ joueur = Joueur 2, carte = Galvanisation, cardId = Galvanisation, handIndex = 3, manaApres = 2, handCount = 6, cible = Joueur 1, toGraveyard = True, turnNumber = 12 }
+370	2026-03-05T11:09:27.4924797Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 6, runeStrikes = 2, damageTotal = 21, turnNumber = 12 }
+371	2026-03-05T11:09:30.4972568Z	DamageApplied	{ cible = Joueur 1, source = Frappe, baseDamage = 1, casterForce = 6, damageTotal = 7, toShield = 7, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 44, shieldApres = 37 }
+372	2026-03-05T11:09:30.4972568Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 6, damageTotal = 7, toShield = 7, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 37, shieldApres = 30 }
+373	2026-03-05T11:09:30.4982583Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 6, damageTotal = 7, toShield = 7, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 30, shieldApres = 23 }
+374	2026-03-05T11:09:30.4987623Z	ShieldApplied	{ cible = Joueur 2, source = Catalyseur arcanique restreint, baseShield = 1, resistance = 0, amount = 1, shieldAvant = 0, shieldApres = 1 }
+375	2026-03-05T11:09:30.4987623Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Frappe, baseDamage = 1, casterForce = 6, turnNumber = 12 }
+376	2026-03-05T11:09:30.5002877Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Attaque +, cardId = AttaquePlus, turnNumber = 12 }
+377	2026-03-05T11:09:30.5013180Z	PlayCard	{ joueur = Joueur 2, carte = Attaque +, cardId = AttaquePlus, handIndex = 0, manaApres = 0, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 12 }
+378	2026-03-05T11:09:33.5043381Z	DamageApplied	{ cible = Joueur 1, source = Attaque +, baseDamage = 9, casterForce = 6, damageTotal = 15, toShield = 15, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 23, shieldApres = 8 }
+379	2026-03-05T11:09:33.5053656Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 6, damageTotal = 7, toShield = 7, toPV = 0, pvAvant = 100, pvApres = 100, shieldAvant = 8, shieldApres = 1 }
+380	2026-03-05T11:09:33.5053656Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 6, damageTotal = 7, toShield = 1, toPV = 6, pvAvant = 100, pvApres = 94, shieldAvant = 1, shieldApres = 0 }
+381	2026-03-05T11:09:33.5063387Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Attaque +, baseDamage = 9, casterForce = 6, turnNumber = 12 }
+382	2026-03-05T11:09:33.5068452Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 12 }
+383	2026-03-05T11:09:33.8106233Z	ShieldApplied	{ cible = Joueur 2, source = Rune essence arcanique, baseShield = 5, resistance = 0, amount = 5, shieldAvant = 1, shieldApres = 6 }
+384	2026-03-05T11:09:33.8116221Z	ForceBonusExpired	{ joueur = Joueur 2, forceRetiree = 0, forceApres = 0, turnNumber = 12 }
+385	2026-03-05T11:09:33.9148846Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 38, shield = 6, handCount = 5, turnNumber = 12 }
+386	2026-03-05T11:09:34.0201926Z	StartTurn	{ joueur = Joueur 1, turnNumber = 12, turnCount = 23, discarded = 1, deckKind = Guerrier }
+387	2026-03-05T11:09:34.1280618Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 94, pvApres = 97, heal = 3, turnNumber = 12 }
+388	2026-03-05T11:09:34.2335775Z	DeckReshuffled	{ joueur = Joueur 1, cardsFromGraveyard = 21, deckSize = 21, turnNumber = 12 }
+389	2026-03-05T11:09:34.2335775Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 17, handCount = 5, mana = 3, turnNumber = 12 }
+390	2026-03-05T11:09:42.1985485Z	ShieldApplied	{ cible = Joueur 1, source = Repositionnement, baseShield = 2, resistance = 3, amount = 8, shieldAvant = 0, shieldApres = 8 }
+391	2026-03-05T11:09:42.1985485Z	Draw	{ joueur = Joueur 1, requested = 1, drawn = 1, deckRemaining = 16, handCount = 5 }
+392	2026-03-05T11:09:42.1996687Z	PlayCard	{ joueur = Joueur 1, carte = Repositionnement, cardId = Repositionnement, handIndex = 2, manaApres = 3, handCount = 5, cible = Joueur 2, toGraveyard = True, turnNumber = 12 }
+393	2026-03-05T11:09:54.6503168Z	ShieldApplied	{ cible = Joueur 1, source = Attaque tactique, baseShield = 1, resistance = 3, amount = 4, shieldAvant = 8, shieldApres = 12 }
+394	2026-03-05T11:09:54.6513147Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque tactique, cardId = AttaqueTactique, turnNumber = 12 }
+395	2026-03-05T11:09:54.6513147Z	PlayCard	{ joueur = Joueur 1, carte = Attaque tactique, cardId = AttaqueTactique, handIndex = 2, manaApres = 3, handCount = 4, cible = Joueur 2, toGraveyard = True, turnNumber = 12 }
+396	2026-03-05T11:09:54.6559232Z	DamageApplied	{ cible = Joueur 2, source = Attaque tactique, baseDamage = 2, casterForce = 3, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 38, pvApres = 38, shieldAvant = 6, shieldApres = 1 }
+397	2026-03-05T11:09:54.6559232Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque tactique, baseDamage = 2, casterForce = 3, turnNumber = 12 }
+398	2026-03-05T11:10:12.4022794Z	ShieldApplied	{ cible = Joueur 1, source = Attaque légère, baseShield = 2, resistance = 3, amount = 8, shieldAvant = 12, shieldApres = 20 }
+399	2026-03-05T11:10:12.4040404Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque légère, cardId = AttaqueLegere, turnNumber = 12 }
+400	2026-03-05T11:10:12.4040404Z	PlayCard	{ joueur = Joueur 1, carte = Attaque légère, cardId = AttaqueLegere, handIndex = 1, manaApres = 2, handCount = 3, cible = Joueur 2, toGraveyard = True, turnNumber = 12 }
+401	2026-03-05T11:10:12.4070444Z	DamageApplied	{ cible = Joueur 2, source = Attaque légère, baseDamage = 3, casterForce = 3, damageTotal = 6, toShield = 1, toPV = 5, pvAvant = 38, pvApres = 33, shieldAvant = 1, shieldApres = 0 }
+402	2026-03-05T11:10:12.4070444Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque légère, baseDamage = 3, casterForce = 3, turnNumber = 12 }
+403	2026-03-05T11:10:14.0112412Z	ShieldApplied	{ cible = Joueur 1, source = Attaque lourde, baseShield = 4, resistance = 3, amount = 16, shieldAvant = 20, shieldApres = 36 }
+404	2026-03-05T11:10:14.0122478Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque lourde, cardId = AttaqueLourde, turnNumber = 12 }
+405	2026-03-05T11:10:14.0122478Z	PlayCard	{ joueur = Joueur 1, carte = Attaque lourde, cardId = AttaqueLourde, handIndex = 1, manaApres = 0, handCount = 2, cible = Joueur 2, toGraveyard = True, turnNumber = 12 }
+406	2026-03-05T11:10:14.0189158Z	DamageApplied	{ cible = Joueur 2, source = Attaque lourde, baseDamage = 7, casterForce = 3, damageTotal = 10, toShield = 0, toPV = 10, pvAvant = 33, pvApres = 23, shieldAvant = 0, shieldApres = 0 }
+407	2026-03-05T11:10:14.0200207Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque lourde, baseDamage = 7, casterForce = 3, turnNumber = 12 }
+408	2026-03-05T11:10:14.7020915Z	StrikeReactionPhase	{ frappeur = Joueur 1, cible = Joueur 2, baseDamage = 5, casterForce = 3, runeStrikes = 0, damageTotal = 8, turnNumber = 12 }
+409	2026-03-05T11:10:14.7036337Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 5, casterForce = 3, damageTotal = 8, toShield = 0, toPV = 8, pvAvant = 23, pvApres = 15, shieldAvant = 0, shieldApres = 0 }
+410	2026-03-05T11:10:14.7046441Z	RuneAgressivite	{ joueur = Joueur 1, forceBonus = 1, duree = jusqu'à fin du tour }
+411	2026-03-05T11:10:14.7046441Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Frappe, baseDamage = 5, casterForce = 3, turnNumber = 12 }
+412	2026-03-05T11:10:15.8891107Z	EndTurnRequested	{ joueur = Joueur 1, turnNumber = 12 }
+413	2026-03-05T11:10:15.8911316Z	ForceBonusExpired	{ joueur = Joueur 1, forceRetiree = 0, forceApres = 3, turnNumber = 12 }
+414	2026-03-05T11:10:15.9013129Z	EndTurn	{ joueur = Joueur 1, manaReserved = 0, pv = 97, shield = 36, handCount = 2, turnNumber = 12 }
+415	2026-03-05T11:10:15.9133722Z	StartTurn	{ joueur = Joueur 2, turnNumber = 13, turnCount = 24, discarded = 5, deckKind = Magicien }
+416	2026-03-05T11:10:15.9229421Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 8, handCount = 2 }
+417	2026-03-05T11:10:15.9344242Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 3, handCount = 7, mana = 3, turnNumber = 13 }
+418	2026-03-05T11:10:15.9450902Z	ShieldApplied	{ cible = Joueur 2, source = Défense, baseShield = 4, resistance = 0, amount = 4, shieldAvant = 0, shieldApres = 4 }
+419	2026-03-05T11:10:15.9450902Z	PlayCard	{ joueur = Joueur 2, carte = Défense, cardId = Defense, handIndex = 6, manaApres = 2, handCount = 6, cible = Joueur 1, toGraveyard = True, turnNumber = 13 }
+420	2026-03-05T11:10:16.2490455Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 2, damageTotal = 3, turnNumber = 13 }
+421	2026-03-05T11:10:19.2846403Z	DamageApplied	{ cible = Joueur 1, source = Frappe, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 97, pvApres = 97, shieldAvant = 36, shieldApres = 35 }
+422	2026-03-05T11:10:19.2846403Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 97, pvApres = 97, shieldAvant = 35, shieldApres = 34 }
+423	2026-03-05T11:10:19.2861453Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 97, pvApres = 97, shieldAvant = 34, shieldApres = 33 }
+424	2026-03-05T11:10:19.2861453Z	ShieldApplied	{ cible = Joueur 2, source = Catalyseur arcanique restreint, baseShield = 1, resistance = 0, amount = 1, shieldAvant = 4, shieldApres = 5 }
+425	2026-03-05T11:10:19.2866816Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Frappe, baseDamage = 1, casterForce = 0, turnNumber = 13 }
+426	2026-03-05T11:10:19.2866816Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Attaque, cardId = Attaque, turnNumber = 13 }
+427	2026-03-05T11:10:19.2881979Z	PlayCard	{ joueur = Joueur 2, carte = Attaque, cardId = Attaque, handIndex = 2, manaApres = 1, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 13 }
+428	2026-03-05T11:10:22.2884118Z	DamageApplied	{ cible = Joueur 1, source = Attaque, baseDamage = 5, casterForce = 0, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 97, pvApres = 97, shieldAvant = 33, shieldApres = 28 }
+429	2026-03-05T11:10:22.2884118Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 97, pvApres = 97, shieldAvant = 28, shieldApres = 27 }
+430	2026-03-05T11:10:22.2884118Z	DamageApplied	{ cible = Joueur 1, source = Rune de force arcanique, baseDamage = 1, casterForce = 0, damageTotal = 1, toShield = 1, toPV = 0, pvAvant = 97, pvApres = 97, shieldAvant = 27, shieldApres = 26 }
+431	2026-03-05T11:10:22.2899220Z	NoReaction	{ defenseur = Joueur 1, attaquant = Joueur 2, source = Attaque, baseDamage = 5, casterForce = 0, turnNumber = 13 }
+432	2026-03-05T11:10:22.2914552Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 1, handCount = 6 }
+433	2026-03-05T11:10:22.2914552Z	PlayCard	{ joueur = Joueur 2, carte = Divination, cardId = Divination, handIndex = 0, manaApres = 0, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 13 }
+434	2026-03-05T11:10:22.5903548Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 13 }
+435	2026-03-05T11:10:22.8966639Z	ShieldApplied	{ cible = Joueur 2, source = Rune essence arcanique, baseShield = 5, resistance = 0, amount = 5, shieldAvant = 5, shieldApres = 10 }
+436	2026-03-05T11:10:23.0023521Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 15, shield = 10, handCount = 5, turnNumber = 13 }
+437	2026-03-05T11:10:23.1094208Z	StartTurn	{ joueur = Joueur 1, turnNumber = 13, turnCount = 25, discarded = 2, deckKind = Guerrier }
+438	2026-03-05T11:10:23.2160872Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 13 }
+439	2026-03-05T11:10:23.3214140Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 11, handCount = 5, mana = 3, turnNumber = 13 }
+440	2026-03-05T11:10:36.3295609Z	ShieldApplied	{ cible = Joueur 1, source = Attaque tactique, baseShield = 1, resistance = 3, amount = 4, shieldAvant = 0, shieldApres = 4 }
+441	2026-03-05T11:10:36.3295609Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque tactique, cardId = AttaqueTactique, turnNumber = 13 }
+442	2026-03-05T11:10:36.3305647Z	PlayCard	{ joueur = Joueur 1, carte = Attaque tactique, cardId = AttaqueTactique, handIndex = 1, manaApres = 3, handCount = 4, cible = Joueur 2, toGraveyard = True, turnNumber = 13 }
+443	2026-03-05T11:10:36.3345644Z	DamageApplied	{ cible = Joueur 2, source = Attaque tactique, baseDamage = 2, casterForce = 3, damageTotal = 5, toShield = 5, toPV = 0, pvAvant = 15, pvApres = 15, shieldAvant = 10, shieldApres = 5 }
+444	2026-03-05T11:10:36.3350968Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque tactique, baseDamage = 2, casterForce = 3, turnNumber = 13 }
+445	2026-03-05T11:10:37.1003675Z	DamageApplied	{ cible = Joueur 2, source = Guillotine, baseDamage = 5, casterForce = 6, damageTotal = 11, toShield = 5, toPV = 6, pvAvant = 15, pvApres = 9, shieldAvant = 5, shieldApres = 0 }
+446	2026-03-05T11:10:37.1003675Z	PlayCard	{ joueur = Joueur 1, carte = Guillotine, cardId = Guillotine, handIndex = 1, manaApres = 2, handCount = 3, cible = Joueur 2, toGraveyard = True, turnNumber = 13 }
+447	2026-03-05T11:10:37.1192564Z	EndTurn	{ joueur = Joueur 1, manaReserved = 2, pv = 100, shield = 4, handCount = 3, turnNumber = 13 }
+448	2026-03-05T11:10:37.1294869Z	StartTurn	{ joueur = Joueur 2, turnNumber = 14, turnCount = 26, discarded = 5, deckKind = Magicien }
+449	2026-03-05T11:10:37.1387519Z	Draw	{ joueur = Joueur 2, requested = 2, drawn = 2, deckRemaining = 0, handCount = 2 }
+450	2026-03-05T11:10:37.1503443Z	DeckReshuffled	{ joueur = Joueur 2, cardsFromGraveyard = 22, deckSize = 22, turnNumber = 14 }
+451	2026-03-05T11:10:37.1508870Z	Draw	{ joueur = Joueur 2, requested = 5, drawn = 5, deckRemaining = 17, handCount = 7, mana = 3, turnNumber = 14 }
+452	2026-03-05T11:10:37.1625505Z	StrikeReactionPhase	{ frappeur = Joueur 2, cible = Joueur 1, baseDamage = 1, casterForce = 0, runeStrikes = 2, damageTotal = 3, turnNumber = 14 }
+453	2026-03-05T11:10:38.2067154Z	RapidPlayed	{ carte = Parade, cardId = Parade, joueur = Joueur 1, attaquant = Joueur 2, type = Parade }
+454	2026-03-05T11:10:38.2082194Z	PlayRapid	{ joueur = Joueur 1, carte = Parade, cardId = Parade, type = Parade ou Contre-attaque, turnNumber = 14 }
+455	2026-03-05T11:10:38.2092768Z	ReactionPhase	{ attaquant = Joueur 2, defenseur = Joueur 1, source = Explosion de magie éphémère, cardId = ExplosionMagieEphemere, turnNumber = 14 }
+456	2026-03-05T11:10:38.2103120Z	PlayCard	{ joueur = Joueur 2, carte = Explosion de magie éphémère, cardId = ExplosionMagieEphemere, handIndex = 5, manaApres = 2, handCount = 6, cible = Joueur 1, toGraveyard = True, turnNumber = 14 }
+457	2026-03-05T11:10:39.1725903Z	RapidPlayed	{ carte = Parade, cardId = Parade, joueur = Joueur 1, attaquant = Joueur 2, type = Parade }
+458	2026-03-05T11:10:39.1741052Z	PlayRapid	{ joueur = Joueur 1, carte = Parade, cardId = Parade, type = Parade ou Contre-attaque, turnNumber = 14 }
+459	2026-03-05T11:10:39.1751089Z	ShieldApplied	{ cible = Joueur 2, source = Défense, baseShield = 4, resistance = 0, amount = 4, shieldAvant = 0, shieldApres = 4 }
+460	2026-03-05T11:10:39.1751089Z	PlayCard	{ joueur = Joueur 2, carte = Défense, cardId = Defense, handIndex = 4, manaApres = 1, handCount = 5, cible = Joueur 1, toGraveyard = True, turnNumber = 14 }
+461	2026-03-05T11:10:39.4780208Z	Galvanisation	{ joueur = Joueur 2, handCount = 4, forceBonus = 4, forceAvant = 0, forceApres = 4, duree = jusqu'à fin du tour }
+462	2026-03-05T11:10:39.4785423Z	PlayCard	{ joueur = Joueur 2, carte = Galvanisation, cardId = Galvanisation, handIndex = 2, manaApres = 0, handCount = 4, cible = Joueur 1, toGraveyard = True, turnNumber = 14 }
+463	2026-03-05T11:10:39.7811890Z	EndTurnRequested	{ joueur = Joueur 2, turnNumber = 14 }
+464	2026-03-05T11:10:40.0884596Z	ShieldApplied	{ cible = Joueur 2, source = Rune essence arcanique, baseShield = 5, resistance = 0, amount = 5, shieldAvant = 4, shieldApres = 9 }
+465	2026-03-05T11:10:40.0894745Z	ForceBonusExpired	{ joueur = Joueur 2, forceRetiree = 0, forceApres = 0, turnNumber = 14 }
+466	2026-03-05T11:10:40.1931699Z	EndTurn	{ joueur = Joueur 2, manaReserved = 0, pv = 9, shield = 9, handCount = 4, turnNumber = 14 }
+467	2026-03-05T11:10:40.2985211Z	StartTurn	{ joueur = Joueur 1, turnNumber = 14, turnCount = 27, discarded = 1, deckKind = Guerrier }
+468	2026-03-05T11:10:40.4029749Z	RuneEndurance	{ joueur = Joueur 1, pvAvant = 97, pvApres = 100, heal = 3, turnNumber = 14 }
+469	2026-03-05T11:10:40.5085228Z	Draw	{ joueur = Joueur 1, requested = 5, drawn = 5, deckRemaining = 6, handCount = 5, mana = 3, turnNumber = 14 }
+470	2026-03-05T11:10:42.1182844Z	ShieldApplied	{ cible = Joueur 1, source = Repositionnement, baseShield = 2, resistance = 3, amount = 8, shieldAvant = 0, shieldApres = 8 }
+471	2026-03-05T11:10:42.1197961Z	Draw	{ joueur = Joueur 1, requested = 1, drawn = 1, deckRemaining = 5, handCount = 5 }
+472	2026-03-05T11:10:42.1197961Z	PlayCard	{ joueur = Joueur 1, carte = Repositionnement, cardId = Repositionnement, handIndex = 1, manaApres = 3, handCount = 5, cible = Joueur 2, toGraveyard = True, turnNumber = 14 }
+473	2026-03-05T11:10:43.1556013Z	ShieldApplied	{ cible = Joueur 1, source = Attaque légère, baseShield = 2, resistance = 3, amount = 8, shieldAvant = 8, shieldApres = 16 }
+474	2026-03-05T11:10:43.1561342Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque légère, cardId = AttaqueLegere, turnNumber = 14 }
+475	2026-03-05T11:10:43.1561342Z	PlayCard	{ joueur = Joueur 1, carte = Attaque légère, cardId = AttaqueLegere, handIndex = 2, manaApres = 2, handCount = 4, cible = Joueur 2, toGraveyard = True, turnNumber = 14 }
+476	2026-03-05T11:10:43.1597180Z	DamageApplied	{ cible = Joueur 2, source = Attaque légère, baseDamage = 3, casterForce = 3, damageTotal = 6, toShield = 6, toPV = 0, pvAvant = 9, pvApres = 9, shieldAvant = 9, shieldApres = 3 }
+477	2026-03-05T11:10:43.1597180Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque légère, baseDamage = 3, casterForce = 3, turnNumber = 14 }
+478	2026-03-05T11:10:43.7201845Z	ShieldApplied	{ cible = Joueur 1, source = Attaque lourde, baseShield = 4, resistance = 3, amount = 16, shieldAvant = 16, shieldApres = 32 }
+479	2026-03-05T11:10:43.7211901Z	ReactionPhase	{ attaquant = Joueur 1, defenseur = Joueur 2, source = Attaque lourde, cardId = AttaqueLourde, turnNumber = 14 }
+480	2026-03-05T11:10:43.7211901Z	PlayCard	{ joueur = Joueur 1, carte = Attaque lourde, cardId = AttaqueLourde, handIndex = 2, manaApres = 0, handCount = 3, cible = Joueur 2, toGraveyard = True, turnNumber = 14 }
+481	2026-03-05T11:10:43.7237491Z	DamageApplied	{ cible = Joueur 2, source = Attaque lourde, baseDamage = 7, casterForce = 3, damageTotal = 10, toShield = 3, toPV = 7, pvAvant = 9, pvApres = 2, shieldAvant = 3, shieldApres = 0 }
+482	2026-03-05T11:10:43.7237491Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Attaque lourde, baseDamage = 7, casterForce = 3, turnNumber = 14 }
+483	2026-03-05T11:10:44.8623756Z	StrikeReactionPhase	{ frappeur = Joueur 1, cible = Joueur 2, baseDamage = 5, casterForce = 3, runeStrikes = 0, damageTotal = 8, turnNumber = 14 }
+484	2026-03-05T11:10:44.8668873Z	DamageApplied	{ cible = Joueur 2, source = Frappe, baseDamage = 5, casterForce = 3, damageTotal = 8, toShield = 0, toPV = 8, pvAvant = 2, pvApres = 0, shieldAvant = 0, shieldApres = 0 }
+485	2026-03-05T11:10:44.8673930Z	RuneAgressivite	{ joueur = Joueur 1, forceBonus = 1, duree = jusqu'à fin du tour }
+486	2026-03-05T11:10:44.8673930Z	NoReaction	{ defenseur = Joueur 2, attaquant = Joueur 1, source = Frappe, baseDamage = 5, casterForce = 3, turnNumber = 14 }
+487	2026-03-05T11:10:44.8689952Z	Victory	{ gagnant = Joueur 1, winnerIndex = 0, turnCount = 27, deckJoueur1 = Guerrier, deckJoueur2 = Magicien }

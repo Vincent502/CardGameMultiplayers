@@ -174,11 +174,13 @@ namespace CardGame.Core
             }
             p.CardsDiscardedThisTurn.Clear();
             p.EphemeralConsumedThisRound = 0;
+            p.InvincibleUntilNextTurn = false; // Discipline éternel : invincible jusqu'au prochain tour
             foreach (var c in p.Hand)
                 p.CardsDiscardedThisTurn.Add(c);
             p.Graveyard.AddRange(p.Hand);
             p.Hand.Clear();
             p.Shield = 0;
+            _resolver.ReapplyShieldBuffs(State, State.CurrentPlayerIndex);
             p.AttackDoneThisTurn = false;
             p.ConsecutiveStrikesThisTurn = 0;
             p.ConsecutiveAttacksThisTurn = 0;

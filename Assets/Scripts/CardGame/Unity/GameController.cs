@@ -20,9 +20,11 @@ namespace CardGame.Unity
 
         private GameSession _session;
         private IGameLogger _logger;
+        private SessionStats _sessionStats;
         private SimpleBot _bot;
         private StepResult _lastStepResult;
         private bool _waitingForHumanAction;
+        private bool _hasFinalized;
 
         public GameState State => _session?.State;
         public int LocalPlayerIndex => 0; // Solo : humain = toujours Joueur 1
@@ -36,7 +38,9 @@ namespace CardGame.Unity
 
         private void Start()
         {
-            _logger = new GameLogger(_writeLogToFile);
+            _sessionStats = new SessionStats();
+            _logger = new GameLogger(_writeLogToFile, _sessionStats, ProfileManager.GameMode.Solo);
+            _hasFinalized = false;
             _session = new GameSession(_logger);
             _bot = new SimpleBot();
 
@@ -100,7 +104,7 @@ namespace CardGame.Unity
                         }
                         break;
                     case StepResult.GameOver:
-                            _logger?.FinalizeReport(State);
+                            EnsureProfileFinalized();
                             yield break;
                 }
             }
@@ -151,6 +155,35 @@ namespace CardGame.Unity
             if (!_waitingForHumanAction || !IsHumanTurn) return;
             if (_session.SubmitAction(new EndTurnAction { PlayerIndex = State.CurrentPlayerIndex }))
                 _waitingForHumanAction = false;
+        }
+
+        public void NotifyQuitToMenu()
+        {
+            if (_sessionStats == null || State == null) return;
+            if (IsGameOver)
+                EnsureProfileFinalized();
+            else
+            {
+                if (string.IsNullOrEmpty(_sessionStats.DeckJoueur1) && State.Players.Length > 0)
+                    _sessionStats.SetDeckJoueur1(State.Players[0].DeckKind.ToString());
+                ProfileManager.OnGameAbandoned(_sessionStats);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (!_hasFinalized && IsGameOver && _sessionStats != null && State != null)
+            {
+                Debug.Log("[GameController] OnDestroy — finalisation du profil (filet de sécurité).");
+                EnsureProfileFinalized();
+            }
+        }
+
+        private void EnsureProfileFinalized()
+        {
+            if (_hasFinalized || _sessionStats == null || State == null) return;
+            _hasFinalized = true;
+            _logger?.FinalizeReport(State);
         }
     }
 }

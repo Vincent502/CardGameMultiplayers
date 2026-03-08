@@ -46,6 +46,8 @@ namespace CardGame.Unity
         // Dégâts / bouclier / PV
         public int baseDamage;
         public int baseShield;
+        public int amount;
+        public int damageTotal;
         public int pvAvant;
         public int pvApres;
         public int shieldAvant;
@@ -113,6 +115,7 @@ namespace CardGame.Unity
                 "RuneAgressivite" => $"{joueur} +1 Force ({duree})",
                 "ForceBonusExpired" => $"{joueur} — bonus Force expiré (-{forceRetiree}), Force : {forceApres}",
                 "ShieldBuffExpired" => $"{joueur} — bouclier de {carte} expiré",
+                "ShieldBuffReapplied" => $"{cible} récupère {amount} bouclier ({carte})",
                 "ResistanceBuffExpired" => $"{joueur} — résistance de {carte} expirée",
                 "PassifMagicien" => $"{joueur} récupère {manaRecovered} mana (éphémères consommés : {ephemeralConsumedThisRound})",
                 "Galvanisation" => $"{joueur} +{forceBonus} Force (main : {handCount})",

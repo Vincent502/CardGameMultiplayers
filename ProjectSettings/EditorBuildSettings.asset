@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
+    path: Assets/Scenes/WindowsScene/CreateProfile.unity
+    guid: 1736146d72c446b4d84603e97e2f0e18
+  - enabled: 0
     path: Assets/Scenes/WindowsScene/Menu.unity
     guid: 0899fd8dd453ec3468692a68643d85d9
   - enabled: 0
@@ -17,6 +20,9 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/WindowsScene/MultiplayeurBoard.unity
     guid: 5b296a2d610d8954aa3dda6d699d83ff
+  - enabled: 1
+    path: Assets/Scenes/AndroideScene/Androide_CreateProfile.unity
+    guid: 8564ded9324de61458b602cce53b9070
   - enabled: 1
     path: Assets/Scenes/AndroideScene/Androide_Menu.unity
     guid: 3b09c16f86a56a240b6ccd1bd757bd53

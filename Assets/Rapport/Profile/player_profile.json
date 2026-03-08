@@ -1,0 +1,35 @@
+{
+    "version": 1,
+    "nom": "Huskyix",
+    "dateCreation": "2026-03-07T10:47:38.9893890Z",
+    "lastUpdated": "2026-03-07T10:47:38.9954251Z",
+    "parties": {
+        "total": 0,
+        "gagnees": 0,
+        "perdues": 0,
+        "abandonnees": 0,
+        "parDeck": []
+    },
+    "cartes": [],
+    "records": {
+        "maxDegatsUnTour": 0,
+        "maxBouclierUnTour": 0,
+        "maxBouclierGagneUnCoup": 0,
+        "partieLaPlusLongue": 0,
+        "partieLaPlusCourte": 0,
+        "partieRecordTours": {
+            "tours": 0,
+            "date": "",
+            "deckJoueur1": "",
+            "deckJoueur2": "",
+            "gagnant": "",
+            "resultatJoueur": ""
+        }
+    },
+    "cumuls": {
+        "degatsInfliges": 0,
+        "bouclierGagne": 0,
+        "cartesPiochees": 0
+    },
+    "succesDebloques": []
+}

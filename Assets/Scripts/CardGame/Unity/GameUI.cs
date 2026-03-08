@@ -433,6 +433,7 @@ namespace CardGame.Unity
 
         private void OnBackToMenu()
         {
+            _controller?.NotifyQuitToMenu();
             SoloGameParamsHolder.Clear();
             NetworkGameController.ResetOpponentDisconnected();
             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)

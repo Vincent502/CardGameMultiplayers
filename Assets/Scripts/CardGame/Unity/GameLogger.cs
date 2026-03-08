@@ -8,7 +8,7 @@ using UnityEngine;
 namespace CardGame.Unity
 {
     /// <summary>
-    /// Implémentation du logger : Debug.Log + fichier dans persistentDataPath/Rapport (compatible Windows et mobile).
+    /// Implémentation du logger : Debug.Log + fichier dans persistentDataPath/Rapport/Historique (compatible Windows et mobile).
     /// Format lisible : une entrée par ligne, payload en JSON.
     /// </summary>
     public class GameLogger : IGameLogger
@@ -17,26 +17,29 @@ namespace CardGame.Unity
         private readonly string _reportId;
         private readonly DateTime _startedAt;
         private int _sequence;
+        private readonly SessionStats _sessionStats;
+        private ProfileManager.GameMode _gameMode;
 
-        public GameLogger(bool writeToFile = true)
+        public GameLogger(bool writeToFile = true, SessionStats sessionStats = null, ProfileManager.GameMode gameMode = ProfileManager.GameMode.Solo)
         {
             _reportId = $"cardgame_{DateTime.Now:yyyyMMdd_HHmmss}";
             _startedAt = DateTime.UtcNow;
 
             if (writeToFile)
             {
-                string rapportDir = Path.Combine(Application.persistentDataPath, "Rapport");
+                string rapportDir = Path.Combine(Application.persistentDataPath, "Rapport", "Historique");
                 try
                 {
                     if (!Directory.Exists(rapportDir))
                         Directory.CreateDirectory(rapportDir);
+                    GameReportManager.PruneOldLogs();
                     _logPath = Path.Combine(rapportDir, $"{_reportId}.log");
                     string header = $"#META\t{{\"id\":\"{_reportId}\",\"startedAt\":\"{_startedAt:O}\"}}\n";
                     File.WriteAllText(_logPath, header);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[CardGame] Impossible de créer le dossier Rapport: {ex.Message}");
+                    Debug.LogWarning($"[CardGame] Impossible de créer le dossier Rapport/Historique: {ex.Message}");
                     _logPath = null;
                 }
             }
@@ -44,6 +47,8 @@ namespace CardGame.Unity
             {
                 _logPath = null;
             }
+            _sessionStats = sessionStats;
+            _gameMode = gameMode;
         }
 
         public void Log(string eventType, object data)
@@ -58,6 +63,8 @@ namespace CardGame.Unity
                 try { File.AppendAllText(_logPath, line + "\n"); }
                 catch { }
             }
+            if (_sessionStats != null)
+                ProfileManager.OnGameEvent(_sessionStats, eventType, payload);
         }
 
         /// <summary>Extrait turnNumber ou turnCount du payload JSON pour le modèle timeline.</summary>
@@ -94,16 +101,24 @@ namespace CardGame.Unity
 
         public void FinalizeReport(GameState state)
         {
-            if (_logPath == null || state == null) return;
-            try
+            if (state == null) return;
+            if (_logPath != null)
             {
-                string winner = state.WinnerIndex >= 0 ? $"Joueur {state.WinnerIndex + 1}" : "";
-                string deck1 = state.Players.Length > 0 ? state.Players[0].DeckKind.ToString() : "";
-                string deck2 = state.Players.Length > 1 ? state.Players[1].DeckKind.ToString() : "";
-                string summary = $"{{\"id\":\"{_reportId}\",\"startedAt\":\"{_startedAt:O}\",\"endedAt\":\"{DateTime.UtcNow:O}\",\"winner\":\"{winner}\",\"turnCount\":{state.TurnCount},\"deckJoueur1\":\"{deck1}\",\"deckJoueur2\":\"{deck2}\"}}";
-                File.AppendAllText(_logPath, $"#SUMMARY\t{summary}\n");
+                try
+                {
+                    string winner = state.WinnerIndex >= 0 ? $"Joueur {state.WinnerIndex + 1}" : "";
+                    string deck1 = state.Players.Length > 0 ? state.Players[0].DeckKind.ToString() : "";
+                    string deck2 = state.Players.Length > 1 ? state.Players[1].DeckKind.ToString() : "";
+                    string summary = $"{{\"id\":\"{_reportId}\",\"startedAt\":\"{_startedAt:O}\",\"endedAt\":\"{DateTime.UtcNow:O}\",\"winner\":\"{winner}\",\"turnCount\":{state.TurnCount},\"deckJoueur1\":\"{deck1}\",\"deckJoueur2\":\"{deck2}\"}}";
+                    File.AppendAllText(_logPath, $"#SUMMARY\t{summary}\n");
+                }
+                catch { }
             }
-            catch { }
+            if (_sessionStats != null)
+            {
+                Debug.Log("[CardGame] Finalisation du rapport — mise à jour du profil.");
+                ProfileManager.FinalizeGame(state, _sessionStats, _gameMode);
+            }
         }
     }
 }

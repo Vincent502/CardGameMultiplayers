@@ -19,6 +19,7 @@ namespace CardGame.Unity
 
         private GameSession _session;
         private IGameLogger _logger;
+        private SessionStats _sessionStats;
         private StepResult _lastStepResult;
         private bool _waitingForHumanAction;
         private GameNetworkBehaviour _gameNetwork;
@@ -69,7 +70,8 @@ namespace CardGame.Unity
             _localPlayerIndex = NetworkGameParamsHolder.IsHost ? GameState.Player1Index : GameState.Player2Index;
             NetworkGameParamsHolder.Clear();
 
-            _logger = new GameLogger(_writeLogToFile);
+            _sessionStats = new SessionStats();
+            _logger = new GameLogger(_writeLogToFile, _sessionStats, ProfileManager.GameMode.Multi);
             _session = new GameSession(_logger);
             _session.StartGame(_humanIsJoueur1, pr.FirstPlayerIndex, pr.GetDeckJoueur1(), pr.GetDeckJoueur2(), pr.Seed);
 
@@ -317,6 +319,16 @@ namespace CardGame.Unity
                     _gameNetwork.SendActionToOtherClient(netMsg);
                 else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
                     _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+            }
+        }
+
+        public void NotifyQuitToMenu()
+        {
+            if (!IsGameOver && _sessionStats != null && State != null)
+            {
+                if (string.IsNullOrEmpty(_sessionStats.DeckJoueur1) && State.Players.Length > 0)
+                    _sessionStats.SetDeckJoueur1(State.Players[0].DeckKind.ToString());
+                ProfileManager.OnGameAbandoned(_sessionStats);
             }
         }
     }
