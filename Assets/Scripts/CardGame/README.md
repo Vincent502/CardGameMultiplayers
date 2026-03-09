@@ -1,26 +1,49 @@
 # 🃏 Card Game – Duel tour par tour
 
-Jeu de cartes **2 joueurs** en tour par tour pour Unity (PC/Mobile). Phase 1 : **duel contre un bot**. Moteur en C# sans réseau, conçu pour être branché plus tard en P2P.
+Jeu de cartes **2 joueurs** en tour par tour pour Unity (PC/Mobile). Moteur C# découplé, UI Unity, support **Solo** (vs bot) et **Multijoueur** (P2P via Netcode/Relay).
 
 ---
 
 ## ✨ Fonctionnalités
 
-- **2 decks** : Magicien et Guerrier (34 cartes chacun, 4 équipements obligatoires). **Passif Guerrier** : +1 Force et +1 Résistance de base.
-- **Règles complètes** : PV, bouclier, Force, Résistance, mana, pioche, frappe (1/tour), équipements actifs à la frappe / début / fin de tour
-- **Effets à durée** : Orage de poche, Armure psychique, Lien karmique (compteur de tours, expiration)
-- **Glace localisée** : gel d’un équipement adverse, dégel uniquement par passage des tours (2 tours du joueur), affichage en bleu
-- **Cartes Éphémère** : chaque exemplaire jouable une fois, les autres exemplaires restent disponibles
-- **IA** : bot simple (SimpleBot) pour le Joueur 2
-- **UI** : TextMeshPro, statut joueurs (Joueur 1 humain / Joueur 2), main, Frappe, Fin de tour, équipements, effets à durée
+### Gameplay
+
+- **2 decks** : Magicien et Guerrier (34 cartes chacun, 4 équipements obligatoires)
+- **Passifs** : Magicien = +1 mana par carte Éphémère jouée ; Guerrier = +1 Force et +1 Résistance de base
+- **Types de cartes** : Équipé, Normal, Éphémère, Rapide
+- **Effets à durée** : Orage de poche, Armure psychique, Lien karmique (compteur par tour)
+- **Glace localisée** : gel d’équipement adverse, dégel après 2 tours du joueur, affichage en bleu
+- **Cartes Éphémère** : chaque exemplaire jouable une fois par partie
+- **Divination** : choix de carte à remettre sur le deck
+- **Réactions** : fenêtre de 1 s pour jouer une carte Rapide (Parade, Contre-attaque, etc.)
+
+### Modes de jeu
+
+- **Solo** : vs bot (SimpleBot)
+- **Multijoueur** : P2P via Unity Netcode + Relay (code à partager pour rejoindre)
+
+### Profil joueur
+
+- Création de profil, stats par bloc (Global, Solo, Multi, Ghost)
+- Succès débloquables
+- Persistance : `Rapport/Profile/player_profile.json`
+
+### UI
+
+- **GameUI** : PV, mana, main, Frappe, Fin de tour, équipements, effets à durée
+- **Historique** : journal des parties avec pseudos et couleurs (gagnant/perdant)
+- **Lobby** : affichage des pseudos pendant le choix des decks
+- **Tooltip équipements** : survol (PC) ou clic (mobile)
 
 ---
 
 ## 🛠 Technologies
 
-- **Unity** (compatible PC / Mobile)
+- **Unity** (PC / Mobile)
 - **C#** – moteur dans `Core/` sans dépendance Unity
 - **TextMeshPro** pour tous les textes
+- **Unity Netcode** pour le multijoueur P2P
+- **Unity Relay** pour la connexion via code (Create/Join)
 
 ---
 
@@ -31,78 +54,68 @@ Scripts/CardGame/
 ├── Core/           # Moteur de jeu (état, règles, résolution des effets)
 ├── Data/           # Définition des decks (Magicien, Guerrier)
 ├── Bot/            # IA SimpleBot
-├── Unity/          # GameController, GameUI, GameLogger
+├── Network/        # Netcode, Lobby, Relay, StartGameParams
+├── Unity/          # Controllers, UI, Profil, Historique
+├── Editor/         # Outils éditeur (MenuProfilBuilder, CreateProfileSceneBuilder)
 └── README.md
 ```
 
 | Dossier  | Rôle |
 |----------|------|
-| **Core** | `GameState`, `GameSession`, `EffectResolver`, `PlayerState`, `EquipmentState`, `ActiveDurationEffect`, types de cartes et actions |
+| **Core** | `GameState`, `GameSession`, `EffectResolver`, `PlayerState`, `EquipmentState`, `ActiveDurationEffect` |
 | **Data** | `DeckDefinitions`, `CardData`, `CardId` |
-| **Bot**  | `SimpleBot` – choix d’action pour le Joueur 2 |
-| **Unity**| Pilote de partie, interface, logs |
+| **Bot**  | `SimpleBot` – IA pour Joueur 2 en solo |
+| **Network** | `NetworkGameController`, `LobbyNetworkState`, `RelayManager`, `GameNetworkBehaviour` |
+| **Unity** | `GameController`, `GameUI`, `ProfileManager`, `HistoryController`, `LobbyController` |
 
 ---
 
 ## 🚀 Installation et lancement (Unity)
 
-1. **Ouvrir la scène** dans Unity.
-2. **Créer un objet vide** → ajouter le script **GameController**.
-3. **Créer un Canvas** (UI) puis sous le Canvas :
-   - Textes TMP : statut, Joueur 1, Joueur 2
-   - Conteneur vide pour la main (ex. `HandContainer`)
-   - 2 boutons : **Frappe**, **Fin de tour**
-   - (Optionnel) Conteneurs pour équipements et effets par joueur
-4. **Créer un objet** sous le Canvas → ajouter le script **GameUI**.
-5. **Brancher dans l’Inspector** :
-   - Controller → `GameController`
-   - _text Status, _text Joueur1, _text Joueur2
-   - Hand Container, Button Strike, Button End Turn
-   - Containers équipements / effets si utilisés
-6. **Play** : Joueur 1 = toi (humain), Joueur 2 = bot. Premier joueur aléatoire.
+### Solo
 
-Référence détaillée : `Assets/Document/carte_spec_complete.md`  
-Rapport d’implémentation : `Assets/Document/RAPPORT_phase1_implementation.md`
+1. Ouvrir la scène **Menu** ou **SoloBoard**.
+2. Créer un profil si nécessaire (écran de création).
+3. Choisir le deck et lancer la partie.
+4. Joueur 1 = humain, Joueur 2 = bot. Premier joueur aléatoire.
+
+### Multijoueur
+
+1. Ouvrir la scène **Lobby**.
+2. **Créer** : génère un code à partager. **Rejoindre** : saisir le code (6–12 caractères).
+3. Choisir son deck (Magicien / Guerrier) et confirmer.
+4. Quand les deux ont confirmé, la partie se lance automatiquement.
 
 ---
 
 ## 🎮 Règles rapides
 
-- **Joueur 1** = humain (index 0), **Joueur 2** = adversaire (index 1).
-- **1 frappe par tour** ; si l’arme est gelée, la frappe n'est pas possible (dégel uniquement après 2 tours du joueur).
-- **Équipement gelé** (bleu) : se dégèle uniquement après 2 tours du joueur propriétaire (pas par frappe ni carte dégâts).
-- **Éphémère** : chaque exemplaire n’est jouable qu’une fois ; les autres exemplaires restent jouables.
-- **Magicien** : passif +1 mana à chaque carte Éphémère jouée.
-- **Guerrier** : passif +1 Force et +1 Résistance de base (dès le début de partie).
+- **Joueur 1** = Host (index 0), **Joueur 2** = Client (index 1).
+- **1 frappe par tour** ; si l’arme est gelée, la frappe n'est pas possible.
+- **Équipement gelé** (bleu) : dégel après 2 tours du joueur propriétaire.
+- **Éphémère** : chaque exemplaire n’est jouable qu’une fois par partie.
+- **Rapide** : jouable pendant la fenêtre de réaction (1 s) après une attaque adverse.
 
 ---
 
-## 📋 Configuration (Inspector)
+## 📋 Logs et rapports
 
-**GameController**
-
-- Humain = Joueur 1 (coché par défaut)
-- Decks : Joueur 1 (ex. Magicien), Joueur 2 (ex. Guerrier)
-- Logs dans un fichier (optionnel)
-
-**GameUI**
-
-- Tous les champs texte et conteneurs doivent être assignés pour un affichage complet.
+- **GameLogger** : logs en console + fichier dans `persistentDataPath/Rapport/Historique/`
+- **GameReportManager** : 10 derniers rapports conservés. Pseudos dans les logs.
+- **Historique** : affichage avec pseudos et couleurs (gagnant vert, perdant rouge).
 
 ---
 
-## 📄 Logs
+## 📄 Documents de référence
 
-Les actions et changements d’état sont logués via **GameLogger** (Console Unity + fichier dans `Application.persistentDataPath` si l’option est activée).
+| Fichier | Description |
+|---------|-------------|
+| `Document/carte.md` | Règles et types de cartes |
+| `Document/carte_spec_complete.md` | Spécification complète |
+| `Document/couleurs_historique.md` | Palette couleurs historique |
+| `Document/REVIEW_etat_projet.md` | Revue d’état du projet |
+| `Rapport/README.txt` | Emplacement des rapports de parties |
 
 ---
 
-## 🔜 Évolution
-
-- **Phase 2** : remplacer le bot par une couche P2P (même moteur, même `SubmitAction`).
-
----
-
-## 📜 Licence et références
-
-Spécifications : `Document/carte_spec_complete.md`, `Document/PROMPT_jeu_cartes.md`.
+*Dernière mise à jour : février 2025*
