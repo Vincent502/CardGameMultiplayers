@@ -106,16 +106,4 @@ Scripts/CardGame/
 
 ---
 
-## 📄 Documents de référence
-
-| Fichier | Description |
-|---------|-------------|
-| `Document/carte.md` | Règles et types de cartes |
-| `Document/carte_spec_complete.md` | Spécification complète |
-| `Document/couleurs_historique.md` | Palette couleurs historique |
-| `Document/REVIEW_etat_projet.md` | Revue d’état du projet |
-| `Rapport/README.txt` | Emplacement des rapports de parties |
-
----
-
 *Dernière mise à jour : mars 2025*
