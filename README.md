@@ -118,4 +118,4 @@ Scripts/CardGame/
 
 ---
 
-*Dernière mise à jour : février 2025*
+*Dernière mise à jour : mars 2025*
