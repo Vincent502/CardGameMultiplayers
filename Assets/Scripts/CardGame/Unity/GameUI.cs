@@ -49,8 +49,11 @@ namespace CardGame.Unity
         private int _lastMana = -1;
         private bool _lastNeedsDivinationChoice;
         private bool _lastNeedsReaction;
+        private bool _lastIsHumanTurn = true;
+        private bool _lastIsDefenderInReaction;
         private string _lastHandKey;
         private string _lastEquipmentsKey;
+        private string _lastEffectsKey;
         private string _localPseudo;
         private string _opponentPseudo;
         private float _reactionTimeRemaining = -1f;
@@ -60,9 +63,8 @@ namespace CardGame.Unity
         {
             _controller = _controllerMono as IGameController ?? _controllerMono?.GetComponent<IGameController>();
             if (_controller == null) _controller = FindFirstObjectByType<GameController>() ?? (IGameController)FindFirstObjectByType<NetworkGameController>();
-            var profile = ProfileManager.LoadProfile();
-            _localPseudo = !string.IsNullOrWhiteSpace(profile?.nom) ? profile.nom : "Joueur";
-            _opponentPseudo = _controller is NetworkGameController ? "Adversaire" : "Bot";
+            _localPseudo = _controller?.LocalPseudo ?? "Joueur";
+            _opponentPseudo = _controller?.OpponentPseudo ?? "Adversaire";
             if (_buttonStrike != null) _buttonStrike.onClick.AddListener(() => _controller?.HumanStrike());
             if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller?.HumanEndTurn());
             if (_buttonBackToMenu != null) _buttonBackToMenu.onClick.AddListener(OnBackToMenu);
@@ -76,12 +78,8 @@ namespace CardGame.Unity
         {
             if (_controller?.State == null) return;
 
-            // En multi, récupérer les pseudos depuis NetworkGameController (initialisés dans son Start())
-            if (_controller is NetworkGameController ngc)
-            {
-                _localPseudo = ngc.LocalPseudo;
-                _opponentPseudo = ngc.OpponentPseudo;
-            }
+            _localPseudo = _controller.LocalPseudo;
+            _opponentPseudo = _controller.OpponentPseudo;
 
             var state = _controller.State;
             int localIdx = _controller.LocalPlayerIndex;
@@ -168,12 +166,12 @@ namespace CardGame.Unity
         private void RefreshHand(GameState state)
         {
             if (_handContainer == null) return;
-            if (_controller.NeedsReaction && state.ReactionTargetPlayerIndex != _controller.LocalPlayerIndex) return;
 
             int localIdx = _controller.LocalPlayerIndex;
             var p = state.Players[localIdx];
             bool needsDiv = _controller.NeedsDivinationChoice;
             bool needsReaction = _controller.NeedsReaction;
+            bool isDefenderInReaction = needsReaction && state.ReactionTargetPlayerIndex == localIdx;
             string handKey = string.Join(",", p.Hand.Select(c => c.InstanceId.ToString()));
             int manaOrReserved = needsReaction ? p.ManaReservedForReaction : p.Mana;
             bool handChanged = p.Hand.Count != _lastHandCount || handKey != _lastHandKey;
@@ -181,12 +179,15 @@ namespace CardGame.Unity
             // Ne pas rafraîchir si on n'est pas en phase jouable ET que la main n'a pas changé.
             // Quand on joue une carte rapide, la main change → on force le rafraîchissement pour que la carte jouée disparaisse
             // et que les autres reprennent l'apparence "non jouable".
-            if (!_controller.IsHumanTurn && !needsDiv && !needsReaction && !handChanged) return;
-            if (p.Hand.Count == _lastHandCount && manaOrReserved == _lastMana && needsDiv == _lastNeedsDivinationChoice && needsReaction == _lastNeedsReaction && handKey == _lastHandKey) return;
+            // Invalider le cache quand IsHumanTurn change (ex. passage au tour de l'adversaire) pour désactiver les cartes.
+            if (!_controller.IsHumanTurn && !needsDiv && !needsReaction && !handChanged && !_lastIsHumanTurn) return;
+            if (p.Hand.Count == _lastHandCount && manaOrReserved == _lastMana && needsDiv == _lastNeedsDivinationChoice && needsReaction == _lastNeedsReaction && _controller.IsHumanTurn == _lastIsHumanTurn && isDefenderInReaction == _lastIsDefenderInReaction && handKey == _lastHandKey) return;
             _lastHandCount = p.Hand.Count;
             _lastMana = manaOrReserved;
             _lastNeedsDivinationChoice = needsDiv;
             _lastNeedsReaction = needsReaction;
+            _lastIsHumanTurn = _controller.IsHumanTurn;
+            _lastIsDefenderInReaction = isDefenderInReaction;
             _lastHandKey = handKey;
 
             foreach (Transform t in _handContainer)
@@ -223,8 +224,8 @@ namespace CardGame.Unity
                     bool isRapide = data.Type == CardType.Rapide;
                     bool outlineVisible = needsReaction && _reactionTimeRemaining > 0;
                     bool canPlay = needsReaction
-                        ? (isRapide && manaOrReserved >= manaCost && outlineVisible)
-                        : (!isRapide && p.Mana >= manaCost && (card.Id != CardId.Repositionnement || !p.HasPlayedRepositionnementThisTurn));
+                        ? (isDefenderInReaction && isRapide && manaOrReserved >= manaCost && outlineVisible)
+                        : (_controller.IsHumanTurn && !isRapide && p.Mana >= manaCost && (card.Id != CardId.Repositionnement || !p.HasPlayedRepositionnementThisTurn));
                     // En mode Divination : n'importe quelle carte de la main peut être choisie pour être remise sur le deck.
                     bool isDivinationChoice = needsDiv;
                     btn.interactable = needsDiv ? true : canPlay;
@@ -573,6 +574,10 @@ namespace CardGame.Unity
 
         private void RefreshEffects(GameState state)
         {
+            string effectsKey = string.Join("|", state.ActiveDurationEffects.Select(e => $"{e.TargetPlayerIndex}_{e.CardId}_{e.TurnsRemaining}"));
+            if (effectsKey == _lastEffectsKey) return;
+            _lastEffectsKey = effectsKey;
+
             int localIdx = _controller.LocalPlayerIndex;
             int oppIdx = 1 - localIdx;
             RefreshEffectsForPlayer(state, localIdx, _effectsJoueur1Container);

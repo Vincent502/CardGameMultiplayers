@@ -10,6 +10,10 @@ namespace CardGame.Unity
         GameState State { get; }
         /// <summary>Index du joueur local (0 ou 1). En Solo = 0. En P2P : Host = 0, Client = 1.</summary>
         int LocalPlayerIndex { get; }
+        /// <summary>Pseudo du joueur local (pour l'affichage).</summary>
+        string LocalPseudo { get; }
+        /// <summary>Pseudo de l'adversaire (pour l'affichage).</summary>
+        string OpponentPseudo { get; }
         bool IsGameOver { get; }
         bool IsHumanTurn { get; }
         bool WaitingForHumanAction { get; }

@@ -183,15 +183,11 @@ namespace CardGame.Unity
                         else
                         {
                             yield return new WaitUntil(() => _hasPendingRemoteAction || IsGameOver || OpponentDisconnected);
-                            if (!IsGameOver && _hasPendingRemoteAction)
+                            if (!IsGameOver && TryApplyPendingRemoteAction(State.CurrentPlayerIndex))
                             {
-                                var action = _pendingRemoteAction.ToGameAction(State.CurrentPlayerIndex);
-                                if (action != null)
-                                    _session.SubmitAction(action);
-                                _hasPendingRemoteAction = false;
+                                while (!IsGameOver && _session.Step() == StepResult.PhaseAdvanced)
+                                    yield return new WaitForSeconds(0.05f);
                             }
-                            while (!IsGameOver && _session.Step() == StepResult.PhaseAdvanced)
-                                yield return new WaitForSeconds(0.05f);
                         }
                         break;
                     case StepResult.NeedPlayAction:
@@ -202,17 +198,12 @@ namespace CardGame.Unity
                         }
                         else
                         {
-                            // On attend qu'une action réseau soit reçue pour le joueur adverse.
                             yield return new WaitUntil(() => _hasPendingRemoteAction || IsGameOver || OpponentDisconnected);
-                            if (!IsGameOver && _hasPendingRemoteAction)
+                            if (!IsGameOver && TryApplyPendingRemoteAction(State.CurrentPlayerIndex))
                             {
-                                var action = _pendingRemoteAction.ToGameAction(State.CurrentPlayerIndex);
-                                if (action != null)
-                                    _session.SubmitAction(action);
-                                _hasPendingRemoteAction = false;
+                                while (!IsGameOver && _session.Step() == StepResult.PhaseAdvanced)
+                                    yield return new WaitForSeconds(0.05f);
                             }
-                            while (!IsGameOver && _session.Step() == StepResult.PhaseAdvanced)
-                                yield return new WaitForSeconds(0.05f);
                         }
                         break;
                     case StepResult.NeedReaction:
@@ -224,15 +215,11 @@ namespace CardGame.Unity
                         else
                         {
                             yield return new WaitUntil(() => _hasPendingRemoteAction || IsGameOver || OpponentDisconnected);
-                            if (!IsGameOver && _hasPendingRemoteAction)
+                            if (!IsGameOver && TryApplyPendingRemoteAction(State.ReactionTargetPlayerIndex))
                             {
-                                var action = _pendingRemoteAction.ToGameAction(State.ReactionTargetPlayerIndex);
-                                if (action != null)
-                                    _session.SubmitAction(action);
-                                _hasPendingRemoteAction = false;
+                                while (!IsGameOver && _session.Step() == StepResult.PhaseAdvanced)
+                                    yield return new WaitForSeconds(0.05f);
                             }
-                            while (!IsGameOver && _session.Step() == StepResult.PhaseAdvanced)
-                                yield return new WaitForSeconds(0.05f);
                         }
                         break;
                     case StepResult.GameOver:
@@ -250,6 +237,26 @@ namespace CardGame.Unity
             _hasPendingRemoteAction = true;
         }
 
+        private void SendActionToNetwork(GameAction action)
+        {
+            if (action == null || _gameNetwork == null || NetworkManager.Singleton == null) return;
+            var netMsg = NetworkActionMessage.From(action);
+            if (NetworkManager.Singleton.IsHost)
+                _gameNetwork.SendActionToOtherClient(netMsg);
+            else
+                _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+        }
+
+        private bool TryApplyPendingRemoteAction(int playerIndex)
+        {
+            if (!_hasPendingRemoteAction) return false;
+            var action = _pendingRemoteAction.ToGameAction(playerIndex);
+            _hasPendingRemoteAction = false;
+            if (action != null)
+                _session.SubmitAction(action);
+            return true;
+        }
+
         public void HumanPlayCard(int handIndex, int? divinationPutBackIndex = null)
         {
             if (!_waitingForHumanAction || !IsHumanTurn) return;
@@ -257,41 +264,29 @@ namespace CardGame.Unity
             if (_session.SubmitAction(a))
             {
                 _waitingForHumanAction = false;
-                var netMsg = NetworkActionMessage.From(a);
-                if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.SendActionToOtherClient(netMsg);
-                else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+                SendActionToNetwork(a);
             }
         }
 
         public void HumanStrike()
         {
             if (!_waitingForHumanAction || !IsHumanTurn) return;
-            if (_session.SubmitAction(new StrikeAction { PlayerIndex = State.CurrentPlayerIndex }))
+            var a = new StrikeAction { PlayerIndex = State.CurrentPlayerIndex };
+            if (_session.SubmitAction(a))
             {
                 _waitingForHumanAction = false;
-                var a = new StrikeAction { PlayerIndex = State.CurrentPlayerIndex };
-                var netMsg = NetworkActionMessage.From(a);
-                if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.SendActionToOtherClient(netMsg);
-                else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+                SendActionToNetwork(a);
             }
         }
 
         public void HumanEndTurn()
         {
             if (!_waitingForHumanAction || !IsHumanTurn) return;
-            if (_session.SubmitAction(new EndTurnAction { PlayerIndex = State.CurrentPlayerIndex }))
+            var a = new EndTurnAction { PlayerIndex = State.CurrentPlayerIndex };
+            if (_session.SubmitAction(a))
             {
                 _waitingForHumanAction = false;
-                var a = new EndTurnAction { PlayerIndex = State.CurrentPlayerIndex };
-                var netMsg = NetworkActionMessage.From(a);
-                if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.SendActionToOtherClient(netMsg);
-                else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+                SendActionToNetwork(a);
             }
         }
 
@@ -302,11 +297,7 @@ namespace CardGame.Unity
             if (_session.SubmitAction(a))
             {
                 _waitingForHumanAction = false;
-                var netMsg = NetworkActionMessage.From(a);
-                if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.SendActionToOtherClient(netMsg);
-                else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+                SendActionToNetwork(a);
             }
         }
 
@@ -317,11 +308,7 @@ namespace CardGame.Unity
             if (_session.SubmitAction(a))
             {
                 _waitingForHumanAction = false;
-                var netMsg = NetworkActionMessage.From(a);
-                if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.SendActionToOtherClient(netMsg);
-                else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+                SendActionToNetwork(a);
             }
         }
 
@@ -332,11 +319,7 @@ namespace CardGame.Unity
             if (_session.SubmitAction(a))
             {
                 _waitingForHumanAction = false;
-                var netMsg = NetworkActionMessage.From(a);
-                if (NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.SendActionToOtherClient(netMsg);
-                else if (!NetworkManager.Singleton.IsHost && _gameNetwork != null)
-                    _gameNetwork.ReceiveFromClientServerRpc(netMsg);
+                SendActionToNetwork(a);
             }
         }
 

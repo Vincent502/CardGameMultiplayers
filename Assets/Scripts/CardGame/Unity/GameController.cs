@@ -28,7 +28,11 @@ namespace CardGame.Unity
 
         public GameState State => _session?.State;
         public int LocalPlayerIndex => 0; // Solo : humain = toujours Joueur 1
+        public string LocalPseudo => _localPseudo ?? "Joueur";
+        public string OpponentPseudo => "Bot";
         public bool IsGameOver => State != null && State.WinnerIndex >= 0;
+
+        private string _localPseudo;
         public bool IsHumanTurn => State != null && State.CurrentPlayer.IsHuman;
         public bool WaitingForHumanAction => _waitingForHumanAction;
         /// <summary>True si le joueur humain peut encore frapper (1 frappe par tour, équipement "strike" une seule fois).</summary>
@@ -40,8 +44,8 @@ namespace CardGame.Unity
         {
             _sessionStats = new SessionStats();
             var profile = ProfileManager.LoadProfile();
-            var name1 = !string.IsNullOrWhiteSpace(profile?.nom) ? profile.nom : "Joueur";
-            _logger = new GameLogger(_writeLogToFile, _sessionStats, ProfileManager.GameMode.Solo, name1, "Bot");
+            _localPseudo = !string.IsNullOrWhiteSpace(profile?.nom) ? profile.nom : "Joueur";
+            _logger = new GameLogger(_writeLogToFile, _sessionStats, ProfileManager.GameMode.Solo, _localPseudo, "Bot");
             _hasFinalized = false;
             _session = new GameSession(_logger);
             _bot = new SimpleBot();
