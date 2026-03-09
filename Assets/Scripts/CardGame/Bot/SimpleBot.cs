@@ -80,6 +80,7 @@ namespace CardGame.Bot
             if (data.Type == CardType.Rapide) return false;
             int cost = data.Type == CardType.Equipe ? 0 : data.Cost;
             if (p.Mana < cost) return false;
+            if (card.Id == CardId.Repositionnement && p.HasPlayedRepositionnementThisTurn) return false;
             return true;
         }
     }

@@ -1008,8 +1008,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardGame.Unity.GameController
   _humanIsJoueur1: 1
   _writeLogToFile: 1
-  _deckJoueur1: 1
-  _deckJoueur2: 0
+  _deckJoueur1: 0
+  _deckJoueur2: 1
 --- !u!4 &801899258
 Transform:
   m_ObjectHideFlags: 0
@@ -1490,7 +1490,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 13, y: -284.99997}
-  m_SizeDelta: {x: 1000, y: 250}
+  m_SizeDelta: {x: 1000, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1394467832
 MonoBehaviour:
@@ -2242,11 +2242,8 @@ MonoBehaviour:
   _equipmentsJoueur1Container: {fileID: 1324514819}
   _equipmentsJoueur2Container: {fileID: 1461625323}
   _equipmentLabelPrefab: {fileID: 2940249844995941936, guid: b85ac4b6f30d92e45a80a6f9569b3723, type: 3}
-  _tooltipAnchorMin: {x: 0.5, y: 0.2}
-  _tooltipAnchorMax: {x: 0.5, y: 0.2}
-  _tooltipPivot: {x: 0.5, y: 0}
-  _tooltipAnchoredPosition: {x: 730, y: 240}
   _tooltipSize: {x: 320, y: 150}
+  _tooltipOffset: {x: 12, y: 12}
   _effectsJoueur1Container: {fileID: 1643392409}
   _effectsJoueur2Container: {fileID: 1185512041}
   _effectLabelPrefab: {fileID: 6950824854011511212, guid: ac3d5c401768df74b96662d92be2ec12, type: 3}

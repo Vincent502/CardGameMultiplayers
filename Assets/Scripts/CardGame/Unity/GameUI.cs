@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Serialization;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 using Unity.Netcode;
 using TMPro;
 
@@ -49,20 +50,33 @@ namespace CardGame.Unity
         private int _lastMana = -1;
         private bool _lastNeedsDivinationChoice;
         private bool _lastNeedsReaction;
+        private bool _lastIsHumanTurn = true;
+        private bool _lastIsDefenderInReaction;
         private string _lastHandKey;
         private string _lastEquipmentsKey;
+        private string _lastEffectsKey;
         private string _localPseudo;
         private string _opponentPseudo;
         private float _reactionTimeRemaining = -1f;
         private const float ReactionWindowDuration = 1f;
+        private const float HandCardWidth = 200f;
+        private const float HandCardHeight = 300f;
+        private int _lastSelectedHandIndex = -1;
+        private float _lastSelectedHandTime = -1f;
+        private const float MinDelayBeforePlay = 0.25f;
+
+#if UNITY_ANDROID || UNITY_IOS
+        private static bool IsTouchDevice => true;
+#else
+        private static bool IsTouchDevice => false;
+#endif
 
         private void Start()
         {
             _controller = _controllerMono as IGameController ?? _controllerMono?.GetComponent<IGameController>();
             if (_controller == null) _controller = FindFirstObjectByType<GameController>() ?? (IGameController)FindFirstObjectByType<NetworkGameController>();
-            var profile = ProfileManager.LoadProfile();
-            _localPseudo = !string.IsNullOrWhiteSpace(profile?.nom) ? profile.nom : "Joueur";
-            _opponentPseudo = _controller is NetworkGameController ? "Adversaire" : "Bot";
+            _localPseudo = _controller?.LocalPseudo ?? "Joueur";
+            _opponentPseudo = _controller?.OpponentPseudo ?? "Adversaire";
             if (_buttonStrike != null) _buttonStrike.onClick.AddListener(() => _controller?.HumanStrike());
             if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller?.HumanEndTurn());
             if (_buttonBackToMenu != null) _buttonBackToMenu.onClick.AddListener(OnBackToMenu);
@@ -76,12 +90,8 @@ namespace CardGame.Unity
         {
             if (_controller?.State == null) return;
 
-            // En multi, récupérer les pseudos depuis NetworkGameController (initialisés dans son Start())
-            if (_controller is NetworkGameController ngc)
-            {
-                _localPseudo = ngc.LocalPseudo;
-                _opponentPseudo = ngc.OpponentPseudo;
-            }
+            _localPseudo = _controller.LocalPseudo;
+            _opponentPseudo = _controller.OpponentPseudo;
 
             var state = _controller.State;
             int localIdx = _controller.LocalPlayerIndex;
@@ -168,12 +178,12 @@ namespace CardGame.Unity
         private void RefreshHand(GameState state)
         {
             if (_handContainer == null) return;
-            if (_controller.NeedsReaction && state.ReactionTargetPlayerIndex != _controller.LocalPlayerIndex) return;
 
             int localIdx = _controller.LocalPlayerIndex;
             var p = state.Players[localIdx];
             bool needsDiv = _controller.NeedsDivinationChoice;
             bool needsReaction = _controller.NeedsReaction;
+            bool isDefenderInReaction = needsReaction && state.ReactionTargetPlayerIndex == localIdx;
             string handKey = string.Join(",", p.Hand.Select(c => c.InstanceId.ToString()));
             int manaOrReserved = needsReaction ? p.ManaReservedForReaction : p.Mana;
             bool handChanged = p.Hand.Count != _lastHandCount || handKey != _lastHandKey;
@@ -181,13 +191,18 @@ namespace CardGame.Unity
             // Ne pas rafraîchir si on n'est pas en phase jouable ET que la main n'a pas changé.
             // Quand on joue une carte rapide, la main change → on force le rafraîchissement pour que la carte jouée disparaisse
             // et que les autres reprennent l'apparence "non jouable".
-            if (!_controller.IsHumanTurn && !needsDiv && !needsReaction && !handChanged) return;
-            if (p.Hand.Count == _lastHandCount && manaOrReserved == _lastMana && needsDiv == _lastNeedsDivinationChoice && needsReaction == _lastNeedsReaction && handKey == _lastHandKey) return;
+            // Invalider le cache quand IsHumanTurn change (ex. passage au tour de l'adversaire) pour désactiver les cartes.
+            if (!_controller.IsHumanTurn && !needsDiv && !needsReaction && !handChanged && !_lastIsHumanTurn) return;
+            if (p.Hand.Count == _lastHandCount && manaOrReserved == _lastMana && needsDiv == _lastNeedsDivinationChoice && needsReaction == _lastNeedsReaction && _controller.IsHumanTurn == _lastIsHumanTurn && isDefenderInReaction == _lastIsDefenderInReaction && handKey == _lastHandKey) return;
             _lastHandCount = p.Hand.Count;
             _lastMana = manaOrReserved;
             _lastNeedsDivinationChoice = needsDiv;
             _lastNeedsReaction = needsReaction;
+            _lastIsHumanTurn = _controller.IsHumanTurn;
+            _lastIsDefenderInReaction = isDefenderInReaction;
             _lastHandKey = handKey;
+            _lastSelectedHandIndex = -1;
+            _lastSelectedHandTime = -1f;
 
             foreach (Transform t in _handContainer)
                 Destroy(t.gameObject);
@@ -195,7 +210,20 @@ namespace CardGame.Unity
             RectTransform handRect = _handContainer as RectTransform ?? _handContainer.GetComponent<RectTransform>();
             Transform parent = handRect != null ? (Transform)handRect : _handContainer;
 
-            for (int i = 0; i < p.Hand.Count; i++)
+            var hlg = handRect != null ? handRect.GetComponent<HorizontalLayoutGroup>() : null;
+            if (hlg != null) hlg.enabled = false;
+            if (handRect != null && handRect.GetComponent<Mask>() == null)
+            {
+                handRect.gameObject.AddComponent<Image>().color = new Color(1, 1, 1, 0.01f);
+                handRect.gameObject.AddComponent<Mask>().showMaskGraphic = false;
+            }
+
+            int n = p.Hand.Count;
+            float containerWidth = handRect != null && handRect.rect.width > 0 ? handRect.rect.width : handRect != null ? handRect.sizeDelta.x : 1000f;
+            float offset = n > 1 ? (containerWidth - HandCardWidth) / (n - 1) : 0f;
+            float startX = -containerWidth * 0.5f;
+
+            for (int i = 0; i < n; i++)
             {
                 int index = i;
                 var card = p.Hand[i];
@@ -206,16 +234,28 @@ namespace CardGame.Unity
                 if (btn != null)
                 {
                     var rt = btn.GetComponent<RectTransform>();
-                    // Si aucun prefab n'est fourni, on force une taille/position par défaut.
-                    // Si un prefab est fourni, on laisse le prefab + le LayoutGroup décider de la taille.
-                    if (rt != null && _cardButtonPrefab == null)
+                    if (rt != null)
                     {
-                        rt.anchorMin = new Vector2(0f, 0.5f);
-                        rt.anchorMax = new Vector2(0f, 0.5f);
-                        rt.pivot = new Vector2(0f, 0.5f);
-                        rt.anchoredPosition = Vector2.zero;
-                        rt.localScale = Vector3.one;
-                        rt.sizeDelta = new Vector2(120f, 40f);
+                        var idxComp = btn.gameObject.GetComponent<HandCardIndex>() ?? btn.gameObject.AddComponent<HandCardIndex>();
+                        idxComp.Index = i;
+                        if (_cardButtonPrefab == null)
+                        {
+                            rt.anchorMin = new Vector2(0f, 0.5f);
+                            rt.anchorMax = new Vector2(0f, 0.5f);
+                            rt.pivot = new Vector2(0f, 0.5f);
+                            rt.anchoredPosition = new Vector2(startX + i * offset, 0f);
+                            rt.localScale = Vector3.one;
+                            rt.sizeDelta = new Vector2(120f, 40f);
+                        }
+                        else
+                        {
+                            rt.anchorMin = new Vector2(0.5f, 0.5f);
+                            rt.anchorMax = new Vector2(0.5f, 0.5f);
+                            rt.pivot = new Vector2(0f, 0.5f);
+                            rt.anchoredPosition = new Vector2(startX + i * offset, 0f);
+                            rt.sizeDelta = new Vector2(HandCardWidth, HandCardHeight);
+                            AddBringToFrontOnHover(btn);
+                        }
                     }
                     int cost = data.Type == CardType.Equipe ? 0 : data.Cost;
                     SetCardPrefabTexts(btn.transform, data.Name, data.Description, cost, data.Type);
@@ -223,27 +263,69 @@ namespace CardGame.Unity
                     bool isRapide = data.Type == CardType.Rapide;
                     bool outlineVisible = needsReaction && _reactionTimeRemaining > 0;
                     bool canPlay = needsReaction
-                        ? (isRapide && manaOrReserved >= manaCost && outlineVisible)
-                        : (!isRapide && p.Mana >= manaCost && (card.Id != CardId.Repositionnement || !p.HasPlayedRepositionnementThisTurn));
-                    // En mode Divination : n'importe quelle carte de la main peut être choisie pour être remise sur le deck.
+                        ? (isDefenderInReaction && isRapide && manaOrReserved >= manaCost && outlineVisible)
+                        : (_controller.IsHumanTurn && !isRapide && p.Mana >= manaCost && (card.Id != CardId.Repositionnement || !p.HasPlayedRepositionnementThisTurn));
                     bool isDivinationChoice = needsDiv;
                     btn.interactable = needsDiv ? true : canPlay;
                     ApplyRapidCardOutline(btn, isRapide && needsReaction, outlineVisible ? Mathf.Clamp01(_reactionTimeRemaining / ReactionWindowDuration) : 0f);
-                    btn.onClick.AddListener(() =>
-                    {
-                        if (!_controller.WaitingForHumanAction) return;
-                        if (isDivinationChoice)
-                            _controller.HumanDivinationPutBack(index);
-                        else if (needsReaction && canPlay)
-                            _controller.HumanPlayRapid(index);
-                        else if (canPlay)
-                            _controller.HumanPlayCard(index);
-                    });
+                    int handCount = p.Hand.Count;
+                    btn.onClick.AddListener(() => OnHandCardClicked(index, btn, handCount, isDivinationChoice, needsReaction, canPlay));
                 }
             }
 
             if (handRect != null)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(handRect);
+        }
+
+        private const int TwoTapHandThreshold = 5;
+
+        private void OnHandCardClicked(int index, Button btn, int handCount, bool isDivinationChoice, bool needsReaction, bool canPlay)
+        {
+            if (!_controller.WaitingForHumanAction) return;
+            bool useTwoTap = IsTouchDevice && handCount > TwoTapHandThreshold;
+            if (useTwoTap && (isDivinationChoice || (canPlay && !isDivinationChoice)))
+            {
+                float now = Time.unscaledTime;
+                bool sameCard = index == _lastSelectedHandIndex;
+                bool delayOk = (now - _lastSelectedHandTime) >= MinDelayBeforePlay;
+                if (sameCard && delayOk)
+                {
+                    if (isDivinationChoice)
+                        _controller.HumanDivinationPutBack(index);
+                    else if (needsReaction)
+                        _controller.HumanPlayRapid(index);
+                    else
+                        _controller.HumanPlayCard(index);
+                    _lastSelectedHandIndex = -1;
+                    _lastSelectedHandTime = -1f;
+                }
+                else
+                {
+                    btn.transform.SetAsLastSibling();
+                    _lastSelectedHandIndex = index;
+                    _lastSelectedHandTime = now;
+                }
+            }
+            else if (isDivinationChoice)
+            {
+                _controller.HumanDivinationPutBack(index);
+            }
+            else if (canPlay)
+            {
+                if (needsReaction)
+                    _controller.HumanPlayRapid(index);
+                else
+                    _controller.HumanPlayCard(index);
+            }
+        }
+
+        private void AddBringToFrontOnHover(Button btn)
+        {
+            if (IsTouchDevice) return;
+            var trigger = btn.gameObject.GetComponent<EventTrigger>() ?? btn.gameObject.AddComponent<EventTrigger>();
+            var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+            enterEntry.callback.AddListener(_ => btn.transform.SetAsLastSibling());
+            trigger.triggers.Add(enterEntry);
         }
 
         /// <summary>Affiche les dos de cartes de l'adversaire. Mis à jour quand sa main change.</summary>
@@ -486,10 +568,11 @@ namespace CardGame.Unity
             float alpha = _reactionTimeRemaining > 0 ? Mathf.Clamp01(_reactionTimeRemaining / ReactionWindowDuration) : 0f;
             var p = state.Players[state.ReactionTargetPlayerIndex];
             int manaOrReserved = p.ManaReservedForReaction;
-            int index = 0;
             foreach (Transform t in _handContainer)
             {
-                if (index >= p.Hand.Count) break;
+                var idxComp = t.GetComponent<HandCardIndex>();
+                int index = idxComp != null ? idxComp.Index : -1;
+                if (index < 0 || index >= p.Hand.Count) continue;
                 var card = p.Hand[index];
                 var data = DeckDefinitions.GetCard(card.Id);
                 var btn = t.GetComponent<Button>();
@@ -506,7 +589,6 @@ namespace CardGame.Unity
                     btn.interactable = false;
                     ApplyRapidCardOutline(btn, false, 0f);
                 }
-                index++;
             }
         }
 
@@ -573,6 +655,10 @@ namespace CardGame.Unity
 
         private void RefreshEffects(GameState state)
         {
+            string effectsKey = string.Join("|", state.ActiveDurationEffects.Select(e => $"{e.TargetPlayerIndex}_{e.CardId}_{e.TurnsRemaining}"));
+            if (effectsKey == _lastEffectsKey) return;
+            _lastEffectsKey = effectsKey;
+
             int localIdx = _controller.LocalPlayerIndex;
             int oppIdx = 1 - localIdx;
             RefreshEffectsForPlayer(state, localIdx, _effectsJoueur1Container);
