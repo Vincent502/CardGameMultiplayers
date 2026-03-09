@@ -1,5 +1,6 @@
 using System;
 using CardGame.Core;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -132,9 +133,11 @@ namespace CardGame.Unity
             if (_textDeckStatus == null) return;
             int host = state.HostDeckChoice;
             int client = state.ClientDeckChoice;
-            string j1 = host == LobbyNetworkState.DeckNotSet ? "?" : ((DeckKind)host).ToString();
-            string j2 = client == LobbyNetworkState.DeckNotSet ? "?" : ((DeckKind)client).ToString();
-            _textDeckStatus.text = $"Joueur 1 : {j1} | Joueur 2 : {j2}" + (_myDeckConfirmed ? " — En attente de l'autre." : " — Choisis et confirme.");
+            string pseudo1 = !string.IsNullOrEmpty(state.HostPseudo) ? state.HostPseudo : "Joueur 1";
+            string pseudo2 = !string.IsNullOrEmpty(state.ClientPseudo) ? state.ClientPseudo : "Joueur 2";
+            string deck1 = host == LobbyNetworkState.DeckNotSet ? "?" : ((DeckKind)host).ToString();
+            string deck2 = client == LobbyNetworkState.DeckNotSet ? "?" : ((DeckKind)client).ToString();
+            _textDeckStatus.text = $"{pseudo1} ({deck1}) vs {pseudo2} ({deck2})" + (_myDeckConfirmed ? " — En attente de l'autre." : " — Choisis et confirme.");
         }
 
         private void OnConfirmDeck()
@@ -142,14 +145,16 @@ namespace CardGame.Unity
             if (_myDeckConfirmed) return;
             var state = FindFirstObjectByType<LobbyNetworkState>();
             if (state == null) return;
+            var profile = ProfileManager.LoadProfile();
+            var pseudo = !string.IsNullOrWhiteSpace(profile?.nom) ? profile.nom : "Joueur";
             if (NetworkManager.Singleton.IsHost)
             {
-                state.SetHostDeck(_selectedDeck);
+                state.SetHostDeck(_selectedDeck, pseudo);
                 _myDeckConfirmed = true;
             }
             else
             {
-                state.SetClientDeckServerRpc((int)_selectedDeck);
+                state.SetClientDeckServerRpc((int)_selectedDeck, new FixedString64Bytes(pseudo));
                 _myDeckConfirmed = true;
             }
             UpdateDeckSelectionUI();
@@ -196,7 +201,7 @@ namespace CardGame.Unity
                 if (ok)
                     SetStatus("Connecté. Choisis ton deck (Joueur 2) et confirme.");
                 else
-                    SetStatus("Échec connexion ou code invalide.");
+                    SetStatus(!string.IsNullOrEmpty(_relayManager.LastError) ? _relayManager.LastError : "Échec connexion ou code invalide.");
             }
             catch (Exception e)
             {

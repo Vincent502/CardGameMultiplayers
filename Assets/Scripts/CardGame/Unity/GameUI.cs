@@ -51,6 +51,8 @@ namespace CardGame.Unity
         private bool _lastNeedsReaction;
         private string _lastHandKey;
         private string _lastEquipmentsKey;
+        private string _localPseudo;
+        private string _opponentPseudo;
         private float _reactionTimeRemaining = -1f;
         private const float ReactionWindowDuration = 2f;
 
@@ -58,6 +60,9 @@ namespace CardGame.Unity
         {
             _controller = _controllerMono as IGameController ?? _controllerMono?.GetComponent<IGameController>();
             if (_controller == null) _controller = FindFirstObjectByType<GameController>() ?? (IGameController)FindFirstObjectByType<NetworkGameController>();
+            var profile = ProfileManager.LoadProfile();
+            _localPseudo = !string.IsNullOrWhiteSpace(profile?.nom) ? profile.nom : "Joueur";
+            _opponentPseudo = _controller is NetworkGameController ? "Adversaire" : "Bot";
             if (_buttonStrike != null) _buttonStrike.onClick.AddListener(() => _controller?.HumanStrike());
             if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller?.HumanEndTurn());
             if (_buttonBackToMenu != null) _buttonBackToMenu.onClick.AddListener(OnBackToMenu);
@@ -71,6 +76,13 @@ namespace CardGame.Unity
         {
             if (_controller?.State == null) return;
 
+            // En multi, récupérer les pseudos depuis NetworkGameController (initialisés dans son Start())
+            if (_controller is NetworkGameController ngc)
+            {
+                _localPseudo = ngc.LocalPseudo;
+                _opponentPseudo = ngc.OpponentPseudo;
+            }
+
             var state = _controller.State;
             int localIdx = _controller.LocalPlayerIndex;
             int oppIdx = 1 - localIdx;
@@ -79,13 +91,13 @@ namespace CardGame.Unity
             {
                 var me = state.Players[localIdx];
                 _textJoueur1.text =
-                    $"Moi - Joueur {localIdx + 1} ({me.DeckKind})\nPV: {me.PV} Bouclier: {me.Shield}\nForce: {me.Force} Résistance: {me.Resistance}\nMana: {me.Mana} Main: {me.Hand.Count} Cim: {me.Graveyard.Count} Éphém: {me.EphemeralConsumedThisGame}";
+                    $"{_localPseudo} ({me.DeckKind})\nPV: {me.PV} Bouclier: {me.Shield}\nForce: {me.Force} Résistance: {me.Resistance}\nMana: {me.Mana} Main: {me.Hand.Count} Cim: {me.Graveyard.Count} Éphém: {me.EphemeralConsumedThisGame}";
             }
             if (_textJoueur2 != null)
             {
                 var adv = state.Players[oppIdx];
                 _textJoueur2.text =
-                    $"Adversaire - Joueur {oppIdx + 1} ({adv.DeckKind})\nPV: {adv.PV} Bouclier: {adv.Shield}\nForce: {adv.Force} Résistance: {adv.Resistance}\nMana: {adv.Mana} Main: {adv.Hand.Count} Cim: {adv.Graveyard.Count} Éphém: {adv.EphemeralConsumedThisGame}";
+                    $"{_opponentPseudo} ({adv.DeckKind})\nPV: {adv.PV} Bouclier: {adv.Shield}\nForce: {adv.Force} Résistance: {adv.Resistance}\nMana: {adv.Mana} Main: {adv.Hand.Count} Cim: {adv.Graveyard.Count} Éphém: {adv.EphemeralConsumedThisGame}";
             }
 
             // Tour actuel = 1 quand le premier joueur joue, 2 quand le second, 3 au tour suivant, etc.
@@ -97,9 +109,9 @@ namespace CardGame.Unity
 
             if (_controller.IsGameOver)
             {
-                int winnerNum = state.WinnerIndex + 1;
                 bool iWon = state.WinnerIndex == localIdx;
-                string msg = iWon ? "Partie terminée.\nVous avez gagné !" : $"Partie terminée.\nJoueur {winnerNum} a gagné.";
+                string winnerName = iWon ? _localPseudo : _opponentPseudo;
+                string msg = iWon ? "Partie terminée.\nVous avez gagné !" : $"Partie terminée.\n{winnerName} a gagné.";
                 if (_textStatus != null) _textStatus.text = msg;
                 if (_textGameOver != null) _textGameOver.text = msg;
                 if (_panelGameOver != null) _panelGameOver.SetActive(true);

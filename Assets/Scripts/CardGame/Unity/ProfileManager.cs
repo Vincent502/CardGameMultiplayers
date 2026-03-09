@@ -106,7 +106,8 @@ namespace CardGame.Unity
 
         /// <summary>Fusionne les stats de la partie terminée dans le profil et sauvegarde.</summary>
         /// <param name="mode">Solo = vs bot, Multi = multijoueur.</param>
-        public static void FinalizeGame(GameState state, SessionStats sessionStats, GameMode mode = GameMode.Solo)
+        /// <param name="localPlayerIndex">Index du joueur local (0 = Host/Joueur 1, 1 = Client/Joueur 2). En solo, toujours 0.</param>
+        public static void FinalizeGame(GameState state, SessionStats sessionStats, GameMode mode = GameMode.Solo, int localPlayerIndex = 0)
         {
             if (sessionStats == null)
             {
@@ -126,12 +127,12 @@ namespace CardGame.Unity
             if (state != null && string.IsNullOrEmpty(sessionStats.DeckJoueur1) && state.Players.Length > 0)
                 sessionStats.SetDeckJoueur1(state.Players[0].DeckKind.ToString());
 
-            bool isVictory = state?.WinnerIndex == 0;
-            bool isDefeat = state?.WinnerIndex == 1;
+            bool isVictory = state != null && state.WinnerIndex >= 0 && state.WinnerIndex == localPlayerIndex;
+            string localPlayerDeck = state?.Players.Length > localPlayerIndex ? state.Players[localPlayerIndex].DeckKind.ToString() : (sessionStats.DeckJoueur1 ?? "Magicien");
 
             var targetBlock = mode == GameMode.Solo ? profile.solo : profile.multi;
-            MergeSessionIntoBlock(profile.parties, profile.records, profile.cumuls, profile.cartes, sessionStats, isVictory, false);
-            MergeSessionIntoBlock(targetBlock.parties, targetBlock.records, targetBlock.cumuls, targetBlock.cartes, sessionStats, isVictory, false);
+            MergeSessionIntoBlock(profile.parties, profile.records, profile.cumuls, profile.cartes, sessionStats, isVictory, false, localPlayerDeck);
+            MergeSessionIntoBlock(targetBlock.parties, targetBlock.records, targetBlock.cumuls, targetBlock.cartes, sessionStats, isVictory, false, localPlayerDeck);
             if (isVictory && sessionStats.ContreAttaqueJouee)
             {
                 profile.cumuls.victoiresAvecContreAttaque++;
@@ -149,7 +150,8 @@ namespace CardGame.Unity
         }
 
         /// <summary>Enregistre une partie abandonnée (ghost).</summary>
-        public static void OnGameAbandoned(SessionStats sessionStats)
+        /// <param name="localPlayerIndex">En multi : 0 = Host, 1 = Client. En solo : 0.</param>
+        public static void OnGameAbandoned(SessionStats sessionStats, int localPlayerIndex = 0)
         {
             if (sessionStats == null) return;
             var profile = LoadProfile();
@@ -158,8 +160,11 @@ namespace CardGame.Unity
             if (profile.succesDebloques == null) profile.succesDebloques = new List<string>();
             EnsureStatsBlocks(profile);
 
-            MergeSessionIntoBlock(profile.parties, profile.records, profile.cumuls, profile.cartes, sessionStats, false, true);
-            MergeSessionIntoBlock(profile.ghost.parties, profile.ghost.records, profile.ghost.cumuls, profile.ghost.cartes, sessionStats, false, true);
+            string abandonedDeck = sessionStats.DeckJoueur1 ?? "Magicien";
+            if (localPlayerIndex == 1 && !string.IsNullOrEmpty(sessionStats.DeckJoueur2))
+                abandonedDeck = sessionStats.DeckJoueur2;
+            MergeSessionIntoBlock(profile.parties, profile.records, profile.cumuls, profile.cartes, sessionStats, false, true, abandonedDeck);
+            MergeSessionIntoBlock(profile.ghost.parties, profile.ghost.records, profile.ghost.cumuls, profile.ghost.cartes, sessionStats, false, true, abandonedDeck);
 
             var newlyUnlocked = AchievementDefinition.CheckNewlyUnlocked(profile);
             foreach (var id in newlyUnlocked)
@@ -178,21 +183,21 @@ namespace CardGame.Unity
             if (profile.ghost == null) profile.ghost = new StatsBlock();
         }
 
-        private static void MergeSessionIntoBlock(PartiesData parties, RecordsData records, CumulsData cumuls, List<CardCount> cartes, SessionStats s, bool isVictory, bool isAbandoned)
+        private static void MergeSessionIntoBlock(PartiesData parties, RecordsData records, CumulsData cumuls, List<CardCount> cartes, SessionStats s, bool isVictory, bool isAbandoned, string localPlayerDeck = null)
         {
             if (parties == null) return;
             if (isAbandoned) { parties.abandonnees++; parties.total++; }
             else { if (isVictory) parties.gagnees++; else parties.perdues++; parties.total++; }
-            MergeDeckStats(parties, s, isVictory);
+            MergeDeckStats(parties, s, isVictory, localPlayerDeck ?? s.DeckJoueur1 ?? "Magicien");
             MergeCartes(cartes ??= new List<CardCount>(), s);
-            MergeRecords(records, s);
+            MergeRecords(records, s, isVictory);
             MergeCumuls(cumuls, s);
         }
 
-        private static void MergeDeckStats(PartiesData parties, SessionStats s, bool isVictory)
+        private static void MergeDeckStats(PartiesData parties, SessionStats s, bool isVictory, string localPlayerDeck)
         {
             if (parties.parDeck == null) parties.parDeck = new List<DeckStatsEntry>();
-            string deck1 = s.DeckJoueur1 ?? "Magicien";
+            string deck1 = localPlayerDeck ?? "Magicien";
             var idx = parties.parDeck.FindIndex(x => x.deckName == deck1);
             DeckStatsEntry entry;
             if (idx < 0)
@@ -220,7 +225,7 @@ namespace CardGame.Unity
             }
         }
 
-        private static void MergeRecords(RecordsData records, SessionStats s)
+        private static void MergeRecords(RecordsData records, SessionStats s, bool isVictory)
         {
             if (records == null) return;
             if (s.DegatsCeTour > records.maxDegatsUnTour)
@@ -243,7 +248,7 @@ namespace CardGame.Unity
                         deckJoueur1 = s.DeckJoueur1 ?? "",
                         deckJoueur2 = s.DeckJoueur2 ?? "",
                         gagnant = s.Gagnant ?? "",
-                        resultatJoueur = s.WinnerIndex == 0 ? "gagné" : "perdu"
+                        resultatJoueur = isVictory ? "gagné" : "perdu"
                     };
                 }
                 if (turns > 0 && (records.partieLaPlusCourte == 0 || turns < records.partieLaPlusCourte))

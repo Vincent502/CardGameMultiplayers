@@ -39,7 +39,9 @@ namespace CardGame.Unity
         private void Start()
         {
             _sessionStats = new SessionStats();
-            _logger = new GameLogger(_writeLogToFile, _sessionStats, ProfileManager.GameMode.Solo);
+            var profile = ProfileManager.LoadProfile();
+            var name1 = !string.IsNullOrWhiteSpace(profile?.nom) ? profile.nom : "Joueur";
+            _logger = new GameLogger(_writeLogToFile, _sessionStats, ProfileManager.GameMode.Solo, name1, "Bot");
             _hasFinalized = false;
             _session = new GameSession(_logger);
             _bot = new SimpleBot();

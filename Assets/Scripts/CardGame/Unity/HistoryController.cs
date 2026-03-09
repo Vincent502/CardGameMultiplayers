@@ -86,14 +86,21 @@ namespace CardGame.Unity
             }
         }
 
-        /// <summary>Formate un item de la liste historique avec couleurs et mise en forme.</summary>
+        /// <summary>Formate un item de la liste historique avec pseudos, couleurs gagnant (vert) / perdant (rouge).</summary>
         private static string FormatHistoriqueItem(GameReportManager.ReportSummary s)
         {
+            string name1 = !string.IsNullOrEmpty(s.NamePlayer1) ? s.NamePlayer1 : s.DeckJoueur1;
+            string name2 = !string.IsNullOrEmpty(s.NamePlayer2) ? s.NamePlayer2 : s.DeckJoueur2;
+            if (string.IsNullOrEmpty(name1)) name1 = "Joueur 1";
+            if (string.IsNullOrEmpty(name2)) name2 = "Joueur 2";
+
             bool hasWinner = !string.IsNullOrEmpty(s.Winner) && s.Winner != "Partie non terminée";
-            string color1 = hasWinner && s.Winner == "Joueur 1" ? ColorShield : (hasWinner ? ColorDamage : ColorSection);
-            string color2 = hasWinner && s.Winner == "Joueur 2" ? ColorShield : (hasWinner ? ColorDamage : ColorSection);
+            bool p1Won = hasWinner && (s.WinnerIndex == 0 || s.Winner == name1 || s.Winner == "Joueur 1");
+            bool p2Won = hasWinner && (s.WinnerIndex == 1 || s.Winner == name2 || s.Winner == "Joueur 2");
+            string color1 = p1Won ? ColorShield : (hasWinner ? ColorDamage : ColorSection);
+            string color2 = p2Won ? ColorShield : (hasWinner ? ColorDamage : ColorSection);
             return $"<color={ColorTime}><size=85%>{s.DisplayDate}</size></color>\n" +
-                   $"<color={color1}><b>{s.DeckJoueur1}</b></color> vs <color={color2}><b>{s.DeckJoueur2}</b></color>\n" +
+                   $"<color={color1}><b>{name1}</b></color> vs <color={color2}><b>{name2}</b></color>\n" +
                    $"<color={ColorTime}>{s.TurnCount} tours</color>";
         }
 
@@ -118,17 +125,20 @@ namespace CardGame.Unity
             sb.AppendLine($"<color={ColorSection}>——— Journal de la partie ———</color>");
             sb.AppendLine();
 
+            string name1 = !string.IsNullOrEmpty(report.Summary?.NamePlayer1) ? report.Summary.NamePlayer1 : "Joueur 1";
+            string name2 = !string.IsNullOrEmpty(report.Summary?.NamePlayer2) ? report.Summary.NamePlayer2 : "Joueur 2";
             foreach (var turnGroup in report.TurnGroups)
             {
+                string joueur = ReplacePlayerNames(turnGroup.Joueur, name1, name2);
                 string header = turnGroup.TurnIndex == 0
                     ? "▶ Début"
-                    : $"▶ Tour {turnGroup.TurnIndex} — {turnGroup.Joueur} (tour {turnGroup.TurnNumber})";
+                    : $"▶ Tour {turnGroup.TurnIndex} — {joueur} (tour {turnGroup.TurnNumber})";
                 sb.AppendLine($"<size=105%><b><color={ColorSection}>{header}</color></b></size>");
                 foreach (var e in turnGroup.Entries)
                 {
                     var record = e.ToActivityRecord();
                     string display = record.Detail?.ToDisplayText(e.Event);
-                    string content = !string.IsNullOrEmpty(display) ? display : e.Data;
+                    string content = ReplacePlayerNames(!string.IsNullOrEmpty(display) ? display : e.Data, name1, name2);
                     string coloredLine = FormatEventLine(e.Event, record.TimeShort, content);
                     sb.AppendLine($"  {coloredLine}");
                 }
@@ -138,6 +148,12 @@ namespace CardGame.Unity
             _textDetail.overflowMode = TextOverflowModes.Overflow;
             _textDetail.richText = true;
             EnsureScrollContentExpands();
+        }
+
+        private static string ReplacePlayerNames(string text, string name1, string name2)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return text.Replace("Joueur 1", name1).Replace("Joueur 2", name2);
         }
 
         /// <summary>Applique une couleur selon le type d'événement.</summary>

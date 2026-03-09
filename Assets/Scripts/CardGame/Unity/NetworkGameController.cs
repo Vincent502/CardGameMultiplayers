@@ -25,12 +25,19 @@ namespace CardGame.Unity
         private GameNetworkBehaviour _gameNetwork;
         private bool _humanIsJoueur1;
         private int _localPlayerIndex;
+        private string _localPseudo;
+        private bool _hasFinalized;
+        private string _opponentPseudo;
         // Action reçue du réseau (Host ou Client) en attente d'application dans la boucle de jeu.
         private bool _hasPendingRemoteAction;
         private NetworkActionMessage _pendingRemoteAction;
 
         public GameState State => _session?.State;
         public int LocalPlayerIndex => _localPlayerIndex;
+        /// <summary>Pseudo du joueur local (pour GameUI).</summary>
+        public string LocalPseudo => _localPseudo ?? "Joueur";
+        /// <summary>Pseudo de l'adversaire (pour GameUI).</summary>
+        public string OpponentPseudo => _opponentPseudo ?? "Adversaire";
         public bool IsGameOver => State != null && State.WinnerIndex >= 0;
         public bool IsHumanTurn => State != null && State.CurrentPlayer.IsHuman;
         public bool WaitingForHumanAction => _waitingForHumanAction;
@@ -54,6 +61,12 @@ namespace CardGame.Unity
                 NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnect;
                 NetworkManager.Singleton.OnConnectionEvent -= OnConnectionEvent;
             }
+            if (!_hasFinalized && _session != null && _sessionStats != null && State != null && State.WinnerIndex >= 0 && _logger != null)
+            {
+                Debug.Log("[NetworkGameController] OnDestroy — finalisation du profil (filet de sécurité).");
+                _hasFinalized = true;
+                _logger.FinalizeReport(State);
+            }
         }
 
         private void Start()
@@ -66,12 +79,17 @@ namespace CardGame.Unity
                 return;
             }
             var pr = p.Value;
-            _humanIsJoueur1 = NetworkGameParamsHolder.IsHost;
-            _localPlayerIndex = NetworkGameParamsHolder.IsHost ? GameState.Player1Index : GameState.Player2Index;
+            bool isHost = NetworkGameParamsHolder.IsHost;
+            _humanIsJoueur1 = isHost;
+            _localPlayerIndex = isHost ? GameState.Player1Index : GameState.Player2Index;
             NetworkGameParamsHolder.Clear();
 
             _sessionStats = new SessionStats();
-            _logger = new GameLogger(_writeLogToFile, _sessionStats, ProfileManager.GameMode.Multi);
+            var name1 = pr.GetHostPseudo();
+            var name2 = pr.GetClientPseudo();
+            _localPseudo = isHost ? name1 : name2;
+            _opponentPseudo = isHost ? name2 : name1;
+            _logger = new GameLogger(_writeLogToFile, _sessionStats, ProfileManager.GameMode.Multi, name1, name2, _localPlayerIndex);
             _session = new GameSession(_logger);
             _session.StartGame(_humanIsJoueur1, pr.FirstPlayerIndex, pr.GetDeckJoueur1(), pr.GetDeckJoueur2(), pr.Seed);
 
@@ -218,7 +236,7 @@ namespace CardGame.Unity
                         }
                         break;
                     case StepResult.GameOver:
-                            _logger?.FinalizeReport(State);
+                            if (!_hasFinalized) { _hasFinalized = true; _logger?.FinalizeReport(State); }
                             yield break;
                 }
             }
@@ -328,7 +346,7 @@ namespace CardGame.Unity
             {
                 if (string.IsNullOrEmpty(_sessionStats.DeckJoueur1) && State.Players.Length > 0)
                     _sessionStats.SetDeckJoueur1(State.Players[0].DeckKind.ToString());
-                ProfileManager.OnGameAbandoned(_sessionStats);
+                ProfileManager.OnGameAbandoned(_sessionStats, _localPlayerIndex);
             }
         }
     }
