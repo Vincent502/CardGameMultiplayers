@@ -54,7 +54,7 @@ namespace CardGame.Unity
         private string _localPseudo;
         private string _opponentPseudo;
         private float _reactionTimeRemaining = -1f;
-        private const float ReactionWindowDuration = 2f;
+        private const float ReactionWindowDuration = 1f;
 
         private void Start()
         {
@@ -129,7 +129,7 @@ namespace CardGame.Unity
                 return;
             }
 
-            // Fenêtre d'opportunité : 2 sec pour jouer une carte Rapide. Le contour sur les cartes Rapides indique la fenêtre jouable.
+            // Fenêtre d'opportunité : 1 sec pour jouer une carte Rapide. Le contour sur les cartes Rapides indique la fenêtre jouable.
             if (_controller.NeedsReaction && state.ReactionTargetPlayerIndex == _controller.LocalPlayerIndex)
             {
                 if (_reactionTimeRemaining < 0)
@@ -168,14 +168,20 @@ namespace CardGame.Unity
         private void RefreshHand(GameState state)
         {
             if (_handContainer == null) return;
-            if (!_controller.IsHumanTurn && !_controller.NeedsDivinationChoice && !_controller.NeedsReaction) return;
             if (_controller.NeedsReaction && state.ReactionTargetPlayerIndex != _controller.LocalPlayerIndex) return;
 
-            var p = _controller.NeedsReaction ? state.Players[state.ReactionTargetPlayerIndex] : state.CurrentPlayer;
+            int localIdx = _controller.LocalPlayerIndex;
+            var p = state.Players[localIdx];
             bool needsDiv = _controller.NeedsDivinationChoice;
             bool needsReaction = _controller.NeedsReaction;
             string handKey = string.Join(",", p.Hand.Select(c => c.InstanceId.ToString()));
             int manaOrReserved = needsReaction ? p.ManaReservedForReaction : p.Mana;
+            bool handChanged = p.Hand.Count != _lastHandCount || handKey != _lastHandKey;
+
+            // Ne pas rafraîchir si on n'est pas en phase jouable ET que la main n'a pas changé.
+            // Quand on joue une carte rapide, la main change → on force le rafraîchissement pour que la carte jouée disparaisse
+            // et que les autres reprennent l'apparence "non jouable".
+            if (!_controller.IsHumanTurn && !needsDiv && !needsReaction && !handChanged) return;
             if (p.Hand.Count == _lastHandCount && manaOrReserved == _lastMana && needsDiv == _lastNeedsDivinationChoice && needsReaction == _lastNeedsReaction && handKey == _lastHandKey) return;
             _lastHandCount = p.Hand.Count;
             _lastMana = manaOrReserved;
@@ -472,37 +478,50 @@ namespace CardGame.Unity
             }
         }
 
-        /// <summary>Met à jour le contour des cartes Rapides existantes (sans reconstruire la main). Permet le fondu sur 2 sec sans bug IA.</summary>
+        /// <summary>Met à jour le contour des cartes Rapides existantes (sans reconstruire la main). Permet le fondu sur 1 sec sans bug IA.
+        /// En phase réaction : les cartes non-rapides restent non jouables (interactable=false, pas de contour).</summary>
         private void UpdateRapidCardOutlines(GameState state)
         {
             if (!_controller.NeedsReaction || state.ReactionTargetPlayerIndex != _controller.LocalPlayerIndex || _handContainer == null) return;
             float alpha = _reactionTimeRemaining > 0 ? Mathf.Clamp01(_reactionTimeRemaining / ReactionWindowDuration) : 0f;
             var p = state.Players[state.ReactionTargetPlayerIndex];
+            int manaOrReserved = p.ManaReservedForReaction;
             int index = 0;
             foreach (Transform t in _handContainer)
             {
                 if (index >= p.Hand.Count) break;
                 var card = p.Hand[index];
                 var data = DeckDefinitions.GetCard(card.Id);
+                var btn = t.GetComponent<Button>();
+                if (btn == null) { index++; continue; }
                 if (data.Type == CardType.Rapide)
                 {
-                    var btn = t.GetComponent<Button>();
-                    if (btn != null) ApplyRapidCardOutline(btn, true, alpha);
+                    int manaCost = data.Type == CardType.Equipe ? 0 : data.Cost;
+                    bool canPlayRapid = manaOrReserved >= manaCost && alpha > 0.01f;
+                    btn.interactable = canPlayRapid;
+                    ApplyRapidCardOutline(btn, true, alpha);
+                }
+                else
+                {
+                    btn.interactable = false;
+                    ApplyRapidCardOutline(btn, false, 0f);
                 }
                 index++;
             }
         }
 
-        /// <summary>Applique un contour spécial aux cartes Rapides pendant la fenêtre de réaction. Le contour disparaît en fondu sur 2 sec.</summary>
+        /// <summary>Applique un contour spécial aux cartes Rapides pendant la fenêtre de réaction. Le contour disparaît en fondu sur 1 sec.
+        /// Si isRapidInReaction=false, désactive le contour (pour les cartes non-rapides en phase réaction).</summary>
         private void ApplyRapidCardOutline(Button btn, bool isRapidInReaction, float outlineAlpha)
         {
-            if (btn == null || !isRapidInReaction) return;
+            if (btn == null) return;
             var img = btn.targetGraphic ?? btn.GetComponent<UnityEngine.UI.Image>();
             if (img == null) img = btn.GetComponentInChildren<UnityEngine.UI.Image>();
             if (img == null) return;
             var outline = img.GetComponent<Outline>();
             if (outline == null) outline = img.gameObject.AddComponent<Outline>();
-            outline.enabled = outlineAlpha > 0.01f;
+            bool showOutline = isRapidInReaction && outlineAlpha > 0.01f;
+            outline.enabled = showOutline;
             outline.effectColor = new Color(1f, 0.9f, 0.2f, outlineAlpha);
             outline.effectDistance = new Vector2(4, 4);
         }
