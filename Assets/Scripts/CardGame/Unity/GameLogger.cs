@@ -56,6 +56,7 @@ namespace CardGame.Unity
             _localPlayerIndex = localPlayerIndex;
             _namePlayer1 = !string.IsNullOrWhiteSpace(namePlayer1) ? namePlayer1 : "Joueur 1";
             _namePlayer2 = !string.IsNullOrWhiteSpace(namePlayer2) ? namePlayer2 : "Joueur 2";
+            GameHistoryBuffer.Clear();
         }
 
         public void Log(string eventType, object data)
@@ -73,6 +74,23 @@ namespace CardGame.Unity
             }
             if (_sessionStats != null)
                 ProfileManager.OnGameEvent(_sessionStats, eventType, payload);
+            string displayText = FormatDisplayText(eventType, payload);
+            GameHistoryBuffer.Add(eventType, turn, displayText);
+        }
+
+        private string FormatDisplayText(string eventType, string payload)
+        {
+            try
+            {
+                var entry = new GameReportManager.ReportEntry { Event = eventType, Data = payload };
+                var record = entry.ToActivityRecord();
+                string display = record.Detail?.ToDisplayText(eventType);
+                return !string.IsNullOrEmpty(display) ? display : $"[{eventType}]";
+            }
+            catch
+            {
+                return $"[{eventType}]";
+            }
         }
 
         private string ReplacePlayerNamesInPayload(string payload)
