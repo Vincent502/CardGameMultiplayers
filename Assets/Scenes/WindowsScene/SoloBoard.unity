@@ -946,8 +946,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardGame.Unity.GameController
   _humanIsJoueur1: 1
   _writeLogToFile: 1
-  _deckJoueur1: 0
-  _deckJoueur2: 1
+  _deckJoueur1: 1
+  _deckJoueur2: 0
 --- !u!4 &801899258
 Transform:
   m_ObjectHideFlags: 0
@@ -1510,9 +1510,9 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_Spacing: 0
-  m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
+  m_Spacing: 10
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
