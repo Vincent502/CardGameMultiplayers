@@ -33,6 +33,9 @@ namespace CardGame.Core
         public bool EndTurnAfterReaction { get; set; }
         /// <summary>Après Parade : le défenseur peut jouer Contre-attaque. Index de l'attaquant pour les 5 dégâts.</summary>
         public int? PendingContreAttaqueAttackerIndex { get; set; }
+        /// <summary>Dernière carte jouée (pour afficher la carte adverse jouée).</summary>
+        public CardId? LastPlayedCardId { get; set; }
+        public int LastPlayedCardPlayerIndex { get; set; } = -1;
         /// <summary>Numéro affiché du gagnant (1 ou 2), -1 si partie non terminée.</summary>
         public int WinnerDisplayNumber => WinnerIndex < 0 ? -1 : WinnerIndex + 1;
 

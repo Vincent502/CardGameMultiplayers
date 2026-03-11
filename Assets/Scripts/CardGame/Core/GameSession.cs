@@ -439,6 +439,8 @@ namespace CardGame.Core
                 State.Phase = TurnPhase.ResolveEndOfTurn;
             }
 
+            State.LastPlayedCardId = card.Id;
+            State.LastPlayedCardPlayerIndex = a.PlayerIndex;
             _log.Log("PlayCard", new {
                 joueur = $"Joueur {a.PlayerIndex + 1}",
                 carte = data.Name,
@@ -473,6 +475,8 @@ namespace CardGame.Core
                 p.Hand.RemoveAt(a.HandIndex);
                 p.Graveyard.Add(card);
                 _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, pendingContreAttaque.Value);
+                State.LastPlayedCardId = card.Id;
+                State.LastPlayedCardPlayerIndex = a.PlayerIndex;
                 State.PendingContreAttaqueAttackerIndex = null;
                 ExitReactionPhase();
                 _log.Log("PlayRapid", new { joueur = $"Joueur {a.PlayerIndex + 1}", carte = data.Name, cardId = card.Id.ToString(), type = "Contre-attaque après Parade", turnNumber = State.GetCurrentTurnNumber() });
@@ -507,6 +511,8 @@ namespace CardGame.Core
             {
                 ExitReactionPhase();
             }
+            State.LastPlayedCardId = card.Id;
+            State.LastPlayedCardPlayerIndex = a.PlayerIndex;
             _log.Log("PlayRapid", new { joueur = $"Joueur {a.PlayerIndex + 1}", carte = data.Name, cardId = card.Id.ToString(), type = card.Id == CardId.Parade ? "Parade (Contre-attaque possible)" : "Parade/Contre-attaque", turnNumber = State.GetCurrentTurnNumber() });
             CheckVictory();
             return true;

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using CardGame.Core;
 using CardGame.Data;
@@ -26,6 +27,9 @@ namespace CardGame.Unity
         [SerializeField] private Transform _handContainer;
         [SerializeField] private Transform _opponentHandContainer;
         [SerializeField] private GameObject _cardButtonPrefab;
+        [Header("Cartes adversaire (CardBackground = dos, Card = face visible)")]
+        [SerializeField] private GameObject _cardBackgroundPrefab;
+        [SerializeField] private GameObject _cardPrefab;
         [SerializeField] private GameObject _cardBackPrefab;
         [SerializeField] private Button _buttonStrike;
         [SerializeField] private Button _buttonEndTurn;
@@ -44,8 +48,14 @@ namespace CardGame.Unity
         [SerializeField] [FormerlySerializedAs("_effectsPlayer0Container")] private Transform _effectsJoueur1Container;
         [SerializeField] [FormerlySerializedAs("_effectsPlayer1Container")] private Transform _effectsJoueur2Container;
         [SerializeField] private GameObject _effectLabelPrefab;
+        [Header("Historique partie en cours")]
+        [SerializeField] private GameObject _panelHistoriqueEnCours;
+        [SerializeField] private TMP_Text _textHistoriqueEnCours;
+        [SerializeField] private RectTransform _scrollHistoriqueContent;
+        [SerializeField] private Button _buttonToggleHistorique;
 
         private int _lastHandCount = -1;
+        private int _lastHistoryEntryCount = -1;
         private int _lastOpponentHandCount = -1;
         private int _lastMana = -1;
         private bool _lastNeedsDivinationChoice;
@@ -66,6 +76,10 @@ namespace CardGame.Unity
         private int _lastSelectedHandIndex = -1;
         private float _lastSelectedHandTime = -1f;
         private const float MinDelayBeforePlay = 0.25f;
+        /// <summary>Durée d'affichage de chaque carte jouée par l'adversaire. Indépendante par carte.</summary>
+        private const float OpponentPlayedDisplayDuration = 3f;
+        private readonly List<(GameObject instance, float displayUntil)> _opponentPlayedCards = new List<(GameObject, float)>();
+        private CardId? _lastDisplayedOpponentCardId;
 
 #if UNITY_ANDROID || UNITY_IOS
         private static bool IsTouchDevice => true;
@@ -82,7 +96,9 @@ namespace CardGame.Unity
             if (_buttonStrike != null) _buttonStrike.onClick.AddListener(() => _controller?.HumanStrike());
             if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller?.HumanEndTurn());
             if (_buttonBackToMenu != null) _buttonBackToMenu.onClick.AddListener(OnBackToMenu);
+            if (_buttonToggleHistorique != null) _buttonToggleHistorique.onClick.AddListener(ToggleHistoriqueEnCours);
             if (_panelGameOver != null) _panelGameOver.SetActive(false);
+            if (_panelHistoriqueEnCours != null) _panelHistoriqueEnCours.SetActive(false);
             var tooltipPanel = CreateEquipmentTooltipPanel();
             if (tooltipPanel != null)
                 EquipmentDescriptionTooltip.SetTooltipPanel(tooltipPanel);
@@ -180,9 +196,11 @@ namespace CardGame.Unity
 
             RefreshHand(state);
             RefreshOpponentHand(state);
+            UpdateOpponentPlayedCard(state);
             UpdateRapidCardOutlines(state);
             RefreshEquipments(state);
             RefreshEffects(state);
+            RefreshHistoriqueEnCours();
             if (_buttonStrike != null) _buttonStrike.interactable = _controller.CanStrike && !_controller.NeedsDivinationChoice && !_controller.NeedsReaction;
             if (_buttonEndTurn != null) _buttonEndTurn.interactable = _controller.IsHumanTurn && !_controller.NeedsDivinationChoice && !_controller.NeedsReaction;
         }
@@ -377,7 +395,10 @@ namespace CardGame.Unity
             _lastOpponentHandCount = count;
 
             foreach (Transform t in _opponentHandContainer)
+            {
+                if (_opponentPlayedCards.Any(p => p.instance == t.gameObject)) continue;
                 Destroy(t.gameObject);
+            }
 
             _opponentHandContainer.gameObject.SetActive(count > 0);
             if (count == 0) return;
@@ -385,7 +406,7 @@ namespace CardGame.Unity
             RectTransform containerRect = _opponentHandContainer as RectTransform ?? _opponentHandContainer.GetComponent<RectTransform>();
             Transform parent = containerRect != null ? (Transform)containerRect : _opponentHandContainer;
 
-            GameObject prefab = _cardBackPrefab != null ? _cardBackPrefab : _cardButtonPrefab;
+            GameObject prefab = _cardBackgroundPrefab != null ? _cardBackgroundPrefab : (_cardBackPrefab != null ? _cardBackPrefab : _cardButtonPrefab);
             for (int i = 0; i < count; i++)
             {
                 GameObject go = prefab != null
@@ -399,6 +420,114 @@ namespace CardGame.Unity
 
             if (containerRect != null)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
+        }
+
+        /// <summary>Chaque carte jouée par l'adversaire reste visible 3 s, indépendamment des autres.</summary>
+        private void UpdateOpponentPlayedCard(GameState state)
+        {
+            if (_opponentHandContainer == null || _cardPrefab == null) return;
+            int oppIdx = 1 - _controller.LocalPlayerIndex;
+            bool opponentJustPlayed = state.LastPlayedCardId.HasValue && state.LastPlayedCardPlayerIndex == oppIdx;
+            bool cardChanged = opponentJustPlayed && state.LastPlayedCardId != _lastDisplayedOpponentCardId;
+            if (cardChanged)
+            {
+                _lastDisplayedOpponentCardId = state.LastPlayedCardId;
+                Transform parent = _opponentHandContainer is RectTransform rt ? (Transform)rt : _opponentHandContainer;
+                var go = Instantiate(_cardPrefab, parent, false);
+                var btn = go.GetComponent<Button>();
+                if (btn != null) btn.interactable = false;
+                var data = DeckDefinitions.GetCard(state.LastPlayedCardId.Value);
+                SetCardPrefabTexts(go.transform, data.Name, data.Description, data.Cost, data.Type);
+                _opponentPlayedCards.Add((go, Time.time + OpponentPlayedDisplayDuration));
+            }
+            float now = Time.time;
+            for (int i = _opponentPlayedCards.Count - 1; i >= 0; i--)
+            {
+                var (instance, displayUntil) = _opponentPlayedCards[i];
+                if (now >= displayUntil || instance == null)
+                {
+                    if (instance != null) Destroy(instance);
+                    _opponentPlayedCards.RemoveAt(i);
+                }
+            }
+            if (_opponentPlayedCards.Count == 0)
+                _lastOpponentHandCount = -1;
+            var containerRect = _opponentHandContainer as RectTransform ?? _opponentHandContainer.GetComponent<RectTransform>();
+            if (containerRect != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
+        }
+
+        private void ToggleHistoriqueEnCours()
+        {
+            if (_panelHistoriqueEnCours != null)
+                _panelHistoriqueEnCours.SetActive(!_panelHistoriqueEnCours.activeSelf);
+        }
+
+        private void RefreshHistoriqueEnCours()
+        {
+            if (_textHistoriqueEnCours == null) return;
+            var entries = GameHistoryBuffer.Entries;
+            if (entries.Count == _lastHistoryEntryCount) return;
+            _lastHistoryEntryCount = entries.Count;
+            var sb = new System.Text.StringBuilder();
+            foreach (var e in entries)
+            {
+                string color = e.EventType switch
+                {
+                    "DamageApplied" or "DamageBlocked" => "#E74C3C",
+                    "ShieldApplied" or "ShieldBuffExpired" or "ShieldBuffReapplied" or "ArmurePsychique" => "#2ECC71",
+                    "PlayCard" or "PlayRapid" or "RapidPlayed" or "StrikeReactionPhase" or "ReactionPhase" or "NoReaction" => "#ECF0F1",
+                    "GameStart" or "StartTurn" or "EndTurn" or "EndTurnRequested" => "#5DADE2",
+                    "Victory" => "#F1C40F",
+                    _ => "#BDC3C7"
+                };
+                sb.AppendLine($"<color=#7F8C8D>[{e.TimeShort}]</color> <color={color}>{e.DisplayText}</color>");
+            }
+            _textHistoriqueEnCours.text = sb.ToString();
+            _textHistoriqueEnCours.richText = true;
+            _textHistoriqueEnCours.overflowMode = TextOverflowModes.Overflow;
+            _textHistoriqueEnCours.textWrappingMode = TMPro.TextWrappingModes.Normal;
+            EnsureHistoriqueContentExpands();
+        }
+
+        private void EnsureHistoriqueContentExpands()
+        {
+            var content = _scrollHistoriqueContent != null ? _scrollHistoriqueContent : _textHistoriqueEnCours?.transform.parent as RectTransform;
+            if (content == null) return;
+
+            var viewport = content.parent as RectTransform;
+            float viewportWidth = viewport != null ? viewport.rect.width : 400f;
+
+            content.anchorMin = new Vector2(0, 1);
+            content.anchorMax = new Vector2(1, 1);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.sizeDelta = new Vector2(0, content.sizeDelta.y);
+            content.anchoredPosition = Vector2.zero;
+
+            var contentLE = content.GetComponent<LayoutElement>();
+            if (contentLE == null) contentLE = content.gameObject.AddComponent<LayoutElement>();
+            contentLE.preferredWidth = viewportWidth;
+
+            var fitter = content.GetComponent<ContentSizeFitter>();
+            if (fitter == null) fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            if (_textHistoriqueEnCours != null)
+            {
+                var textRT = _textHistoriqueEnCours.rectTransform;
+                textRT.anchorMin = new Vector2(0, 1);
+                textRT.anchorMax = new Vector2(1, 1);
+                textRT.pivot = new Vector2(0.5f, 1f);
+                var textLE = _textHistoriqueEnCours.GetComponent<LayoutElement>();
+                if (textLE == null) textLE = _textHistoriqueEnCours.gameObject.AddComponent<LayoutElement>();
+                textLE.preferredWidth = viewportWidth;
+                textLE.flexibleWidth = 1;
+                textLE.preferredHeight = -1;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
         }
 
         /// <summary>Cache les infos de carte et applique l'apparence dos de carte (quand on réutilise le prefab carte).</summary>
