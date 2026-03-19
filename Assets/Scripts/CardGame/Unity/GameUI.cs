@@ -52,10 +52,12 @@ namespace CardGame.Unity
         [SerializeField] private GameObject _panelHistoriqueEnCours;
         [SerializeField] private TMP_Text _textHistoriqueEnCours;
         [SerializeField] private RectTransform _scrollHistoriqueContent;
+        [SerializeField] private GameObject _historiqueLinePrefab;
         [SerializeField] private Button _buttonToggleHistorique;
 
         private int _lastHandCount = -1;
         private int _lastHistoryEntryCount = -1;
+        private readonly List<GameObject> _historiqueLineInstances = new List<GameObject>();
         private int _lastOpponentHandCount = -1;
         private int _lastMana = -1;
         private bool _lastNeedsDivinationChoice;
@@ -465,69 +467,94 @@ namespace CardGame.Unity
 
         private void RefreshHistoriqueEnCours()
         {
-            if (_textHistoriqueEnCours == null) return;
             var entries = GameHistoryBuffer.Entries;
             if (entries.Count == _lastHistoryEntryCount) return;
-            _lastHistoryEntryCount = entries.Count;
-            var sb = new System.Text.StringBuilder();
-            foreach (var e in entries)
+
+            // Nouveau mode : une entrée = une prefab ligne dans le Content.
+            if (_scrollHistoriqueContent != null)
             {
-                string color = e.EventType switch
-                {
-                    "DamageApplied" or "DamageBlocked" => "#E74C3C",
-                    "ShieldApplied" or "ShieldBuffExpired" or "ShieldBuffReapplied" or "ArmurePsychique" => "#2ECC71",
-                    "PlayCard" or "PlayRapid" or "RapidPlayed" or "StrikeReactionPhase" or "ReactionPhase" or "NoReaction" => "#ECF0F1",
-                    "GameStart" or "StartTurn" or "EndTurn" or "EndTurnRequested" => "#5DADE2",
-                    "Victory" => "#F1C40F",
-                    _ => "#BDC3C7"
-                };
-                sb.AppendLine($"<color=#7F8C8D>[{e.TimeShort}]</color> <color={color}>{e.DisplayText}</color>");
+                EnsureHistoriqueContentLayout(_scrollHistoriqueContent);
+
+                if (entries.Count < _lastHistoryEntryCount)
+                    ClearHistoriqueLines();
+
+                int startIndex = _lastHistoryEntryCount < 0 || entries.Count < _lastHistoryEntryCount ? 0 : _lastHistoryEntryCount;
+                for (int i = startIndex; i < entries.Count; i++)
+                    AddHistoriqueLine(entries[i]);
+
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(_scrollHistoriqueContent);
             }
-            _textHistoriqueEnCours.text = sb.ToString();
-            _textHistoriqueEnCours.richText = true;
-            _textHistoriqueEnCours.overflowMode = TextOverflowModes.Overflow;
-            _textHistoriqueEnCours.textWrappingMode = TMPro.TextWrappingModes.Normal;
-            EnsureHistoriqueContentExpands();
+            else if (_textHistoriqueEnCours != null)
+            {
+                // Fallback : ancien mode texte unique si aucun Content n'est branché.
+                var sb = new System.Text.StringBuilder();
+                foreach (var e in entries)
+                    sb.AppendLine(FormatHistoriqueLine(e));
+                _textHistoriqueEnCours.text = sb.ToString();
+                _textHistoriqueEnCours.richText = true;
+                _textHistoriqueEnCours.overflowMode = TextOverflowModes.Overflow;
+                _textHistoriqueEnCours.textWrappingMode = TMPro.TextWrappingModes.Normal;
+            }
+
+            _lastHistoryEntryCount = entries.Count;
         }
 
-        private void EnsureHistoriqueContentExpands()
+        private void EnsureHistoriqueContentLayout(RectTransform content)
         {
-            var content = _scrollHistoriqueContent != null ? _scrollHistoriqueContent : _textHistoriqueEnCours?.transform.parent as RectTransform;
-            if (content == null) return;
-
-            var viewport = content.parent as RectTransform;
-            float viewportWidth = viewport != null ? viewport.rect.width : 400f;
-
-            content.anchorMin = new Vector2(0, 1);
-            content.anchorMax = new Vector2(1, 1);
-            content.pivot = new Vector2(0.5f, 1f);
-            content.sizeDelta = new Vector2(0, content.sizeDelta.y);
-            content.anchoredPosition = Vector2.zero;
-
-            var contentLE = content.GetComponent<LayoutElement>();
-            if (contentLE == null) contentLE = content.gameObject.AddComponent<LayoutElement>();
-            contentLE.preferredWidth = viewportWidth;
-
+            var vlg = content.GetComponent<VerticalLayoutGroup>();
+            if (vlg == null) vlg = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
             var fitter = content.GetComponent<ContentSizeFitter>();
             if (fitter == null) fitter = content.gameObject.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        }
 
-            if (_textHistoriqueEnCours != null)
+        private void ClearHistoriqueLines()
+        {
+            foreach (var go in _historiqueLineInstances)
             {
-                var textRT = _textHistoriqueEnCours.rectTransform;
-                textRT.anchorMin = new Vector2(0, 1);
-                textRT.anchorMax = new Vector2(1, 1);
-                textRT.pivot = new Vector2(0.5f, 1f);
-                var textLE = _textHistoriqueEnCours.GetComponent<LayoutElement>();
-                if (textLE == null) textLE = _textHistoriqueEnCours.gameObject.AddComponent<LayoutElement>();
-                textLE.preferredWidth = viewportWidth;
-                textLE.flexibleWidth = 1;
-                textLE.preferredHeight = -1;
+                if (go != null) Destroy(go);
             }
+            _historiqueLineInstances.Clear();
+        }
 
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+        private void AddHistoriqueLine(GameHistoryBuffer.Entry entry)
+        {
+            if (_scrollHistoriqueContent == null) return;
+
+            GameObject lineGO = _historiqueLinePrefab != null
+                ? Instantiate(_historiqueLinePrefab, _scrollHistoriqueContent, false)
+                : new GameObject("HistoriqueLine", typeof(RectTransform), typeof(TextMeshProUGUI));
+
+            var textComp = lineGO.GetComponentInChildren<TMP_Text>() ?? lineGO.GetComponent<TMP_Text>();
+            if (textComp == null)
+                textComp = lineGO.AddComponent<TextMeshProUGUI>();
+
+            textComp.text = FormatHistoriqueLine(entry);
+            textComp.richText = true;
+            textComp.overflowMode = TextOverflowModes.Overflow;
+            textComp.textWrappingMode = TMPro.TextWrappingModes.Normal;
+
+            _historiqueLineInstances.Add(lineGO);
+        }
+
+        private static string FormatHistoriqueLine(GameHistoryBuffer.Entry e)
+        {
+            string color = e.EventType switch
+            {
+                "DamageApplied" or "DamageBlocked" => "#E74C3C",
+                "ShieldApplied" or "ShieldBuffExpired" or "ShieldBuffReapplied" or "ArmurePsychique" => "#2ECC71",
+                "PlayCard" or "PlayRapid" or "RapidPlayed" or "StrikeReactionPhase" or "ReactionPhase" or "NoReaction" => "#ECF0F1",
+                "GameStart" or "StartTurn" or "EndTurn" or "EndTurnRequested" => "#5DADE2",
+                "Victory" => "#F1C40F",
+                _ => "#BDC3C7"
+            };
+            return $"<color=#7F8C8D>[{e.TimeShort}]</color> <color={color}>{e.DisplayText}</color>";
         }
 
         /// <summary>Cache les infos de carte et applique l'apparence dos de carte (quand on réutilise le prefab carte).</summary>
