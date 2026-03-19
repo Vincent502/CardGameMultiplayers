@@ -51,7 +51,9 @@ namespace CardGame.Bot
         /// <summary>Choisit une action de réaction (Parade/Contre-attaque ou passer).</summary>
         public GameAction ChooseReactionAction(GameState state)
         {
-            if (state.Phase != TurnPhase.Reaction || state.PendingReaction == null) return null;
+            if (state.Phase != TurnPhase.Reaction) return null;
+            bool afterParade = state.PendingContreAttaqueAttackerIndex.HasValue;
+            if (!afterParade && state.PendingReaction == null) return null;
             int defenderIdx = state.ReactionTargetPlayerIndex;
             var p = state.Players[defenderIdx];
             if (p.IsHuman) return null;
@@ -59,8 +61,10 @@ namespace CardGame.Bot
             var playableRapids = Enumerable.Range(0, p.Hand.Count)
                 .Where(i =>
                 {
-                    var data = DeckDefinitions.GetCard(p.Hand[i].Id);
-                    return data.Type == CardType.Rapide && p.ManaReservedForReaction >= data.Cost;
+                    var card = p.Hand[i];
+                    var data = DeckDefinitions.GetCard(card.Id);
+                    if (data.Type != CardType.Rapide || p.ManaReservedForReaction < data.Cost) return false;
+                    return afterParade ? (card.Id == CardId.ContreAttaque) : (card.Id != CardId.ContreAttaque);
                 })
                 .ToList();
             if (playableRapids.Count > 0 && _rng.NextDouble() < 0.5)

@@ -439,6 +439,8 @@ namespace CardGame.Core
                 State.Phase = TurnPhase.ResolveEndOfTurn;
             }
 
+            State.LastPlayedCardId = card.Id;
+            State.LastPlayedCardPlayerIndex = a.PlayerIndex;
             _log.Log("PlayCard", new {
                 joueur = $"Joueur {a.PlayerIndex + 1}",
                 carte = data.Name,
@@ -456,7 +458,7 @@ namespace CardGame.Core
 
         private bool TryPlayRapid(PlayRapidAction a)
         {
-            if (State.Phase != TurnPhase.Reaction || State.PendingReaction == null) return false;
+            if (State.Phase != TurnPhase.Reaction) return false;
             var p = State.Players[State.ReactionTargetPlayerIndex];
             if (a.HandIndex < 0 || a.HandIndex >= p.Hand.Count) return false;
             var card = p.Hand[a.HandIndex];
@@ -465,16 +467,34 @@ namespace CardGame.Core
             int cost = data.Cost;
             if (p.ManaReservedForReaction < cost) return false;
 
+            int? pendingContreAttaque = State.PendingContreAttaqueAttackerIndex;
+            if (pendingContreAttaque.HasValue)
+            {
+                if (card.Id != CardId.ContreAttaque) return false;
+                p.ManaReservedForReaction -= cost;
+                p.Hand.RemoveAt(a.HandIndex);
+                p.Graveyard.Add(card);
+                _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, pendingContreAttaque.Value);
+                State.LastPlayedCardId = card.Id;
+                State.LastPlayedCardPlayerIndex = a.PlayerIndex;
+                State.PendingContreAttaqueAttackerIndex = null;
+                ExitReactionPhase();
+                _log.Log("PlayRapid", new { joueur = $"Joueur {a.PlayerIndex + 1}", carte = data.Name, cardId = card.Id.ToString(), type = "Contre-attaque après Parade", turnNumber = State.GetCurrentTurnNumber() });
+                CheckVictory();
+                return true;
+            }
+
+            if (State.PendingReaction == null) return false;
+            if (card.Id == CardId.ContreAttaque) return false;
+
+            var pending = State.PendingReaction;
             p.ManaReservedForReaction -= cost;
             p.Hand.RemoveAt(a.HandIndex);
             p.Graveyard.Add(card);
 
-            var pending = State.PendingReaction;
             _resolver.ResolveRapidCardEffect(State, card.Id, State.ReactionTargetPlayerIndex, pending.AttackerIndex);
 
-            // Boule de feu : Parade/Esquive ne réduisent que 50 % des dégâts
             if (card.Id == CardId.Parade &&
-                pending != null &&
                 pending.SourceName == DeckDefinitions.GetCard(CardId.BouleDeFeu).Name)
             {
                 int total = _resolver.ComputeDamage(pending.BaseDamage, pending.CasterForce);
@@ -483,27 +503,42 @@ namespace CardGame.Core
             }
 
             State.PendingReaction = null;
-            State.Phase = State.EndTurnAfterReaction ? TurnPhase.ResolveEndOfTurn : TurnPhase.Play;
-            State.EndTurnAfterReaction = false;
-            _log.Log("PlayRapid", new {
-                joueur = $"Joueur {a.PlayerIndex + 1}",
-                carte = data.Name,
-                cardId = card.Id.ToString(),
-                type = "Parade ou Contre-attaque",
-                turnNumber = State.GetCurrentTurnNumber()
-            });
+            if (card.Id == CardId.Parade)
+            {
+                State.PendingContreAttaqueAttackerIndex = pending.AttackerIndex;
+            }
+            else
+            {
+                ExitReactionPhase();
+            }
+            State.LastPlayedCardId = card.Id;
+            State.LastPlayedCardPlayerIndex = a.PlayerIndex;
+            _log.Log("PlayRapid", new { joueur = $"Joueur {a.PlayerIndex + 1}", carte = data.Name, cardId = card.Id.ToString(), type = card.Id == CardId.Parade ? "Parade (Contre-attaque possible)" : "Parade/Contre-attaque", turnNumber = State.GetCurrentTurnNumber() });
             CheckVictory();
             return true;
         }
 
+        private void ExitReactionPhase()
+        {
+            State.Phase = State.EndTurnAfterReaction ? TurnPhase.ResolveEndOfTurn : TurnPhase.Play;
+            State.EndTurnAfterReaction = false;
+        }
+
         private bool TryNoReaction()
         {
-            if (State.Phase != TurnPhase.Reaction || State.PendingReaction == null) return false;
+            if (State.Phase != TurnPhase.Reaction) return false;
+            if (State.PendingContreAttaqueAttackerIndex.HasValue)
+            {
+                State.PendingContreAttaqueAttackerIndex = null;
+                ExitReactionPhase();
+                _log.Log("NoReaction", new { defenseur = $"Joueur {State.ReactionTargetPlayerIndex + 1}", choix = "Passer Contre-attaque", turnNumber = State.GetCurrentTurnNumber() });
+                return true;
+            }
+            if (State.PendingReaction == null) return false;
             var pending = State.PendingReaction;
             _resolver.ApplyPendingReaction(State, pending);
             State.PendingReaction = null;
-            State.Phase = State.EndTurnAfterReaction ? TurnPhase.ResolveEndOfTurn : TurnPhase.Play;
-            State.EndTurnAfterReaction = false;
+            ExitReactionPhase();
             _log.Log("NoReaction", new {
                 defenseur = $"Joueur {State.ReactionTargetPlayerIndex + 1}",
                 attaquant = $"Joueur {pending.AttackerIndex + 1}",

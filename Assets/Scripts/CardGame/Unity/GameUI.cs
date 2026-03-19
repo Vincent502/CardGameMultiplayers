@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using CardGame.Core;
 using CardGame.Data;
@@ -26,6 +27,9 @@ namespace CardGame.Unity
         [SerializeField] private Transform _handContainer;
         [SerializeField] private Transform _opponentHandContainer;
         [SerializeField] private GameObject _cardButtonPrefab;
+        [Header("Cartes adversaire (CardBackground = dos, Card = face visible)")]
+        [SerializeField] private GameObject _cardBackgroundPrefab;
+        [SerializeField] private GameObject _cardPrefab;
         [SerializeField] private GameObject _cardBackPrefab;
         [SerializeField] private Button _buttonStrike;
         [SerializeField] private Button _buttonEndTurn;
@@ -44,8 +48,16 @@ namespace CardGame.Unity
         [SerializeField] [FormerlySerializedAs("_effectsPlayer0Container")] private Transform _effectsJoueur1Container;
         [SerializeField] [FormerlySerializedAs("_effectsPlayer1Container")] private Transform _effectsJoueur2Container;
         [SerializeField] private GameObject _effectLabelPrefab;
+        [Header("Historique partie en cours")]
+        [SerializeField] private GameObject _panelHistoriqueEnCours;
+        [SerializeField] private TMP_Text _textHistoriqueEnCours;
+        [SerializeField] private RectTransform _scrollHistoriqueContent;
+        [SerializeField] private GameObject _historiqueLinePrefab;
+        [SerializeField] private Button _buttonToggleHistorique;
 
         private int _lastHandCount = -1;
+        private int _lastHistoryEntryCount = -1;
+        private readonly List<GameObject> _historiqueLineInstances = new List<GameObject>();
         private int _lastOpponentHandCount = -1;
         private int _lastMana = -1;
         private bool _lastNeedsDivinationChoice;
@@ -59,11 +71,17 @@ namespace CardGame.Unity
         private string _opponentPseudo;
         private float _reactionTimeRemaining = -1f;
         private const float ReactionWindowDuration = 1f;
+        private const float ReactionWindowAfterParadeDuration = 2f;
+        private bool _lastWasAfterParade;
         private const float HandCardWidth = 200f;
         private const float HandCardHeight = 300f;
         private int _lastSelectedHandIndex = -1;
         private float _lastSelectedHandTime = -1f;
         private const float MinDelayBeforePlay = 0.25f;
+        /// <summary>Durée d'affichage de chaque carte jouée par l'adversaire. Indépendante par carte.</summary>
+        private const float OpponentPlayedDisplayDuration = 3f;
+        private readonly List<(GameObject instance, float displayUntil)> _opponentPlayedCards = new List<(GameObject, float)>();
+        private CardId? _lastDisplayedOpponentCardId;
 
 #if UNITY_ANDROID || UNITY_IOS
         private static bool IsTouchDevice => true;
@@ -80,7 +98,9 @@ namespace CardGame.Unity
             if (_buttonStrike != null) _buttonStrike.onClick.AddListener(() => _controller?.HumanStrike());
             if (_buttonEndTurn != null) _buttonEndTurn.onClick.AddListener(() => _controller?.HumanEndTurn());
             if (_buttonBackToMenu != null) _buttonBackToMenu.onClick.AddListener(OnBackToMenu);
+            if (_buttonToggleHistorique != null) _buttonToggleHistorique.onClick.AddListener(ToggleHistoriqueEnCours);
             if (_panelGameOver != null) _panelGameOver.SetActive(false);
+            if (_panelHistoriqueEnCours != null) _panelHistoriqueEnCours.SetActive(false);
             var tooltipPanel = CreateEquipmentTooltipPanel();
             if (tooltipPanel != null)
                 EquipmentDescriptionTooltip.SetTooltipPanel(tooltipPanel);
@@ -139,14 +159,23 @@ namespace CardGame.Unity
                 return;
             }
 
-            // Fenêtre d'opportunité : 1 sec pour jouer une carte Rapide. Le contour sur les cartes Rapides indique la fenêtre jouable.
+            // Fenêtre d'opportunité : 1 sec pour Parade/Esquive, 2 sec pour Contre-attaque après Parade.
             if (_controller.NeedsReaction && state.ReactionTargetPlayerIndex == _controller.LocalPlayerIndex)
             {
-                if (_reactionTimeRemaining < 0)
-                    _reactionTimeRemaining = ReactionWindowDuration;
+                bool afterParade = state.PendingContreAttaqueAttackerIndex.HasValue;
+                if (afterParade && !_lastWasAfterParade)
+                    _reactionTimeRemaining = ReactionWindowAfterParadeDuration;
+                else if (_reactionTimeRemaining < 0)
+                    _reactionTimeRemaining = afterParade ? ReactionWindowAfterParadeDuration : ReactionWindowDuration;
+                _lastWasAfterParade = afterParade;
                 _reactionTimeRemaining -= Time.deltaTime;
                 if (_textStatus != null)
-                    _textStatus.text = _reactionTimeRemaining > 0 ? "Réagissez ! Jouez une carte Rapide (contour visible)." : "Temps écoulé...";
+                {
+                    string msg = _reactionTimeRemaining > 0
+                        ? (afterParade ? "Contre-attaque possible ! Jouez ou passez." : "Réagissez ! Jouez une carte Rapide (contour visible).")
+                        : "Temps écoulé...";
+                    _textStatus.text = msg;
+                }
                 if (_reactionTimeRemaining <= 0)
                 {
                     _controller.HumanNoReaction();
@@ -156,6 +185,7 @@ namespace CardGame.Unity
             else
             {
                 _reactionTimeRemaining = -1f;
+                _lastWasAfterParade = false;
                 if (_textStatus != null)
                     _textStatus.text = _controller.NeedsReaction
                         ? "L'adversaire réfléchit..."
@@ -168,9 +198,11 @@ namespace CardGame.Unity
 
             RefreshHand(state);
             RefreshOpponentHand(state);
+            UpdateOpponentPlayedCard(state);
             UpdateRapidCardOutlines(state);
             RefreshEquipments(state);
             RefreshEffects(state);
+            RefreshHistoriqueEnCours();
             if (_buttonStrike != null) _buttonStrike.interactable = _controller.CanStrike && !_controller.NeedsDivinationChoice && !_controller.NeedsReaction;
             if (_buttonEndTurn != null) _buttonEndTurn.interactable = _controller.IsHumanTurn && !_controller.NeedsDivinationChoice && !_controller.NeedsReaction;
         }
@@ -210,18 +242,26 @@ namespace CardGame.Unity
             RectTransform handRect = _handContainer as RectTransform ?? _handContainer.GetComponent<RectTransform>();
             Transform parent = handRect != null ? (Transform)handRect : _handContainer;
 
-            var hlg = handRect != null ? handRect.GetComponent<HorizontalLayoutGroup>() : null;
-            if (hlg != null) hlg.enabled = false;
-            if (handRect != null && handRect.GetComponent<Mask>() == null)
-            {
-                handRect.gameObject.AddComponent<Image>().color = new Color(1, 1, 1, 0.01f);
-                handRect.gameObject.AddComponent<Mask>().showMaskGraphic = false;
-            }
-
             int n = p.Hand.Count;
-            float containerWidth = handRect != null && handRect.rect.width > 0 ? handRect.rect.width : handRect != null ? handRect.sizeDelta.x : 1000f;
-            float offset = n > 1 ? (containerWidth - HandCardWidth) / (n - 1) : 0f;
-            float startX = -containerWidth * 0.5f;
+            var hlg = handRect != null ? handRect.GetComponent<HorizontalLayoutGroup>() : null;
+            if (hlg != null)
+            {
+                hlg.enabled = true;
+                if (n > TwoTapHandThreshold)
+                {
+                    float containerWidth = handRect.rect.width > 0 ? handRect.rect.width : handRect.sizeDelta.x;
+                    if (containerWidth <= 0) containerWidth = 1000f;
+                    hlg.spacing = (containerWidth - HandCardWidth) / (n - 1) - HandCardWidth;
+                }
+                else
+                {
+                    hlg.spacing = HandSpacingWhenFewCards;
+                }
+                hlg.childControlWidth = false;
+                hlg.childControlHeight = false;
+                hlg.childForceExpandWidth = false;
+                hlg.childForceExpandHeight = false;
+            }
 
             for (int i = 0; i < n; i++)
             {
@@ -240,20 +280,11 @@ namespace CardGame.Unity
                         idxComp.Index = i;
                         if (_cardButtonPrefab == null)
                         {
-                            rt.anchorMin = new Vector2(0f, 0.5f);
-                            rt.anchorMax = new Vector2(0f, 0.5f);
-                            rt.pivot = new Vector2(0f, 0.5f);
-                            rt.anchoredPosition = new Vector2(startX + i * offset, 0f);
                             rt.localScale = Vector3.one;
                             rt.sizeDelta = new Vector2(120f, 40f);
                         }
                         else
                         {
-                            rt.anchorMin = new Vector2(0.5f, 0.5f);
-                            rt.anchorMax = new Vector2(0.5f, 0.5f);
-                            rt.pivot = new Vector2(0f, 0.5f);
-                            rt.anchoredPosition = new Vector2(startX + i * offset, 0f);
-                            rt.sizeDelta = new Vector2(HandCardWidth, HandCardHeight);
                             AddBringToFrontOnHover(btn);
                         }
                     }
@@ -262,12 +293,17 @@ namespace CardGame.Unity
                     int manaCost = data.Type == CardType.Equipe ? 0 : data.Cost;
                     bool isRapide = data.Type == CardType.Rapide;
                     bool outlineVisible = needsReaction && _reactionTimeRemaining > 0;
+                    bool afterParade = state.PendingContreAttaqueAttackerIndex.HasValue;
+                    bool rapideAllowed = afterParade
+                        ? (card.Id == CardId.ContreAttaque)
+                        : (card.Id != CardId.ContreAttaque);
                     bool canPlay = needsReaction
-                        ? (isDefenderInReaction && isRapide && manaOrReserved >= manaCost && outlineVisible)
+                        ? (isDefenderInReaction && isRapide && rapideAllowed && manaOrReserved >= manaCost && outlineVisible)
                         : (_controller.IsHumanTurn && !isRapide && p.Mana >= manaCost && (card.Id != CardId.Repositionnement || !p.HasPlayedRepositionnementThisTurn));
                     bool isDivinationChoice = needsDiv;
                     btn.interactable = needsDiv ? true : canPlay;
-                    ApplyRapidCardOutline(btn, isRapide && needsReaction, outlineVisible ? Mathf.Clamp01(_reactionTimeRemaining / ReactionWindowDuration) : 0f);
+                    float reactionDuration = afterParade ? ReactionWindowAfterParadeDuration : ReactionWindowDuration;
+                    ApplyRapidCardOutline(btn, isRapide && needsReaction, outlineVisible ? Mathf.Clamp01(_reactionTimeRemaining / reactionDuration) : 0f);
                     int handCount = p.Hand.Count;
                     btn.onClick.AddListener(() => OnHandCardClicked(index, btn, handCount, isDivinationChoice, needsReaction, canPlay));
                 }
@@ -278,6 +314,7 @@ namespace CardGame.Unity
         }
 
         private const int TwoTapHandThreshold = 5;
+        private const float HandSpacingWhenFewCards = 10f;
 
         private void OnHandCardClicked(int index, Button btn, int handCount, bool isDivinationChoice, bool needsReaction, bool canPlay)
         {
@@ -301,7 +338,7 @@ namespace CardGame.Unity
                 }
                 else
                 {
-                    btn.transform.SetAsLastSibling();
+                    SetCardOnTop(btn);
                     _lastSelectedHandIndex = index;
                     _lastSelectedHandTime = now;
                 }
@@ -324,8 +361,27 @@ namespace CardGame.Unity
             if (IsTouchDevice) return;
             var trigger = btn.gameObject.GetComponent<EventTrigger>() ?? btn.gameObject.AddComponent<EventTrigger>();
             var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-            enterEntry.callback.AddListener(_ => btn.transform.SetAsLastSibling());
+            enterEntry.callback.AddListener(_ => SetCardOnTop(btn));
             trigger.triggers.Add(enterEntry);
+        }
+
+        /// <summary>Met la carte au premier plan (rendu) sans la déplacer, via Canvas.sortingOrder.</summary>
+        private void SetCardOnTop(Button btn)
+        {
+            if (btn == null || _handContainer == null) return;
+            foreach (Transform t in _handContainer)
+            {
+                var c = t.GetComponent<Canvas>();
+                if (c != null) c.sortingOrder = 0;
+            }
+            var canvas = btn.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = btn.gameObject.AddComponent<Canvas>();
+                btn.gameObject.AddComponent<GraphicRaycaster>();
+            }
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 1;
         }
 
         /// <summary>Affiche les dos de cartes de l'adversaire. Mis à jour quand sa main change.</summary>
@@ -341,7 +397,10 @@ namespace CardGame.Unity
             _lastOpponentHandCount = count;
 
             foreach (Transform t in _opponentHandContainer)
+            {
+                if (_opponentPlayedCards.Any(p => p.instance == t.gameObject)) continue;
                 Destroy(t.gameObject);
+            }
 
             _opponentHandContainer.gameObject.SetActive(count > 0);
             if (count == 0) return;
@@ -349,7 +408,7 @@ namespace CardGame.Unity
             RectTransform containerRect = _opponentHandContainer as RectTransform ?? _opponentHandContainer.GetComponent<RectTransform>();
             Transform parent = containerRect != null ? (Transform)containerRect : _opponentHandContainer;
 
-            GameObject prefab = _cardBackPrefab != null ? _cardBackPrefab : _cardButtonPrefab;
+            GameObject prefab = _cardBackgroundPrefab != null ? _cardBackgroundPrefab : (_cardBackPrefab != null ? _cardBackPrefab : _cardButtonPrefab);
             for (int i = 0; i < count; i++)
             {
                 GameObject go = prefab != null
@@ -363,6 +422,139 @@ namespace CardGame.Unity
 
             if (containerRect != null)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
+        }
+
+        /// <summary>Chaque carte jouée par l'adversaire reste visible 3 s, indépendamment des autres.</summary>
+        private void UpdateOpponentPlayedCard(GameState state)
+        {
+            if (_opponentHandContainer == null || _cardPrefab == null) return;
+            int oppIdx = 1 - _controller.LocalPlayerIndex;
+            bool opponentJustPlayed = state.LastPlayedCardId.HasValue && state.LastPlayedCardPlayerIndex == oppIdx;
+            bool cardChanged = opponentJustPlayed && state.LastPlayedCardId != _lastDisplayedOpponentCardId;
+            if (cardChanged)
+            {
+                _lastDisplayedOpponentCardId = state.LastPlayedCardId;
+                Transform parent = _opponentHandContainer is RectTransform rt ? (Transform)rt : _opponentHandContainer;
+                var go = Instantiate(_cardPrefab, parent, false);
+                var btn = go.GetComponent<Button>();
+                if (btn != null) btn.interactable = false;
+                var data = DeckDefinitions.GetCard(state.LastPlayedCardId.Value);
+                SetCardPrefabTexts(go.transform, data.Name, data.Description, data.Cost, data.Type);
+                _opponentPlayedCards.Add((go, Time.time + OpponentPlayedDisplayDuration));
+            }
+            float now = Time.time;
+            for (int i = _opponentPlayedCards.Count - 1; i >= 0; i--)
+            {
+                var (instance, displayUntil) = _opponentPlayedCards[i];
+                if (now >= displayUntil || instance == null)
+                {
+                    if (instance != null) Destroy(instance);
+                    _opponentPlayedCards.RemoveAt(i);
+                }
+            }
+            if (_opponentPlayedCards.Count == 0)
+                _lastOpponentHandCount = -1;
+            var containerRect = _opponentHandContainer as RectTransform ?? _opponentHandContainer.GetComponent<RectTransform>();
+            if (containerRect != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
+        }
+
+        private void ToggleHistoriqueEnCours()
+        {
+            if (_panelHistoriqueEnCours != null)
+                _panelHistoriqueEnCours.SetActive(!_panelHistoriqueEnCours.activeSelf);
+        }
+
+        private void RefreshHistoriqueEnCours()
+        {
+            var entries = GameHistoryBuffer.Entries;
+            if (entries.Count == _lastHistoryEntryCount) return;
+
+            // Nouveau mode : une entrée = une prefab ligne dans le Content.
+            if (_scrollHistoriqueContent != null)
+            {
+                EnsureHistoriqueContentLayout(_scrollHistoriqueContent);
+
+                if (entries.Count < _lastHistoryEntryCount)
+                    ClearHistoriqueLines();
+
+                int startIndex = _lastHistoryEntryCount < 0 || entries.Count < _lastHistoryEntryCount ? 0 : _lastHistoryEntryCount;
+                for (int i = startIndex; i < entries.Count; i++)
+                    AddHistoriqueLine(entries[i]);
+
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(_scrollHistoriqueContent);
+            }
+            else if (_textHistoriqueEnCours != null)
+            {
+                // Fallback : ancien mode texte unique si aucun Content n'est branché.
+                var sb = new System.Text.StringBuilder();
+                foreach (var e in entries)
+                    sb.AppendLine(FormatHistoriqueLine(e));
+                _textHistoriqueEnCours.text = sb.ToString();
+                _textHistoriqueEnCours.richText = true;
+                _textHistoriqueEnCours.overflowMode = TextOverflowModes.Overflow;
+                _textHistoriqueEnCours.textWrappingMode = TMPro.TextWrappingModes.Normal;
+            }
+
+            _lastHistoryEntryCount = entries.Count;
+        }
+
+        private void EnsureHistoriqueContentLayout(RectTransform content)
+        {
+            var vlg = content.GetComponent<VerticalLayoutGroup>();
+            if (vlg == null) vlg = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+            var fitter = content.GetComponent<ContentSizeFitter>();
+            if (fitter == null) fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        }
+
+        private void ClearHistoriqueLines()
+        {
+            foreach (var go in _historiqueLineInstances)
+            {
+                if (go != null) Destroy(go);
+            }
+            _historiqueLineInstances.Clear();
+        }
+
+        private void AddHistoriqueLine(GameHistoryBuffer.Entry entry)
+        {
+            if (_scrollHistoriqueContent == null) return;
+
+            GameObject lineGO = _historiqueLinePrefab != null
+                ? Instantiate(_historiqueLinePrefab, _scrollHistoriqueContent, false)
+                : new GameObject("HistoriqueLine", typeof(RectTransform), typeof(TextMeshProUGUI));
+
+            var textComp = lineGO.GetComponentInChildren<TMP_Text>() ?? lineGO.GetComponent<TMP_Text>();
+            if (textComp == null)
+                textComp = lineGO.AddComponent<TextMeshProUGUI>();
+
+            textComp.text = FormatHistoriqueLine(entry);
+            textComp.richText = true;
+            textComp.overflowMode = TextOverflowModes.Overflow;
+            textComp.textWrappingMode = TMPro.TextWrappingModes.Normal;
+
+            _historiqueLineInstances.Add(lineGO);
+        }
+
+        private static string FormatHistoriqueLine(GameHistoryBuffer.Entry e)
+        {
+            string color = e.EventType switch
+            {
+                "DamageApplied" or "DamageBlocked" => "#E74C3C",
+                "ShieldApplied" or "ShieldBuffExpired" or "ShieldBuffReapplied" or "ArmurePsychique" => "#2ECC71",
+                "PlayCard" or "PlayRapid" or "RapidPlayed" or "StrikeReactionPhase" or "ReactionPhase" or "NoReaction" => "#ECF0F1",
+                "GameStart" or "StartTurn" or "EndTurn" or "EndTurnRequested" => "#5DADE2",
+                "Victory" => "#F1C40F",
+                _ => "#BDC3C7"
+            };
+            return $"<color=#7F8C8D>[{e.TimeShort}]</color> <color={color}>{e.DisplayText}</color>";
         }
 
         /// <summary>Cache les infos de carte et applique l'apparence dos de carte (quand on réutilise le prefab carte).</summary>
@@ -565,7 +757,9 @@ namespace CardGame.Unity
         private void UpdateRapidCardOutlines(GameState state)
         {
             if (!_controller.NeedsReaction || state.ReactionTargetPlayerIndex != _controller.LocalPlayerIndex || _handContainer == null) return;
-            float alpha = _reactionTimeRemaining > 0 ? Mathf.Clamp01(_reactionTimeRemaining / ReactionWindowDuration) : 0f;
+            bool afterParade = state.PendingContreAttaqueAttackerIndex.HasValue;
+            float reactionDuration = afterParade ? ReactionWindowAfterParadeDuration : ReactionWindowDuration;
+            float alpha = _reactionTimeRemaining > 0 ? Mathf.Clamp01(_reactionTimeRemaining / reactionDuration) : 0f;
             var p = state.Players[state.ReactionTargetPlayerIndex];
             int manaOrReserved = p.ManaReservedForReaction;
             foreach (Transform t in _handContainer)
@@ -580,7 +774,8 @@ namespace CardGame.Unity
                 if (data.Type == CardType.Rapide)
                 {
                     int manaCost = data.Type == CardType.Equipe ? 0 : data.Cost;
-                    bool canPlayRapid = manaOrReserved >= manaCost && alpha > 0.01f;
+                    bool rapideAllowed = afterParade ? (card.Id == CardId.ContreAttaque) : (card.Id != CardId.ContreAttaque);
+                    bool canPlayRapid = rapideAllowed && manaOrReserved >= manaCost && alpha > 0.01f;
                     btn.interactable = canPlayRapid;
                     ApplyRapidCardOutline(btn, true, alpha);
                 }
